@@ -1,3 +1,5 @@
+//USED FOR TEXT WITH DIFFERENT STYLES
+
 import { Text, type TextProps, StyleSheet } from 'react-native';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -5,7 +7,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  type?: 'default' | 'display' |'title' | 'defaultSemiBold' | 'subtitle' | 'body' | 'link';
 };
 
 export function ThemedText({
@@ -17,14 +19,17 @@ export function ThemedText({
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
+      // The component that is returned
   return (
     <Text
       style={[
         { color },
         type === 'default' ? styles.default : undefined,
+        type === 'display' ? styles.display : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
         type === 'subtitle' ? styles.subtitle : undefined,
+        type === 'body' ? styles.body : undefined,
         type === 'link' ? styles.link : undefined,
         style,
       ]}
@@ -43,6 +48,11 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: '600',
   },
+  display: {
+    fontSize: 64,
+    fontWeight: 'bold',
+    lineHeight: 64,
+  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -50,6 +60,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 20,
+    fontWeight: 'bold',
+  },
+  body: {
+    fontSize: 16,
     fontWeight: 'bold',
   },
   link: {

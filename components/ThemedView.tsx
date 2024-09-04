@@ -1,3 +1,5 @@
+//USED FOR VIEWS WITH DIFFERENT STYLES
+
 import { View, type ViewProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/useThemeColor';

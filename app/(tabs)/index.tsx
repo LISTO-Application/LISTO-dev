@@ -5,10 +5,15 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-export default function HomeScreen() {
+export default function Emergency() {
+  
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+    headerBackgroundColor={Platform.select({
+      ios: { dark: '#000', light: '#FFF' },
+      android: { dark: '#000', light: '#FFF' },
+      default: { dark: '#000', light: '#FFF' } // Provide a default value
+    })}
       headerImage={
         <Image
           source={require('@/assets/images/partial-react-logo.png')}
@@ -16,7 +21,7 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
+        <ThemedText type="title">EGG</ThemedText>
         <HelloWave />
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
