@@ -1,11 +1,6 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import {Button, Image, Platform, KeyboardAvoidingView, ScrollView} from 'react-native';
 import { styles } from '@/styles/styles';
-import { utility } from '@/styles/utility';
 import {router} from 'expo-router';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
 
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
@@ -14,7 +9,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 
 
 
-export default function Login() {
+export default function Forgot() {
   return (
     
     <ScrollView 
@@ -30,21 +25,18 @@ export default function Login() {
           style={styles.subContainer}
         >
           
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" style={styles.text}>Login</ThemedText>
+            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" style={styles.text}>Forgot your password?</ThemedText>
             <ThemedInput type='outline' placeholder='Email' />
-            <ThemedInput type='outline' placeholder='********' secureTextEntry />
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Forgot Password?</ThemedText>
             <SpacerView height={40} />
             <SpacerView height={40}>
-              <ThemedButton title="Login" onPress={() => 
-                {router.replace({
-                  pathname: "/register",
-                })}} />
+              <ThemedButton title="Submit" 
+              onPress={() => 
+                router.replace({
+                  pathname: "/[id]",
+                  params: { id: 'burgerjoints' },
+                })} />
             </SpacerView>
-            <SpacerView height={55}>
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" style={styles.text}>Don't have an account? </ThemedText>
-            
-            </SpacerView>
+            <SpacerView height={55}/>
 
         </KeyboardAvoidingView>
 

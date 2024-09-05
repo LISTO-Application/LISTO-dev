@@ -11,43 +11,39 @@ import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { SpacerView } from '@/components/SpacerView';
 import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedView } from '@/components/ThemedView';
+import { useLocalSearchParams } from 'expo-router';
 
 
 
-export default function Login() {
+export default function UserAccount() {
+  
+  const { id } = useLocalSearchParams();
+
   return (
     
-    <ScrollView 
-    contentContainerStyle={{ flexGrow: 1 }} 
+    <ThemedView
     style={styles.mainContainer}
-    showsVerticalScrollIndicator = {false}
-    keyboardShouldPersistTaps = "handled"
     >
         <SpacerView height={60} />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        <ThemedView
           style={styles.subContainer}
         >
           
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" style={styles.text}>Login</ThemedText>
+            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" style={styles.text}>User {id} </ThemedText>
             <ThemedInput type='outline' placeholder='Email' />
-            <ThemedInput type='outline' placeholder='********' secureTextEntry />
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Forgot Password?</ThemedText>
+            <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Welcome!</ThemedText>
             <SpacerView height={40} />
             <SpacerView height={40}>
               <ThemedButton title="Login" onPress={() => 
                 {router.replace({
-                  pathname: "/register",
+                  pathname: "/",
                 })}} />
             </SpacerView>
-            <SpacerView height={55}>
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" style={styles.text}>Don't have an account? </ThemedText>
-            
-            </SpacerView>
+            <SpacerView height={55}/>
 
-        </KeyboardAvoidingView>
+        </ThemedView>
 
-    </ScrollView>
+    </ThemedView>
   );
 }

@@ -23,21 +23,23 @@ export default function Register() {
     showsVerticalScrollIndicator = {false}
     keyboardShouldPersistTaps = "handled"
     >
-        <SpacerView height={60} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 400}
           style={styles.subContainer}
         >
           
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" style={styles.text}>Sign Up</ThemedText>
+            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" style={styles.text}>Sign up</ThemedText>
+            <ThemedInput type='outline' placeholder='First Name' />
+            <ThemedInput type='outline' placeholder='Last Name' />
+            <ThemedInput type='outline' placeholder='+63' />
             <ThemedInput type='outline' placeholder='Email' />
             <ThemedInput type='outline' placeholder='********' secureTextEntry />
             <SpacerView height={40} />
             <SpacerView height={40}>
-              <ThemedButton title="Submit" onPress={() => 
+              <ThemedButton title="Sign up" onPress={() => 
                 {router.replace({
-                  pathname: "/",
+                  pathname: "/forgot",
                 })}}/>
             </SpacerView>
             <SpacerView height={55}>
