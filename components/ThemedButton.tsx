@@ -52,6 +52,10 @@ export type ThemedButtonProps = PressableProps & {
         textAlign: 'center',
     },
 
+    default: {
+        backgroundColor: '#DA4B46',
+    },
+
     red: {
         backgroundColor: '#DA4B46',
     },
