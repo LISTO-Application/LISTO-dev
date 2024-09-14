@@ -7,7 +7,9 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'display' |'title' | 'defaultSemiBold' | 'subtitle' | 'body' | 'link';
+  type?: 'default' | 'display' | 'subDisplay' | 'title' | 'defaultSemiBold' | 'subtitle' | 'body' | 'link';
+  textAlign: 'center' | 'left' | 'right';
+  paddingVertical: number;
 };
 
 export function ThemedText({
@@ -15,6 +17,8 @@ export function ThemedText({
   lightColor,
   darkColor,
   type = 'default',
+  textAlign,
+
   ...rest
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
@@ -26,11 +30,13 @@ export function ThemedText({
         { color },
         type === 'default' ? styles.default : undefined,
         type === 'display' ? styles.display : undefined,
+        type === 'subDisplay' ? styles.subDisplay : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
         type === 'subtitle' ? styles.subtitle : undefined,
         type === 'body' ? styles.body : undefined,
         type === 'link' ? styles.link : undefined,
+        {textAlign},
         style,
       ]}
       {...rest}
@@ -53,6 +59,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     lineHeight: 64,
   },
+  
+  subDisplay: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    lineHeight: 48,
+  },
+
   title: {
     fontSize: 32,
     fontWeight: 'bold',

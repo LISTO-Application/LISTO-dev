@@ -2,7 +2,6 @@ import { StyleSheet } from "react-native";
 
     const styles = StyleSheet.create({
         mainContainer: {
-          backgroundColor: '#115272',
           flexDirection: 'column',
           height: '100%',
           display: 'flex',
@@ -10,14 +9,23 @@ import { StyleSheet } from "react-native";
         },
       
         subContainer: {
-          backgroundColor: '#115272',
           marginLeft: '5%',
           marginRight: '5%',
-          marginVertical: '20%',
+          paddingVertical: '5%',
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
           flex: 1,
+        },
+        
+        header: {
+          paddingLeft: '5%',
+          paddingRight: '5%',
+          paddingTop: '5%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
         },
       
         input: {
@@ -28,6 +36,7 @@ import { StyleSheet } from "react-native";
           marginBottom: '5%',
           lineHeight: 42,
           paddingLeft: 10,
+          
         },
 
         container: {
@@ -40,12 +49,6 @@ import { StyleSheet } from "react-native";
         link: {
         marginTop: 15,
         paddingVertical: 15,
-        },
-
-        text: {
-            flexDirection: 'column',
-            marginTop: '5%',
-            marginBottom: '5%',
         },
 
         submit: {

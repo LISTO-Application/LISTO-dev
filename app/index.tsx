@@ -19,18 +19,18 @@ export default function Login() {
     
     <ScrollView 
     contentContainerStyle={{ flexGrow: 1 }} 
-    style={styles.mainContainer}
+    style={[styles.mainContainer, utility.blueBackground]}
     showsVerticalScrollIndicator = {false}
     keyboardShouldPersistTaps = "handled"
     >
-        <SpacerView height={60} />
+        <SpacerView height={80} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-          style={styles.subContainer}
+          style={[styles.subContainer, utility.blueBackground]}
         >
           
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" style={styles.text}>Login</ThemedText>
+            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" >Login</ThemedText>
             <ThemedInput type='outline' placeholder='Email' />
             <ThemedInput type='outline' placeholder='********' secureTextEntry />
             <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Forgot Password?</ThemedText>
@@ -41,9 +41,8 @@ export default function Login() {
                   pathname: "/register",
                 })}} />
             </SpacerView>
-            <SpacerView height={55}>
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" style={styles.text}>Don't have an account? </ThemedText>
-            
+            <SpacerView height={55} marginTop={20}>
+                <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Don't have an account? </ThemedText>
             </SpacerView>
 
         </KeyboardAvoidingView>

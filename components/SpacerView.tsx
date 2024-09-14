@@ -12,6 +12,16 @@ export type SpacerViewProps = ViewProps & {
   marginRight?: number;
   marginBottom?: number;
   justifyContent?: 'center' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
+  textAlign?: 'center' | 'left' | 'right';
+  backgroundColor?: string;
+  borderBottomWidth: number;
+  borderBottomColor: string;
+  opacity: number;
+  padding: number;
+  paddingTop : number;
+  paddingLeft : number;
+  paddingBottom : number;
+  paddingRight : number;
 };
 
 export function SpacerView({
@@ -25,6 +35,15 @@ export function SpacerView({
   marginRight = 0,
   marginBottom = 0,
   justifyContent = 'flex-start',
+  backgroundColor,
+  borderBottomWidth,
+  borderBottomColor,
+  opacity,
+  padding,
+  paddingTop,
+  paddingLeft,
+  paddingBottom,
+  paddingRight,
   ...rest
 }: SpacerViewProps) {
 
@@ -41,6 +60,15 @@ export function SpacerView({
         {marginRight},
         {marginBottom},
         {justifyContent},
+        {backgroundColor},
+        {borderBottomWidth},
+        {borderBottomColor},
+        {opacity},
+        {padding},
+        {paddingTop},
+        {paddingLeft},
+        {paddingBottom},
+        {paddingRight},
         style,
       ]}
       {...rest}

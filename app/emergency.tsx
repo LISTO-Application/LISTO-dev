@@ -14,38 +14,39 @@ import { ThemedButton } from '@/components/ThemedButton';
 
 
 
-export default function Register() {
+export default function Login() {
   return (
     
     <ScrollView 
     contentContainerStyle={{ flexGrow: 1 }} 
-    style={[styles.mainContainer, utility.blueBackground]}
+    style={[styles.mainContainer, utility.redBackground]}
     showsVerticalScrollIndicator = {false}
     keyboardShouldPersistTaps = "handled"
     >
-        <SpacerView height={60} />
+        <SpacerView height={80} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 400}
-          style={[styles.subContainer, utility.blueBackground]}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          style={[styles.subContainer, utility.redBackground]}
         >
           
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Sign up</ThemedText>
-            <ThemedInput type='outline' placeholder='First Name' />
-            <ThemedInput type='outline' placeholder='Last Name' />
-            <ThemedInput type='outline' placeholder='+63' />
+            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subDisplay" >Send a distress message</ThemedText>
+
             <ThemedInput type='outline' placeholder='Email' />
             <ThemedInput type='outline' placeholder='********' secureTextEntry />
+
+            <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Additional Information</ThemedText>
+            <ThemedInput borderRadius = {15} height = {100} placeholder='Additional Information' textAlign = "left" textAlignVertical = "top"/>
+ 
             <SpacerView height={40} />
-            <SpacerView height={40}>
-              <ThemedButton title="Sign up" onPress={() => 
+            <SpacerView height={40} justifyContent = "center">
+              <ThemedButton title="Submit" width = "50%" type = "blue" onPress={() => 
                 {router.replace({
-                  pathname: "/forgot",
-                })}}/>
+                  pathname: "/register",
+                })}} />
             </SpacerView>
             <SpacerView height={55} marginTop={20}>
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="body">Already have an account? </ThemedText>
-            
+                <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Don't have an account? </ThemedText>
             </SpacerView>
 
         </KeyboardAvoidingView>

@@ -9,6 +9,30 @@ import { StyleSheet } from "react-native";
         alignCenter: {
             alignItems: 'center'
         },
+
+        blueBackground: {
+          backgroundColor: '#115272',
+        },
+
+        
+        blackBackground: {
+          backgroundColor: '#000',
+        },
+
+        redBackground: {
+          backgroundColor: '#DA4B46',
+        },
+
+        flex: {
+          display: 'flex',
+        },
+
+        row: {
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }
         
       });
 

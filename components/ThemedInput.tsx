@@ -4,13 +4,24 @@ import { TextInput, type TextInputProps, StyleSheet } from "react-native";
 
 export type ThemedInputProps = TextInputProps & {
     type?: 'outline' |'solid' ;
+    height?: number;
+    borderRadius?: number;
+    textAlign: 'center' | 'left' | 'right';
+    textAlignVertical: 'center' | 'top' | 'bottom';
+    padding: number;
+
     
   };
   
   export function ThemedInput({
     style,
     type = 'outline',
+    height = 48,
+    borderRadius = 50,
     placeholderTextColor = "#BBB",
+    textAlign,
+    textAlignVertical,
+    padding = 10,
     ...rest
   }: ThemedInputProps) {
   
@@ -21,6 +32,11 @@ export type ThemedInputProps = TextInputProps & {
           type === 'outline' ? styles.default : undefined,
           type === 'outline' ? styles.outline : undefined,
           type === 'solid' ? styles.solid : undefined,
+          {height},
+          {borderRadius},
+          {textAlign},
+          {textAlignVertical},
+          {padding},
           style,
         ]}
         placeholderTextColor={placeholderTextColor}
@@ -32,11 +48,9 @@ export type ThemedInputProps = TextInputProps & {
   
   const styles = StyleSheet.create({
     default: {
-        height: 48,
         backgroundColor: 'transparent',
         borderColor: '#FFF',
         borderWidth: 3,
-        borderRadius: 50,
         marginTop: '5%',
         marginBottom: '5%',
         paddingLeft: 20,
@@ -46,11 +60,9 @@ export type ThemedInputProps = TextInputProps & {
     },
   
     outline: {
-        height: 48,
         backgroundColor: 'transparent',
         borderColor: '#FFF',
         borderWidth: 3,
-        borderRadius: 50,
         marginTop: '5%',
         marginBottom: '5%',
         paddingLeft: 20,
@@ -59,11 +71,9 @@ export type ThemedInputProps = TextInputProps & {
     },
   
     solid: {
-        height: 48,
         backgroundColor: '#FFF',
         borderWidth: 3,
         borderColor: '#FFF',
-        borderRadius: 50,
         marginTop: '5%',
         marginBottom: '5%',
         paddingLeft: 20,
