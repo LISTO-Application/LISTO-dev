@@ -7,7 +7,99 @@ const styles = StyleSheet.create({
     display: 'flex',
     flex: 1,
   },
-  
+  container: {
+    flex: 1,
+    backgroundColor: '#F0F4F8',
+    paddingHorizontal: 20,
+  },
+  headerContainer: {
+    backgroundColor: '#115272', // Blue color
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backIcon: {
+    marginRight: 10,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFF', // White text color
+  },
+  scrollViewContent: {
+    alignItems: 'center',
+    paddingBottom: 30,
+  },
+  reportContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#115272',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    width: '100%',
+  },
+  reportIcon: {
+    marginRight: 10,
+    backgroundColor: '#DA4B46',
+    padding: 10,
+    borderRadius: 50,
+  },
+  reportTextContainer: {
+    flex: 1,
+  },
+  reportTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  reportActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timeText: {
+    marginLeft: 'auto',
+    fontSize: 14,
+    color: '#FFF',
+  },
+  editIcon: {
+    marginLeft: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 20,
+  },
+  cancelButton: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#115272',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    width: '45%',
+    alignItems: 'center',
+  },
+  submitButton: {
+    backgroundColor: '#115272',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    width: '45%',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#115272',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+
+
   header: {
     paddingLeft: '5%',
     paddingRight: '5%',

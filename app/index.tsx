@@ -51,7 +51,13 @@ export default function Login() {
                 </TouchableOpacity>
             </SpacerView>
             <TouchableOpacity onPress={() => router.push("/changeAdminInformation")}>
-                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Test </ThemedText>
+                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >change Admin Info </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/changeUserInformation")}>
+                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >change User Info </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/viewReports")}>
+                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >View Reports</ThemedText>
                 </TouchableOpacity>
         </KeyboardAvoidingView>
 
