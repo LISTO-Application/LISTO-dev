@@ -38,9 +38,14 @@ export default function Forgot() {
                     id: 'John Doe' },
                     
                 })} />
+                
+                
             </SpacerView>
+            
             <SpacerView height={55}/>
+            <ThemedButton title="Back" onPress={() => router.push("/")}>
 
+</ThemedButton>
         </KeyboardAvoidingView>
 
     </ScrollView>

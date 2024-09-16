@@ -12,7 +12,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { SpacerView } from '@/components/SpacerView';
 import { ThemedButton } from '@/components/ThemedButton';
 
-export default function Login() {
+export default function adminLogin() {
   return (
     
     <ScrollView 
@@ -28,21 +28,18 @@ export default function Login() {
           style={[styles.subContainer, utility.blueBackground]}
         >
           
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" >Login</ThemedText>
+            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" >Admin Login</ThemedText>
             <ThemedInput type='outline' placeholder='Email' />
             
-            <ThemedInput type='outline' placeholder='Phone Number' />
             <ThemedInput type='outline' placeholder='********' secureTextEntry />
             <TouchableOpacity onPress={() => router.push("/forgot")}>
             <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Forgot Password?</ThemedText>
             </TouchableOpacity>
             <SpacerView height={40} />
             <SpacerView height={40}>
-
               <ThemedButton title="Login" onPress={() => 
-              //check if has account
                 {router.replace({
-                  pathname: "/adminLogin",
+                  pathname: "/register",
                 })}} />
             </SpacerView>
             <SpacerView height={55} marginTop={20}>
@@ -50,9 +47,7 @@ export default function Login() {
                     <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Don't have an account? </ThemedText>
                 </TouchableOpacity>
             </SpacerView>
-            <TouchableOpacity onPress={() => router.push("/changeAdminInformation")}>
-                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Test </ThemedText>
-                </TouchableOpacity>
+
         </KeyboardAvoidingView>
 
     </ScrollView>

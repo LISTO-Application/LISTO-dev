@@ -39,6 +39,9 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="[id]" options={{ headerShown: false }} />
         <Stack.Screen name="emergency" options={{ headerShown: false }} />
+        <Stack.Screen name="adminLogin" options={{ headerShown: false }} />
+        <Stack.Screen name="changeUserInformation" options={{ headerShown: false }} />
+        <Stack.Screen name="changeAdminInformation" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>

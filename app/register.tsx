@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {Button, Image, Platform, KeyboardAvoidingView, ScrollView} from 'react-native';
+import {Button, Image, Platform, KeyboardAvoidingView, ScrollView, TouchableOpacity} from 'react-native';
 import { styles } from '@/styles/styles';
 import { utility } from '@/styles/utility';
 import {router} from 'expo-router';
@@ -44,7 +44,9 @@ export default function Register() {
                 })}}/>
             </SpacerView>
             <SpacerView height={55} marginTop={20}>
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="body">Already have an account? </ThemedText>
+            <TouchableOpacity onPress={() => router.push("/")}>
+                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Already have an account? </ThemedText>
+                </TouchableOpacity>
             
             </SpacerView>
 
