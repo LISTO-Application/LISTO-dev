@@ -175,10 +175,139 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  formContainer: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  dropdown: {
+    padding: 15,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  selectedText: {
+    fontSize: 16,
+    color: 'gray',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    marginHorizontal: 20,
+  },
+  item: {
+    paddingVertical: 15,
+  },
+  itemText: {
+    fontSize: 18,
+    color: 'black',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    padding: 15,
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  imageUpload: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  uploadText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: 'gray',
+  },
+
+  buttonContainerReport: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 20,
+  },
+  cancelButtonReport: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    padding: 15,
+    width: '40%',
+    alignItems: 'center',
+  },
+  submitButtonReport: {
+    backgroundColor: '#0d6efd',
+    borderRadius: 5,
+    padding: 15,
+    width: '40%',
+    alignItems: 'center',
+  },
+  buttonTextReport: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'gray',
+  }, reportContainer: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  reportHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reportTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  reportDescription: {
+    marginTop: 5,
+    fontSize: 14,
+    color: '#666',
+  },
+  statusLabel: {
+    borderRadius: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  statusText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+ 
+  actionButton: {
+    marginHorizontal: 10,
+  },
+  
 
   blueBackground: {
     backgroundColor: '#003366',  // Blue background for the top section
   },
+  
 });
+
 
 export { styles };

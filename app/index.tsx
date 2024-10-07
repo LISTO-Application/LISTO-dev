@@ -59,6 +59,9 @@ export default function Login() {
                 <TouchableOpacity onPress={() => router.push("/viewReports")}>
                     <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >View Reports</ThemedText>
                 </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/validateReports")}>
+                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >View Admin Reports</ThemedText>
+                </TouchableOpacity>
         </KeyboardAvoidingView>
 
     </ScrollView>
