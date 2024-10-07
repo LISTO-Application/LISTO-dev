@@ -1,24 +1,36 @@
 //USED FOR INPUTS WITH DIFFERENT STYLES
 
-import { TextInput, type TextInputProps, StyleSheet } from "react-native";
+import { TextInput, type TextInputProps, type ViewProps , StyleSheet, DimensionValue } from "react-native";
 
 export type ThemedInputProps = TextInputProps & {
-    type?: 'outline' |'solid' ;
-    height?: number;
+    type?: 'outline' |'solid' | 'blueOutline';
+    width?: number | DimensionValue | undefined;
+    height?: number | DimensionValue | undefined;
+    marginVertical?: number | DimensionValue | undefined;
+    marginHorizontal?: number | DimensionValue | undefined;
+    marginTop?: number | DimensionValue | undefined;
+    marginBottom?: number | DimensionValue | undefined;
+    marginLeft?: number | DimensionValue | undefined;
+    marginRight?: number | DimensionValue | undefined;
     borderRadius?: number;
-    textAlign: 'center' | 'left' | 'right';
-    textAlignVertical: 'center' | 'top' | 'bottom';
-    padding: number;
+    placeholderTextColor?: string | undefined; 
+    backgroundColor?: string | undefined;
+    textAlign?: 'center' | 'left' | 'right';
+    textAlignVertical?: 'center' | 'top' | 'bottom';
+    padding?: number;
 
-    
   };
   
   export function ThemedInput({
     style,
     type = 'outline',
+    width,
     height = 48,
+    marginVertical,
+    marginHorizontal,
     borderRadius = 50,
-    placeholderTextColor = "#BBB",
+    placeholderTextColor = '#BBB',
+    backgroundColor,
     textAlign,
     textAlignVertical,
     padding = 10,
@@ -32,15 +44,20 @@ export type ThemedInputProps = TextInputProps & {
           type === 'outline' ? styles.default : undefined,
           type === 'outline' ? styles.outline : undefined,
           type === 'solid' ? styles.solid : undefined,
+          type === 'blueOutline' ? styles.blueOutline : undefined,
+          {width},
           {height},
+          {marginVertical},
+          {marginHorizontal},
           {borderRadius},
+          {backgroundColor},
           {textAlign},
           {textAlignVertical},
           {padding},
           style,
         ]}
-        placeholderTextColor={placeholderTextColor}
         cursorColor={'#FFF'}
+        placeholderTextColor={placeholderTextColor}
         {...rest}
       />
     );
@@ -80,6 +97,17 @@ export type ThemedInputProps = TextInputProps & {
         fontWeight: 'bold',
 
     },
+
+    blueOutline: {
+      backgroundColor: '#FFF',
+      borderWidth: 3,
+      borderColor: '#115272',
+      marginTop: '5%',
+      marginBottom: '5%',
+      paddingLeft: 20,
+      fontWeight: 'bold',
+      color: '#115272',
+    }
 
   });
   

@@ -1,46 +1,67 @@
-import { Tabs } from 'expo-router';
+//React Imports
 import React from 'react';
+import { View } from 'react-native';
 
+//Expo Imports
+import { useRouter, Tabs, useFocusEffect} from 'expo-router';
+
+//Component Imports
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { Colors } from '@/constants/Colors';
+import { TabBar } from '@/components/navigation/TabBar';
+
+
+//Hooks
 import { useColorScheme } from '@/hooks/useColorScheme';
+
+const report = require('../../assets/images/report-icon.png');
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const isLoggedIn = true;
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'dark'].tint,
-        headerShown: false,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Emergency',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'call' : 'call-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="account"
-        options={{
-          title: 'Account',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
+  if(isLoggedIn) {
+
+    return (
+          <Tabs
+            initialRouteName='index'
+            screenOptions={{
+              headerShown: false,
+            }}
+            tabBar={props => <TabBar {...props}/>}>
+            <Tabs.Screen
+              name="emergency"
+              options={{
+                tabBarShowLabel: false,
+                title: 'Emergency',
+              }}
+            />
+        
+            <Tabs.Screen
+              name="index"
+              options={{
+                tabBarShowLabel: false,
+                title: 'Crime Map',
+              }}
+            />
+
+            <Tabs.Screen
+              name="account"
+              options={{
+                tabBarShowLabel: false,
+                title: 'Account',
+              }}
+            />
+          </Tabs>
+
+    );
+
+  }
+  else
+  {
+    console.log('User is not logged in');
+    router.replace({
+      pathname: '/',
+    });
+  };
 }

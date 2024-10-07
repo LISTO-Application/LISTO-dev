@@ -1,11 +1,16 @@
 //USED FOR BUTTONS WITH DIFFERENT STYLES
 
-import { Pressable, Text, type PressableProps, StyleSheet } from "react-native";
+import { Pressable, Text, type PressableProps, StyleSheet, DimensionValue } from "react-native";
 
 export type ThemedButtonProps = PressableProps & {
     title?: string;
-    type?: 'default' | 'red' | 'white' | 'blue'
-    width?: string | number;
+    type?: 'default' | 'red' | 'white' | 'blue' | 'white-outline'
+    height?: DimensionValue;
+    width?: DimensionValue ;
+    paddingHorizontal?: DimensionValue;
+    paddingVertical?: DimensionValue;
+    marginHorizontal?: DimensionValue;
+    marginVertical?: DimensionValue;
     onPress?: () => void; 
   };
   
@@ -13,7 +18,12 @@ export type ThemedButtonProps = PressableProps & {
     style,
     title,
     type = 'default',
+    height = 36,
     width = '100%',
+    paddingHorizontal,
+    paddingVertical,
+    marginHorizontal,
+    marginVertical,
     onPress,
     ...rest
   }: ThemedButtonProps) {
@@ -26,8 +36,13 @@ export type ThemedButtonProps = PressableProps & {
           type === 'red' ? styles.red : undefined,
           type === 'white' ? styles.white : undefined,
           type === 'blue' ? styles.blue : undefined,
+          type === 'white-outline' ? styles.whiteOutline : undefined,
+          {height},
           {width},
-          style
+          {paddingHorizontal},
+          {paddingVertical},
+          {marginHorizontal},
+          {marginVertical},
         ]}
         {...rest}
         onPress={onPress}>
@@ -67,6 +82,12 @@ export type ThemedButtonProps = PressableProps & {
     blue: {
         backgroundColor: '#115272',
     },
+
+    whiteOutline: {
+        backgroundColor: 'transparent',
+        borderColor: '#FFF',
+        borderWidth: 3,
+    }
 
   });
   

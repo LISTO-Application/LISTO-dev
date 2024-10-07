@@ -1,10 +1,18 @@
+// React Imports
+import { useEffect, useState } from 'react';
+import 'react-native-reanimated';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+// Expo Imports
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-import 'react-native-reanimated';
 
+//Portal Imports
+import { PortalProvider } from '@gorhom/portal';
+
+//Hooks
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -16,7 +24,7 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Replace with actual login state
+  const isLoggedIn= true; // Replace with actual login state
 
   useEffect(() => {
     if (loaded) {
@@ -28,19 +36,24 @@ export default function RootLayout() {
     return null;
   }
 
-  console.log('Rendering Stack with initialRouteName:', isLoggedIn ? '(tabs)' : 'login');
-
+  console.log('Rendering Stack with initialRouteName:', isLoggedIn ? '(tabs)' : 'index');
+  
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack initialRouteName={isLoggedIn ? '(tabs)' : 'index'}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-        <Stack.Screen name="forgot" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="emergency" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
+    <GestureHandlerRootView>
+      <PortalProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <Stack initialRouteName={isLoggedIn ? '(tabs)' : 'index'}>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="index" options={{ headerShown: false }} />
+                    <Stack.Screen name="register" options={{ headerShown: false }} />
+                    <Stack.Screen name="forgot" options={{ headerShown: false }}/>
+                    <Stack.Screen name="otp" options={{ headerShown: false }}/>
+                    <Stack.Screen name="[id]" options={{ headerShown: false }}/>
+                    <Stack.Screen name="emergency" options={{ headerShown: false }}/>
+                    <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
+              </Stack>
+          </ThemeProvider>
+      </PortalProvider>
+    </GestureHandlerRootView>
   );
 }

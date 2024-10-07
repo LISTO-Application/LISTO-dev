@@ -2,6 +2,7 @@
   "expo": {
     "name": "LISTO-dev",
     "slug": "LISTO-dev",
+    "owner": "listo-dev",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,6 +20,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"
+        }
       },
       "package": "com.pingusbingus.LISTOdev"
     },

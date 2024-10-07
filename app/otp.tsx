@@ -6,7 +6,7 @@ import {router} from 'expo-router';
 
 //Stylesheet Imports
 import { styles } from '@/styles/styles';
-import { utility } from '@/styles/utility';
+import {utility} from '@/styles/utility';
 
 //Component Imports
 import { ThemedInput } from '@/components/ThemedInput';
@@ -14,56 +14,49 @@ import { ThemedText } from '@/components/ThemedText';
 import { SpacerView } from '@/components/SpacerView';
 import { ThemedButton } from '@/components/ThemedButton';
 
-//Icon Imports
-import Ionicons from '@expo/vector-icons/Ionicons';
+export default function Forgot() {
 
-export default function Register() {
+  const logo = require('../assets/images/logo.png');
 
-  
-const logo = require('../assets/images/logo.png');
-  
   if(Platform.OS === 'android') {
+   
     return (
-    
       <ScrollView 
       contentContainerStyle={{ flexGrow: 1 }} 
       style={[styles.mainContainer, utility.blueBackground]}
       showsVerticalScrollIndicator = {false}
       keyboardShouldPersistTaps = "handled"
       >
-          <SpacerView height={60} />
+          <SpacerView height={100} />
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 400}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             style={[styles.subContainer, utility.blueBackground]}
           >
             
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Sign up</ThemedText>
-              <ThemedInput type='outline' placeholder='First Name' />
-              <ThemedInput type='outline' placeholder='Last Name' />
-              <ThemedInput type='outline' placeholder='+63' />
-              <ThemedInput type='outline' placeholder='Email' />
-              <ThemedInput type='outline' placeholder='********' secureTextEntry />
+              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Enter OTP</ThemedText>
+              <ThemedInput type='outline' placeholder='_ _ _ _ _ _' />
               <SpacerView height={40} />
               <SpacerView height={40}>
-                <ThemedButton title="Sign up" onPress={() => 
-                  {router.replace({
-                    pathname: "/forgot",
-                  })}}/>
+                <ThemedButton title="Submit" 
+                onPress={() => 
+                  router.replace({
+                    pathname: "/[id]",
+                    params: { 
+                      id: 'John Doe' },
+                      
+                  })} />
               </SpacerView>
-              <SpacerView height={55} marginTop={20}>
-                <ThemedText lightColor='#FFF' darkColor='#FFF' type="body">Already have an account? </ThemedText>
-              
-              </SpacerView>
+              <SpacerView height={55}/>
   
           </KeyboardAvoidingView>
   
       </ScrollView>
     );
+
   }
   else if(Platform.OS === 'web') {
     return (
-    
       <SpacerView
       height='100%'
       width='100%'
@@ -93,7 +86,7 @@ const logo = require('../assets/images/logo.png');
             style={[utility.blueBackground]}
             flexDirection='column'
             justifyContent='center'
-            height='75%'
+            height='50%'
             width='50%'
           >
               <SpacerView
@@ -105,31 +98,22 @@ const logo = require('../assets/images/logo.png');
               justifyContent='center'
               alignItems='center'
               >
-                <ThemedText lightColor='#115272' darkColor='#115272' type="subDisplay">Create an account</ThemedText>
+                <ThemedText lightColor='#115272' darkColor='#115272' type="subDisplay">Enter OTP</ThemedText>
                 <SpacerView height='5%' />
-
-                <SpacerView>
-                  <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='First Name' />
-                  <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='Last Name' />
-                </SpacerView>
-
-                <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='+63' />
-                <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='Email' />
-                
-                <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='********' secureTextEntry />
+                <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='_ _ _ _ _ _' />
                 <SpacerView height='5%' />
-                  <ThemedButton width='25%' title="Sign up" onPress={() =>
+                  <ThemedButton width='25%' title="Submit" onPress={() =>
                     {router.replace({
-                      pathname: "/forgot",
+                      pathname: "/[id]",
+                      params: { 
+                        id: 'John Doe' },
                     })}} />
                     <SpacerView height='2.5%'/>
-                    <ThemedText lightColor='#115272' darkColor='#115272' type="body" >Already have an account? </ThemedText>
               </SpacerView>
 
           </SpacerView>
   
       </SpacerView>
-    );
+    )
   }
-  
 }
