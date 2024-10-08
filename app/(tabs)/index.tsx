@@ -3,21 +3,13 @@ import {Platform, KeyboardAvoidingView, ScrollView, Image, StyleSheet, Pressable
 import MapView from 'react-native-maps';
 import { Marker } from 'react-native-maps';
 import { PROVIDER_GOOGLE } from 'react-native-maps';
+import {Map, APIProvider, useMapsLibrary, useMap} from '@vis.gl/react-google-maps'
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {useMemo, useCallback, useRef, useState} from 'react';
-
-//Expo Imports
-import {router} from 'expo-router';
-
-//Stylesheet Imports
-import { styles } from '@/styles/styles';
-import { utility } from '@/styles/utility';
+import {useMemo, useCallback, useRef, useState, useEffect} from 'react';
 
 //Component Imports
-import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { SpacerView } from '@/components/SpacerView';
-import { ThemedButton } from '@/components/ThemedButton';
 
 //Bottom Sheet Import
 import BottomSheet, {BottomSheetScrollView, } from "@gorhom/bottom-sheet";
@@ -34,11 +26,27 @@ const homicide = require('../../assets/images/knife-icon.png');
 const theft = require('../../assets/images/thief-icon.png');
 const carnapping = require('../../assets/images/car-icon.png');
 
+const PlacesLibrary = () => {
+    const map = useMap();
+    const placesLib = useMapsLibrary('places');
+    const [markers, setMarkers] = useState<google.maps.places.PlaceResult[]>([]);
+  
+    useEffect(() => {
+      if (!placesLib || !map) return;
+  
+      const svc = new placesLib.PlacesService(map);
+
+    }, [placesLib, map]);
+
+    return null;
+  };
+
 export default function CrimeMap() {
 
   const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["3%", "25%"], []);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(true);
+  const position = {lat: 14.685992094228787, lng: 121.07589171824928};
 
   // callbacks
   const handleSheetChange = useCallback((index: any) => {
@@ -215,30 +223,28 @@ export default function CrimeMap() {
         justifyContent='center'
         alignItems='center'
         >
-
-            <MapView
-            style = {style.map}
-            provider="google"
-            minZoomLevel={14}
-            maxZoomLevel={17}
-            initialRegion={{
-            latitude:14.685992094228787,
-            longitude:121.07589171824928,
-            latitudeDelta:0.009351,
-            longitudeDelta:0.005772,
-            }}
-            googleMapsApiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0">
-            
-
-                <Marker
-                key={0}
-                title='Crime Scene #1'
-                coordinate={{
-                latitude:14.685992094228787,
-                longitude:121.07589171824928,
-                }}/>
-
-            </MapView>
+        <APIProvider apiKey={'AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0'}>
+                <Map defaultCenter={position} 
+                defaultZoom={15} 
+                mapId="5cc51025f805d25d" 
+                mapTypeControl = {false}
+                streetViewControl={false}
+                mapTypeId='roadmap'
+                restriction=
+                {{latLngBounds: {
+                    north: 14.693963, 
+                    south: 14.669975, 
+                    west: 121.069508, 
+                    east: 121.087376
+                    }
+                }}
+                minZoom={15}
+                maxZoom={18}
+                >
+                        
+                        <PlacesLibrary />
+                </Map>
+        </APIProvider>
 
             <Pressable
             style = {{
@@ -301,52 +307,6 @@ export default function CrimeMap() {
 
         </SpacerView>
 
-        <Portal>
-            <BottomSheet
-                ref={sheetRef}
-                index={1}
-                snapPoints={snapPoints}
-                onChange={handleSheetChange}
-                backgroundStyle={{backgroundColor: '#115272'}}
-                handleIndicatorStyle={{backgroundColor: '#FFF', width: '40%'}}>
-
-                <BottomSheetScrollView style = {{height: 'auto', width: 'auto', backgroundColor: "#115272"}} horizontal = {true}>
-                    
-                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10} >
-                            <Image source = {homicide} />
-                        </SpacerView>
-                    
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Homicide</ThemedText>
-                        </SpacerView>
-                    </SpacerView>
-
-                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10}>
-                            <Image source = {theft} />
-                        </SpacerView>
-
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Theft</ThemedText>
-                        </SpacerView>
-                    </SpacerView>
-
-                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10}>
-                            <Image source = {carnapping} />
-                        </SpacerView>
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Carnapping</ThemedText>
-                        </SpacerView>
-                    </SpacerView>
-
-                    <SpacerView width={160} height='auto'></SpacerView>
-
-                </BottomSheetScrollView>
-
-            </BottomSheet>
-        </Portal>
 
     </GestureHandlerRootView>
     );
