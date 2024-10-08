@@ -2,7 +2,7 @@
 import {Platform, KeyboardAvoidingView, ScrollView, Image, StyleSheet, Pressable} from 'react-native';
 import MapView from 'react-native-maps';
 import { Marker } from 'react-native-maps';
-import { PROVIDER_GOOGLE } from 'react-native-maps';
+import { PROVIDER_GOOGLE, Heatmap } from 'react-native-maps';
 import {Map, APIProvider, useMapsLibrary, useMap} from '@vis.gl/react-google-maps'
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useMemo, useCallback, useRef, useState, useEffect} from 'react';
@@ -22,9 +22,13 @@ const toggler = require('../../assets/images/toggler.png');
 const filter = require('../../assets/images/filter.png');
 const heatmap = require('../../assets/images/heatmap.png');
 
-const homicide = require('../../assets/images/knife-icon.png');
+const murder = require('../../assets/images/knife-icon.png');
+const homicide = require('../../assets/images/homicide-icon.png');
 const theft = require('../../assets/images/thief-icon.png');
 const carnapping = require('../../assets/images/car-icon.png');
+const injury = require('../../assets/images/injury-icon.png')
+const robbery = require('../../assets/images/robbery-icon.png')
+const rape = require('../../assets/images/rape-icon.png')
 
 const PlacesLibrary = () => {
     const map = useMap();
@@ -46,7 +50,17 @@ export default function CrimeMap() {
   const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["3%", "25%"], []);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(true);
+  const [isHeatMapOn, setIsHeatMapOn] = useState(false);
   const position = {lat: 14.685992094228787, lng: 121.07589171824928};
+
+  // Static array of points for testing
+  const heatmapPoints = [
+    { latitude: 14.685992094228787, longitude: 121.07589171824928, weight: 1 },
+    { latitude: 14.686502094228787, longitude: 121.07629171824928, weight: 1 },
+    { latitude: 14.685502094228787, longitude: 121.07539171824928, weight: 1 },
+    { latitude: 14.685002094228787, longitude: 121.07679171824928, weight: 1 },
+    { latitude: 14.6857002094228787, longitude: 121.07489171824928, weight: 1 },
+  ];
 
   // callbacks
   const handleSheetChange = useCallback((index: any) => {
@@ -91,6 +105,7 @@ export default function CrimeMap() {
             longitudeDelta:0.005772,
             }}>
 
+                {!isHeatMapOn &&
                 <Marker
                 key={0}
                 title='Crime Scene #1'
@@ -98,6 +113,14 @@ export default function CrimeMap() {
                 latitude:14.685992094228787,
                 longitude:121.07589171824928,
                 }}/>
+                }
+
+                {isHeatMapOn &&
+                <Heatmap
+                points={heatmapPoints}
+                radius={10}>
+                </Heatmap>
+                }
 
             </MapView>
 
@@ -151,7 +174,7 @@ export default function CrimeMap() {
             top: 110,
             right: 20,
             }} 
-            onPress={() => {}}
+            onPress={() => {setIsHeatMapOn(!isHeatMapOn)}}
             >
                 <Image style = {{
                 width: 50,
@@ -169,40 +192,62 @@ export default function CrimeMap() {
                 snapPoints={snapPoints}
                 onChange={handleSheetChange}
                 backgroundStyle={{backgroundColor: '#115272'}}
-                handleIndicatorStyle={{backgroundColor: '#FFF', width: '40%'}}>
+                handleIndicatorStyle={{backgroundColor: '#FFF', width: '40%'}}
+                enablePanDownToClose={true}
+                >
 
-                <BottomSheetScrollView style = {{height: 'auto', width: 'auto', backgroundColor: "#115272"}} horizontal = {true}>
+                <BottomSheetScrollView style = {{height: 'auto', backgroundColor: "#115272",}} horizontal = {true} contentContainerStyle = {{alignItems:"center", width: 'auto'}}>
                     
-                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10} >
-                            <Image source = {homicide} />
+                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
+                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='25%' paddingRight='25%' paddingTop='25%' paddingBottom='25%' borderRadius = {10} borderWidth={3} >
+                            <Image source = {murder} />
                         </SpacerView>
-                    
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Homicide</ThemedText>
-                        </SpacerView>
+                            <ThemedText style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Murder</ThemedText>
                     </SpacerView>
 
-                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10}>
+                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
+                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='25%' paddingRight='25%' paddingTop='25%' paddingBottom='25%' borderRadius = {10} borderWidth={3}>
                             <Image source = {theft} />
                         </SpacerView>
-
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Theft</ThemedText>
-                        </SpacerView>
+                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Theft</ThemedText>
                     </SpacerView>
 
-                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10}>
+                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
+                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='21%' paddingRight='21%' paddingTop='30%' paddingBottom='30%' borderRadius = {10} borderWidth={3}>
                             <Image source = {carnapping} />
                         </SpacerView>
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Carnapping</ThemedText>
-                        </SpacerView>
+                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Carnapping</ThemedText>
                     </SpacerView>
 
-                    <SpacerView width={160} height='auto'></SpacerView>
+                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
+                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='23%' paddingRight='23%' paddingTop='29%' paddingBottom='29%' borderRadius = {10} borderWidth={3}>
+                            <Image source = {homicide} />
+                        </SpacerView>
+                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Homicide</ThemedText>
+                    </SpacerView>
+
+                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
+                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='30%' paddingRight='30%' paddingTop='22%' paddingBottom='22%' borderRadius = {10} borderWidth={3}>
+                            <Image source = {injury} />
+                        </SpacerView>
+                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Injury</ThemedText>
+                    </SpacerView>
+
+                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
+                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='26%' paddingRight='26%' paddingTop='22%' paddingBottom='22%' borderRadius = {10} borderWidth={3}>
+                            <Image source = {robbery} />
+                        </SpacerView>
+                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Robbery</ThemedText>
+                    </SpacerView>
+
+                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
+                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='19%' paddingRight='19%' paddingTop='19%' paddingBottom='19%' borderRadius = {10} borderWidth={3}>
+                            <Image source = {rape} />
+                        </SpacerView>
+                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Rape</ThemedText>
+                    </SpacerView>
+
+                    <SpacerView width={560} height='auto'></SpacerView>
 
                 </BottomSheetScrollView>
 
