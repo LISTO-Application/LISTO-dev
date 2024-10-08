@@ -165,7 +165,7 @@ export default function CrimeMap() {
 
                 <BottomSheetScrollView style = {{height: 'auto', width: 'auto', backgroundColor: "#115272"}} horizontal = {true}>
                     
-                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
+                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
                         <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10} >
                             <Image source = {homicide} />
                         </SpacerView>
@@ -175,7 +175,7 @@ export default function CrimeMap() {
                         </SpacerView>
                     </SpacerView>
 
-                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
+                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
                         <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10}>
                             <Image source = {theft} />
                         </SpacerView>
@@ -185,7 +185,7 @@ export default function CrimeMap() {
                         </SpacerView>
                     </SpacerView>
 
-                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
+                    <SpacerView width = "33.3%" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
                         <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10}>
                             <Image source = {carnapping} />
                         </SpacerView>
@@ -257,6 +257,7 @@ export default function CrimeMap() {
                   <ThemedButton width='25%' title="Login" onPress={() =>
                     {router.replace({
                       pathname: "/register",
+                      params: {}
                     })}} />
                 <SpacerView height={55} marginTop={20}>
                     <ThemedText lightColor='#115272' darkColor='#115272' type="body" >Don't have an account? </ThemedText>
