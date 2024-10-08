@@ -154,7 +154,7 @@ const handleClosePress = useCallback(() => {
                       <SpacerView  width = "auto" height = "auto" backgroundColor = "#FFF" justifyContent = "center" padding = "10%" borderRadius = {10} >
                           <Image source = {qcLogo} />
                       </SpacerView>
-                      <SpacerView  width = "auto" height = "auto" justifyContent = "center">
+                      <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
                           <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >QC Hotline</ThemedText>
                       </SpacerView>
                   </SpacerView>
@@ -163,7 +163,7 @@ const handleClosePress = useCallback(() => {
                       <SpacerView  width = "auto" height = "auto" backgroundColor = "#FFF" justifyContent = "center" padding = "10%" borderRadius = {10}>
                           <Image source = {holyspiritLogo} />
                       </SpacerView>
-                      <SpacerView  width = "auto" height = "auto" justifyContent = "center">
+                      <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
                           <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Holy Spirit</ThemedText>
                       </SpacerView>
                   </SpacerView>
@@ -172,7 +172,7 @@ const handleClosePress = useCallback(() => {
                       <SpacerView  width = "auto" height = "auto" backgroundColor = "#FFF" justifyContent = "center" padding = "10%" borderRadius = {10}>
                           <Image source = {balaraLogo} />
                       </SpacerView>
-                      <SpacerView  width = "auto" height = "auto" justifyContent = "center">
+                      <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
                           <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Old Balara</ThemedText>
                       </SpacerView>
                   </SpacerView>

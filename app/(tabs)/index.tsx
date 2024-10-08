@@ -20,7 +20,7 @@ import { SpacerView } from '@/components/SpacerView';
 import { ThemedButton } from '@/components/ThemedButton';
 
 //Bottom Sheet Import
-import BottomSheetModal, {BottomSheetScrollView, BottomSheetView, } from "@gorhom/bottom-sheet";
+import BottomSheet, {BottomSheetScrollView, } from "@gorhom/bottom-sheet";
 
 //Portal Imports
 import { Portal } from '@gorhom/portal';
@@ -30,13 +30,13 @@ const toggler = require('../../assets/images/toggler.png');
 const filter = require('../../assets/images/filter.png');
 const heatmap = require('../../assets/images/heatmap.png');
 
-const qcLogo = require('../../assets/images/qc-logo.png');
-const holyspiritLogo = require('../../assets/images/holyspirit-logo.png');
-const balaraLogo = require('../../assets/images/balara-logo.png');
+const homicide = require('../../assets/images/knife-icon.png');
+const theft = require('../../assets/images/thief-icon.png');
+const carnapping = require('../../assets/images/car-icon.png');
 
 export default function CrimeMap() {
 
-  const sheetRef = useRef<BottomSheetModal>(null);
+  const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["3%", "25%"], []);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(true);
 
@@ -45,9 +45,7 @@ export default function CrimeMap() {
     setIsBottomSheetOpen(index !== -1);
   }, []);
 
-  const handlePresentModalPress = () => sheetRef.current?.present();
-
-  const handleSnapPress = useCallback((index: number) => {
+  const handlePresentModalPress = useCallback((index: number) => {
     sheetRef.current?.snapToIndex(index);
   }, []);
 
@@ -116,7 +114,7 @@ export default function CrimeMap() {
             top: 30,
             right: 20,
             }}
-            onPress={() => handlePresentModalPress()}>
+            onPress={() => handlePresentModalPress(1)}>
                 <Image style = {{
                 width: 50,
                 height: 50,
@@ -157,53 +155,50 @@ export default function CrimeMap() {
         </SpacerView>
 
         <Portal>
-            <BottomSheetModal
+            <BottomSheet
                 ref={sheetRef}
                 index={1}
                 snapPoints={snapPoints}
                 onChange={handleSheetChange}
                 backgroundStyle={{backgroundColor: '#115272'}}
-                handleIndicatorStyle={{backgroundColor: '#FFF'}}>
-
-                <BottomSheetView style = {style.bottomSheetTitle}>
-                <SpacerView height={0}></SpacerView>
-                </BottomSheetView>
+                handleIndicatorStyle={{backgroundColor: '#FFF', width: '40%'}}>
 
                 <BottomSheetScrollView style = {{height: 'auto', width: 'auto', backgroundColor: "#115272"}} horizontal = {true}>
                     
-                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" marginLeft='2.5%' marginRight='2.5%' backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#FFF" justifyContent = "center" padding = "10%" borderRadius = {10} >
-                            <Image source = {qcLogo} />
+                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
+                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10} >
+                            <Image source = {homicide} />
                         </SpacerView>
                     
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center">
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >QC Hotline</ThemedText>
+                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
+                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Homicide</ThemedText>
                         </SpacerView>
                     </SpacerView>
 
-                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" marginLeft='2.5%' marginRight='2.5%' backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#FFF" justifyContent = "center" padding = "10%" borderRadius = {10}>
-                            <Image source = {holyspiritLogo} />
+                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
+                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10}>
+                            <Image source = {theft} />
                         </SpacerView>
 
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center">
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Holy Spirit</ThemedText>
+                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
+                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Theft</ThemedText>
                         </SpacerView>
                     </SpacerView>
 
-                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" marginLeft='2.5%' marginRight='2.5%' backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
-                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#FFF" justifyContent = "center" padding = "10%" borderRadius = {10}>
-                            <Image source = {balaraLogo} />
+                    <SpacerView width = "1/3" height = "auto" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" paddingLeft = "2.5%" paddingRight = "2.5%">
+                        <SpacerView  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" padding = "75%" borderRadius = {10}>
+                            <Image source = {carnapping} />
                         </SpacerView>
-                        <SpacerView  width = "auto" height = "auto" justifyContent = "center">
-                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Old Balara</ThemedText>
+                        <SpacerView  width = "auto" height = "auto" justifyContent = "center" marginTop='1%'>
+                            <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Carnapping</ThemedText>
                         </SpacerView>
                     </SpacerView>
+
                     <SpacerView width={160} height='auto'></SpacerView>
 
                 </BottomSheetScrollView>
 
-            </BottomSheetModal>
+            </BottomSheet>
         </Portal>
 
     </GestureHandlerRootView>
@@ -291,7 +286,5 @@ const style = StyleSheet.create({
   },
   bottomSheetTitle: {
     justifyContent: "center",
-    borderTopWidth: 3,
-    borderTopColor: "#FFF",
   }
 })
