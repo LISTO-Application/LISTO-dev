@@ -108,7 +108,7 @@ export default function Login() {
                 <SpacerView height='5%' />
                   <ThemedButton width='25%' title="Login" onPress={() =>
                     {router.replace({
-                      pathname: "/register",
+                      pathname: "/(tabs)",
                     })}} />
                 <SpacerView height={55} marginTop={20}>
                     <ThemedText lightColor='#115272' darkColor='#115272' type="body" >Don't have an account? </ThemedText>
