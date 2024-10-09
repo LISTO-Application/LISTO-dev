@@ -41,7 +41,7 @@ export default function Forgot() {
                 <ThemedButton title="Submit" 
                 onPress={() => 
                   router.replace({
-                    pathname: "/otp",
+                    pathname: "/",
                   })} />
               </SpacerView>
               <SpacerView height={55}/>

@@ -5,11 +5,11 @@
     "owner": "listo-dev",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/app-logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/listo-splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

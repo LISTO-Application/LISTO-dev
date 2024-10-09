@@ -1,5 +1,6 @@
 //React Imports
 import {Image, Platform, ScrollView, ImageBackground, Pressable} from 'react-native';
+import { useRoute } from '@react-navigation/native';
 
 //Expo Imports
 import { useLocalSearchParams } from 'expo-router';
@@ -19,10 +20,8 @@ import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedImageBackground } from '@/components/ThemedImageBackground';
 
 export default function UserAccount() {
-  
-  const { id } = useLocalSearchParams();
-  const texture = require('../assets/images/texture.png');
-  const image = require('../assets/images/user-icon.png');
+  const texture = require('../../assets/images/texture.png');
+  const image = require('../../assets/images/user-icon.png');
 
 
   if(Platform.OS === 'android') {
@@ -40,7 +39,7 @@ export default function UserAccount() {
                 <SpacerView height={30} />
                 <Image source={image}></Image>
                 <SpacerView height={20} />
-                <ThemedText lightColor='#FFF' darkColor='#FFF' type="title"> {id} </ThemedText>
+                <ThemedText lightColor='#FFF' darkColor='#FFF' type="title"> John Doe </ThemedText>
                 <SpacerView height={20} />
             </ImageBackground>
             <SpacerView height={20} />
@@ -62,7 +61,7 @@ export default function UserAccount() {
                 <SpacerView height = {65} borderBottomWidth = {3} borderBottomColor = '#C3D3DB' flexDirection = "column" marginBottom = {5}>
             
                     <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical = {2}> Name </ThemedText>
-                    <ThemedText lightColor='#115272' darkColor='#115272' type="body" paddingVertical = {2}> {id} </ThemedText>
+                    <ThemedText lightColor='#115272' darkColor='#115272' type="body" paddingVertical = {2}> John Doe </ThemedText>
                 </SpacerView>
             
                 <SpacerView height = {65} borderBottomWidth = {3} borderBottomColor = '#C3D3DB' flexDirection = "column" marginBottom = {5}>
@@ -94,7 +93,7 @@ export default function UserAccount() {
             
                 <SpacerView height = {35} borderBottomWidth = {3} borderBottomColor = '#C3D3DB' flexDirection = "column" marginBottom = {5}>
             
-                <Pressable 
+                    <Pressable 
                     style = 
                     {{
                       width: 'auto',
@@ -102,11 +101,11 @@ export default function UserAccount() {
                     }}
                     onPress={() => {
                       router.replace({
-                      pathname: "/",
+                      pathname: "../",
                     })}}>
-                    <ThemedText lightColor='#DA4B46' darkColor='#DA4B46' type="body" paddingVertical = {2}>  Logout </ThemedText>
-                </Pressable>
-
+                      <ThemedText lightColor='#DA4B46' darkColor='#DA4B46' type="body" paddingVertical = {2}>  Logout </ThemedText>
+                    </Pressable>
+                
                 </SpacerView>
   
             </ThemedView>
@@ -218,6 +217,21 @@ export default function UserAccount() {
                               
                               <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> Phone Number </ThemedText>
                               <ThemedInput width='45%' borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder='+63' />
+                            </SpacerView>
+
+                            <SpacerView
+ 
+                            justifyContent='center'
+                            alignItems='flex-end'
+                            height='auto'
+                            marginTop='5%'
+                            >
+
+                                <ThemedButton width='35%' title="Login" onPress={() =>
+                                  {router.replace({
+                                    pathname: "/emergency",
+                                  })}} />
+
                             </SpacerView>
 
                         </SpacerView>

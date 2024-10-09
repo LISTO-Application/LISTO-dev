@@ -49,7 +49,6 @@ export default function RootLayout() {
                     <Stack.Screen name="forgot" options={{ headerShown: false }}/>
                     <Stack.Screen name="otp" options={{ headerShown: false }}/>
                     <Stack.Screen name="[id]" options={{ headerShown: false }}/>
-                    <Stack.Screen name="emergency" options={{ headerShown: false }}/>
                     <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
               </Stack>
           </ThemeProvider>

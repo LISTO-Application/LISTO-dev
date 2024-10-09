@@ -9,9 +9,9 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const person = require('../../assets/images/person-icon.png');
 
     const icons = {
-        emergency : (props : any) => <Image width={35} height = 'auto' source={phone} {...props}/>,
-        index: (props: any) => <Image width= {35} height = 'auto' source={report} {...props}/>,
-        account: (props: any) => <Image width={35} height = 'auto' source={person} {...props}/>
+        emergency : (props : any) => <Image width={20} height = 'auto' source={phone} {...props}/>,
+        index: (props: any) => <Image width= {5} height = 'auto' source={report} {...props}/>,
+        "[id]": (props: any) => <Image width={20} height = 'auto' source={person} {...props}/>
     }
 
     return (
@@ -50,8 +50,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           <TouchableOpacity
             key={route.name}
             style={[
-              route.name !== 'index' && styles.tabBarItem,
-              route.name === 'index' && styles.tabBarMidItem,
+              styles.tabBarItem,
             ]}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
@@ -66,7 +65,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               }
               
               {route.name !== 'index' && (
-                <Text style={{ color: isFocused ? '#673ab7' : '#222', fontWeight: 'bold' }}>
+                <Text style={{ color: isFocused ? '#673ab7' : '#222', fontWeight: 'bold', marginTop: '2.5%'}}>
                   {label}
                 </Text>
               )}
@@ -81,9 +80,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
     tabBar: {
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-evenly',
         alignItems: 'center',
-        paddingVertical: '5%',
+        height: '12.5%',
+        backgroundColor: '#FFF',
     },
     tabBarItem: {
         flex: 1,
@@ -91,8 +91,4 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         textAlign: 'center',
     },
-    tabBarMidItem: {
-        position: 'absolute',
-        top: -30,
-    }
 })

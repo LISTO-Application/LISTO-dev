@@ -1,5 +1,5 @@
 //React Imports
-import {Platform, KeyboardAvoidingView, ScrollView, Image, StyleSheet, Pressable} from 'react-native';
+import {Platform, KeyboardAvoidingView, ScrollView, Image, StyleSheet, Pressable, View, Text} from 'react-native';
 import MapView from 'react-native-maps';
 import { Marker } from 'react-native-maps';
 import { PROVIDER_GOOGLE, Heatmap } from 'react-native-maps';
@@ -10,6 +10,7 @@ import {useMemo, useCallback, useRef, useState, useEffect} from 'react';
 //Component Imports
 import { ThemedText } from '@/components/ThemedText';
 import { SpacerView } from '@/components/SpacerView';
+import { ThemedButton } from '@/components/ThemedButton';
 
 //Bottom Sheet Import
 import BottomSheet, {BottomSheetScrollView, } from "@gorhom/bottom-sheet";
@@ -17,10 +18,12 @@ import BottomSheet, {BottomSheetScrollView, } from "@gorhom/bottom-sheet";
 //Portal Imports
 import { Portal } from '@gorhom/portal';
 
-const logo = require('../../assets/images/report-icon.png');
 const toggler = require('../../assets/images/toggler.png');
 const filter = require('../../assets/images/filter.png');
 const heatmap = require('../../assets/images/heatmap.png');
+const leftArrow = require('../../assets/images/left-arrow-icon.png');
+const rightArrow = require('../../assets/images/right-arrow-icon.png');
+
 
 const murder = require('../../assets/images/knife-icon.png');
 const homicide = require('../../assets/images/homicide-icon.png');
@@ -49,7 +52,7 @@ export default function CrimeMap() {
 
   const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["3%", "25%"], []);
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(true);
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isHeatMapOn, setIsHeatMapOn] = useState(false);
   const position = {lat: 14.685992094228787, lng: 121.07589171824928};
 
@@ -60,6 +63,21 @@ export default function CrimeMap() {
     { latitude: 14.685502094228787, longitude: 121.07539171824928, weight: 1 },
     { latitude: 14.685002094228787, longitude: 121.07679171824928, weight: 1 },
     { latitude: 14.6857002094228787, longitude: 121.07489171824928, weight: 1 },
+    { latitude: 14.686992094228787, longitude: 121.07789171824928, weight: 1 },
+    { latitude: 14.687992094228787, longitude: 121.07889171824928, weight: 1 },
+    { latitude: 14.688992094228787, longitude: 121.07989171824928, weight: 1 },
+    { latitude: 14.689992094228787, longitude: 121.08089171824928, weight: 1 },
+    { latitude: 14.690992094228787, longitude: 121.08189171824928, weight: 1 },
+    { latitude: 14.691992094228787, longitude: 121.08289171824928, weight: 1 },
+    { latitude: 14.692992094228787, longitude: 121.08389171824928, weight: 1 },
+    { latitude: 14.693992094228787, longitude: 121.08489171824928, weight: 1 },
+    { latitude: 14.694992094228787, longitude: 121.08589171824928, weight: 1 },
+    { latitude: 14.695992094228787, longitude: 121.08689171824928, weight: 1 },
+    { latitude: 14.696992094228787, longitude: 121.08789171824928, weight: 1 },
+    { latitude: 14.697992094228787, longitude: 121.08889171824928, weight: 1 },
+    { latitude: 14.698992094228787, longitude: 121.08989171824928, weight: 1 },
+    { latitude: 14.699992094228787, longitude: 121.09089171824928, weight: 1 },
+    { latitude: 14.700992094228787, longitude: 121.09189171824928, weight: 1 },
   ];
 
   // callbacks
@@ -118,7 +136,7 @@ export default function CrimeMap() {
                 {isHeatMapOn &&
                 <Heatmap
                 points={heatmapPoints}
-                radius={10}>
+                radius={40}>
                 </Heatmap>
                 }
 
@@ -183,12 +201,58 @@ export default function CrimeMap() {
                 source={heatmap}/>
             </Pressable>
 
+            <View style = {{position: 'absolute', bottom: 30, width: '75%', height: 'auto', justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row'}}>
+                
+                <Pressable
+                style = {{
+                    width: 'auto',
+                    height: 'auto',
+                }}
+                onPress={() => {}}
+                >
+                    <Image style = {{width: 36, height: 36}} source={leftArrow}/>
+
+                </Pressable>
+                
+                <Pressable
+                style = {{
+                    
+                }}
+                onPress={() => {}}
+                >
+                        <Text style = {{ 
+                        width: 'auto',
+                        height: 'auto',
+                        paddingVertical: '1%',
+                        backgroundColor: '#115272',
+                        paddingHorizontal: '5%',
+                        color: '#FFF', 
+                        fontWeight: 'bold',
+                        fontSize: 18,
+                        borderRadius: 50
+                        }}>
+                            09/02/2024
+                        </Text>
+                </Pressable>
+
+                <Pressable
+                style = {{
+                    width: 'auto',
+                    height: 'auto',
+                }}
+                onPress={() => {}}
+                >
+                    <Image style = {{width: 36, height: 36}} source={rightArrow}/>
+
+                </Pressable>
+            </View>
+
         </SpacerView>
 
         <Portal>
             <BottomSheet
                 ref={sheetRef}
-                index={1}
+                index={-1}
                 snapPoints={snapPoints}
                 onChange={handleSheetChange}
                 backgroundStyle={{backgroundColor: '#115272'}}
@@ -196,7 +260,7 @@ export default function CrimeMap() {
                 enablePanDownToClose={true}
                 >
 
-                <BottomSheetScrollView style = {{height: 'auto', backgroundColor: "#115272",}} horizontal = {true} contentContainerStyle = {{alignItems:"center", width: 'auto'}}>
+                <BottomSheetScrollView style = {{height: 'auto', backgroundColor: "#115272",}} horizontal = {true} contentContainerStyle = {{alignItems:"center", width: 'auto', paddingVertical: '2.5%' }}>
                     
                     <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
                         <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='25%' paddingRight='25%' paddingTop='25%' paddingBottom='25%' borderRadius = {10} borderWidth={3} >

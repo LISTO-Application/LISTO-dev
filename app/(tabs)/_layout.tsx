@@ -46,7 +46,7 @@ export default function TabLayout() {
             />
 
             <Tabs.Screen
-              name="account"
+              name="[id]"
               options={{
                 tabBarShowLabel: false,
                 title: 'Account',

@@ -1,5 +1,5 @@
 //React Imports
-import {Platform, KeyboardAvoidingView, ScrollView, Image} from 'react-native';
+import {Platform, KeyboardAvoidingView, ScrollView, Image, Pressable} from 'react-native';
 
 //Expo Imports
 import {router} from 'expo-router';
@@ -48,12 +48,22 @@ const logo = require('../assets/images/logo.png');
               <SpacerView height={40}>
                 <ThemedButton title="Sign up" onPress={() => 
                   {router.replace({
-                    pathname: "/forgot",
+                    pathname: "/otp",
                   })}}/>
               </SpacerView>
               <SpacerView height={55} marginTop={20}>
-                <ThemedText lightColor='#FFF' darkColor='#FFF' type="body">Already have an account? </ThemedText>
-              
+              <Pressable 
+                    style = 
+                    {{
+                      width: 'auto',
+                      height: 'auto'
+                    }}
+                    onPress={() => {
+                      router.replace({
+                      pathname: "/",
+                    })}}>
+                  <ThemedText lightColor='#FFF' darkColor='#FFF' type="body">Already have an account? </ThemedText>
+              </Pressable>
               </SpacerView>
   
           </KeyboardAvoidingView>
@@ -120,10 +130,23 @@ const logo = require('../assets/images/logo.png');
                 <SpacerView height='5%' />
                   <ThemedButton width='25%' title="Sign up" onPress={() =>
                     {router.replace({
-                      pathname: "/forgot",
+                      pathname: "/otp",
                     })}} />
                     <SpacerView height='2.5%'/>
-                    <ThemedText lightColor='#115272' darkColor='#115272' type="body" >Already have an account? </ThemedText>
+                    
+                    <Pressable 
+                    style = 
+                    {{
+                      width: 'auto',
+                      height: 'auto'
+                    }}
+                    onPress={() => {
+                      router.replace({
+                      pathname: "/",
+                    })}}>
+                        <ThemedText lightColor='#115272' darkColor='#115272' type="body" >Already have an account? </ThemedText>
+                    </Pressable>
+              
               </SpacerView>
 
           </SpacerView>

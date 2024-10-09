@@ -1,5 +1,5 @@
 //React Imports
-import {Platform, KeyboardAvoidingView, ScrollView, Image} from 'react-native';
+import {Platform, KeyboardAvoidingView, ScrollView, Image, Pressable} from 'react-native';
 
 //Expo Imports
 import {router} from 'expo-router';
@@ -39,7 +39,18 @@ export default function Login() {
               <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" >Login</ThemedText>
               <ThemedInput type='outline' placeholder='Email' />
               <ThemedInput type='outline' placeholder='********' secureTextEntry />
+              <Pressable 
+                    style = 
+                    {{
+                      width: 'auto',
+                      height: 'auto'
+                    }}
+                    onPress={() => {
+                      router.replace({
+                      pathname: "/forgot",
+                    })}}>
               <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Forgot Password?</ThemedText>
+              </Pressable>
               <SpacerView height={40} />
               <SpacerView height={40}>
                 <ThemedButton title="Login" onPress={() => 
@@ -48,7 +59,18 @@ export default function Login() {
                   })}} />
               </SpacerView>
               <SpacerView height={55} marginTop={20}>
+              <Pressable 
+                    style = 
+                    {{
+                      width: 'auto',
+                      height: 'auto'
+                    }}
+                    onPress={() => {
+                      router.replace({
+                      pathname: "/register",
+                    })}}>
                   <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Don't have an account? </ThemedText>
+              </Pressable>
               </SpacerView>
   
           </KeyboardAvoidingView>
@@ -104,14 +126,42 @@ export default function Login() {
                 <SpacerView height='10%' />
                 <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='Email' />
                 <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='********' secureTextEntry />
-                <ThemedText lightColor='#115272' darkColor='#115272' type="body" textAlign='left'>Forgot Password?</ThemedText>
+                
+                <Pressable 
+                    style = 
+                    {{
+                      width: 'auto',
+                      height: 'auto'
+                    }}
+                    onPress={() => {
+                      router.replace({
+                      pathname: "/forgot",
+                    })}}>
+                    <ThemedText lightColor='#115272' darkColor='#115272' type="body" textAlign='left'>Forgot Password?</ThemedText>
+                </Pressable>
+
                 <SpacerView height='5%' />
                   <ThemedButton width='25%' title="Login" onPress={() =>
                     {router.replace({
                       pathname: "/(tabs)",
+                      params: { 
+                        id: 'John Doe' },
                     })}} />
                 <SpacerView height={55} marginTop={20}>
+
+                    <Pressable 
+                        style = 
+                        {{
+                          width: 'auto',
+                          height: 'auto'
+                        }}
+                        onPress={() => {
+                          router.replace({
+                          pathname: "/register",
+                        })}}>
                     <ThemedText lightColor='#115272' darkColor='#115272' type="body" >Don't have an account? </ThemedText>
+                    </Pressable>
+
                 </SpacerView>
               </SpacerView>
 

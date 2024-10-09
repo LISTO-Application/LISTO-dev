@@ -41,10 +41,7 @@ export default function Forgot() {
                 <ThemedButton title="Submit" 
                 onPress={() => 
                   router.replace({
-                    pathname: "/[id]",
-                    params: { 
-                      id: 'John Doe' },
-                      
+                    pathname: "/",
                   })} />
               </SpacerView>
               <SpacerView height={55}/>
@@ -104,9 +101,7 @@ export default function Forgot() {
                 <SpacerView height='5%' />
                   <ThemedButton width='25%' title="Submit" onPress={() =>
                     {router.replace({
-                      pathname: "/[id]",
-                      params: { 
-                        id: 'John Doe' },
+                      pathname: "/",
                     })}} />
                     <SpacerView height='2.5%'/>
               </SpacerView>
