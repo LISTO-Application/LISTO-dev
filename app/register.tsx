@@ -24,7 +24,6 @@ const logo = require('../assets/images/logo.png');
   
   if(Platform.OS === 'android') {
     return (
-    
       <ScrollView 
       contentContainerStyle={{ flexGrow: 1 }} 
       style={[styles.mainContainer, utility.blueBackground]}

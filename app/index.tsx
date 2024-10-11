@@ -105,7 +105,7 @@ export default function Login() {
               <ThemedText lightColor='#FFF' darkColor='#FFF' type="display" >L I S T O</ThemedText>
 
           </SpacerView>
-          
+        
           <SpacerView
             style={[utility.blueBackground]}
             flexDirection='column'
