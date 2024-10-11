@@ -101,7 +101,7 @@ export default function UserAccount() {
                     }}
                     onPress={() => {
                       router.replace({
-                      pathname: "../",
+                      pathname: "../index",
                     })}}>
                       <ThemedText lightColor='#DA4B46' darkColor='#DA4B46' type="body" paddingVertical = {2}>  Logout </ThemedText>
                     </Pressable>
@@ -152,7 +152,7 @@ export default function UserAccount() {
                     paddingTop='2%'
                     paddingBottom='2%'>
                         <Image source={image}/>
-                        <ThemedText lightColor='#115272' darkColor='#115272' type="title" paddingVertical = {2}> {id} </ThemedText>
+                        <ThemedText lightColor='#115272' darkColor='#115272' type="title" paddingVertical = {2}> John Doe </ThemedText>
                     </SpacerView>
                 
                     <SpacerView
@@ -195,7 +195,7 @@ export default function UserAccount() {
                                 flexDirection='column'
                                 >
                                     <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> First Name </ThemedText>
-                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' placeholderTextColor = "#115272" placeholder={id}/>
+                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' placeholderTextColor = "#115272" placeholder="John Doe"/>
                                 </SpacerView>
 
                                 <SpacerView
@@ -203,7 +203,7 @@ export default function UserAccount() {
                                 width="45%"
                                 flexDirection='column'>
                                     <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical = {2}> Last Name </ThemedText>
-                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder={id} />
+                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder="John Doe" />
                                 </SpacerView>
 
                             </SpacerView>

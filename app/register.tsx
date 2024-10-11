@@ -33,8 +33,8 @@ const logo = require('../assets/images/logo.png');
       >
           <SpacerView height={60} />
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 400}
+            behavior={'height'}
+            keyboardVerticalOffset={400}
             style={[styles.subContainer, utility.blueBackground]}
           >
             

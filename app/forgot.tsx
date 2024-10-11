@@ -29,8 +29,8 @@ export default function Forgot() {
       >
           <SpacerView height={100} />
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            behavior='height'
+            keyboardVerticalOffset= {0}
             style={[styles.subContainer, utility.blueBackground]}
           >
             

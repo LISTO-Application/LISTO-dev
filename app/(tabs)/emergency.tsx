@@ -1,10 +1,11 @@
 //React Imports
 import {Image, Platform, KeyboardAvoidingView, ScrollView, StyleSheet} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {useMemo, useCallback, useRef, useState} from 'react';
+import {useMemo, useCallback, useRef, useState,} from 'react';
+
 
 //Expo Imports
-import {router} from 'expo-router';
+import {router, useFocusEffect} from 'expo-router';
 
 //Stylesheet Imports
 import { styles } from '@/styles/styles';
@@ -44,6 +45,12 @@ const handleSnapPress = useCallback((index: number) => {
 const handleClosePress = useCallback(() => {
   sheetRef.current?.close();
 }, []);
+
+useFocusEffect(
+  useCallback(() => {
+    return () => sheetRef.current?.close()
+  }, [])
+);
   
   if(Platform.OS === 'android') {
     return (
@@ -63,7 +70,7 @@ const handleClosePress = useCallback(() => {
             >
         
                 <ThemedText lightColor='#FFF' darkColor='#FFF' type="subDisplay" >Send a distress message</ThemedText>
-                <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" marginBottom = '2.5%'>Send to</ThemedText>
+                <ThemedText style = {{marginBottom: '2.5%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle">Send to</ThemedText>
         
                 <SpacerView height = "5%" marginBottom = '5%'>
                   <ScrollView
@@ -87,7 +94,7 @@ const handleClosePress = useCallback(() => {
 
                   </ScrollView>
                 </SpacerView>
-                <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" marginBottom = '2.5%'>Emergency Type</ThemedText>
+                <ThemedText style = {{marginBottom: '2.5%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle">Emergency Type</ThemedText>
                 <SpacerView height = "5%" marginBottom = '5%'>
                   <ScrollView
                   horizontal = {true}
@@ -146,12 +153,6 @@ const handleClosePress = useCallback(() => {
                       handleIndicatorStyle={{backgroundColor: '#FFF', width: '40%'}}
                       enablePanDownToClose={true}
                     >
-
-                      <BottomSheetView style = {style.bottomSheetTitle}>
-
-                          <SpacerView height={0}></SpacerView>
-
-                      </BottomSheetView>   
 
                       <BottomSheetScrollView style = {{height: 'auto', backgroundColor: "#115272",}} horizontal = {true} contentContainerStyle = {{alignItems:"center", width: 'auto', }}>
                     
@@ -214,7 +215,7 @@ const handleClosePress = useCallback(() => {
 
                   
                     <SpacerView justifyContent='flex-start' width = '50%' height='auto' marginBottom = '1%'>
-                      <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" marginBottom = '2.5%'>Send to</ThemedText>
+                      <ThemedText style = {{marginBottom: '2.5%'}} lightColor='#FFF' darkColor='#FFF' type="title">Send to</ThemedText>
                     </SpacerView>
                     
                     <SpacerView
@@ -238,7 +239,7 @@ const handleClosePress = useCallback(() => {
                     </SpacerView>
                 
                 <SpacerView justifyContent='flex-start' width = '50%' height='auto' marginBottom = "1%">
-                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" marginBottom = '2.5%'>Emergency Type</ThemedText>
+                    <ThemedText style = {{marginBottom: '2.5%'}} lightColor='#FFF' darkColor='#FFF' type="title">Emergency Type</ThemedText>
                 </SpacerView>
 
                     <SpacerView
@@ -297,10 +298,5 @@ const style = StyleSheet.create({
     margin: 6,
     backgroundColor: "#00F",
   },
-  bottomSheetTitle: {
-    justifyContent: "center",
-    borderTopWidth: 3,
-    borderTopColor: "#FFF",
-  }
 
 });
