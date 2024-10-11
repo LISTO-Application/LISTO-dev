@@ -8,8 +8,8 @@ export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
   type?: 'default' | 'display' | 'subDisplay' | 'title' | 'defaultSemiBold' | 'subtitle' | 'body' | 'link';
-  textAlign: 'center' | 'left' | 'right';
-  paddingVertical: number;
+  textAlign?: 'center' | 'left' | 'right';
+  paddingVertical?: number;
 };
 
 export function ThemedText({

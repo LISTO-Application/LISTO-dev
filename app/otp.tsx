@@ -30,12 +30,12 @@ export default function Forgot() {
           <SpacerView height={100} />
           <KeyboardAvoidingView
             behavior='height'
-            keyboardVerticalOffset= {0}
+            keyboardVerticalOffset={0}
             style={[styles.subContainer, utility.blueBackground]}
           >
             
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Forgot your password?</ThemedText>
-              <ThemedInput type='outline' placeholder='Email' />
+              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Enter OTP</ThemedText>
+              <ThemedInput type='outline' placeholder='_ _ _ _ _ _' />
               <SpacerView height={40} />
               <SpacerView height={40}>
                 <ThemedButton title="Submit" 
@@ -95,13 +95,13 @@ export default function Forgot() {
               justifyContent='center'
               alignItems='center'
               >
-                <ThemedText lightColor='#115272' darkColor='#115272' type="subDisplay">Forgot Password?</ThemedText>
+                <ThemedText lightColor='#115272' darkColor='#115272' type="subDisplay">Enter OTP</ThemedText>
                 <SpacerView height='5%' />
-                <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='Email' />
+                <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='_ _ _ _ _ _' />
                 <SpacerView height='5%' />
-                  <ThemedButton width='25%' title="Reset Password" onPress={() =>
+                  <ThemedButton width='25%' title="Submit" onPress={() =>
                     {router.replace({
-                      pathname: "/otp",
+                      pathname: "/",
                     })}} />
                     <SpacerView height='2.5%'/>
               </SpacerView>

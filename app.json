@@ -2,15 +2,16 @@
   "expo": {
     "name": "LISTO-dev",
     "slug": "LISTO-dev",
+    "owner": "listo-dev",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/app-logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "image": "./assets/images/listo-splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#115272"
     },
     "ios": {
       "supportsTablet": true
@@ -19,6 +20,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"
+        }
       },
       "package": "com.pingusbingus.LISTOdev"
     },

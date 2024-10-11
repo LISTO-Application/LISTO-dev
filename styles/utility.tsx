@@ -23,6 +23,10 @@ import { StyleSheet } from "react-native";
           backgroundColor: '#DA4B46',
         },
 
+        whiteBackground: {
+          backgroundColor: '#FFF',
+        },
+
         flex: {
           display: 'flex',
         },

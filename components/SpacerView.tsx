@@ -3,29 +3,36 @@
 import { View, type ViewProps, StyleSheet, DimensionValue } from 'react-native';
 
 export type SpacerViewProps = ViewProps & {
+  width?: DimensionValue;
   height?: DimensionValue;
   flexDirection?: 'row' | 'column';
-  marginVertical?: number;
-  marginHorizontal?: number;
-  marginLeft?: number;
-  marginTop?: number;
-  marginRight?: number;
-  marginBottom?: number;
+  marginVertical?: number | DimensionValue | undefined;
+  marginHorizontal?: number | DimensionValue | undefined;
+  marginLeft?: number | DimensionValue | undefined;
+  marginTop?: number | DimensionValue | undefined;
+  marginRight?: number | DimensionValue | undefined;
+  marginBottom?: number | DimensionValue | undefined;
   justifyContent?: 'center' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
+  alignItems?: 'stretch' | 'flex-start' | 'flex-end' | 'center' | 'baseline';
   textAlign?: 'center' | 'left' | 'right';
-  backgroundColor?: string;
-  borderBottomWidth: number;
-  borderBottomColor: string;
-  opacity: number;
-  padding: number;
-  paddingTop : number;
-  paddingLeft : number;
-  paddingBottom : number;
-  paddingRight : number;
+  backgroundColor?: string | undefined;
+  borderWidth?: number | undefined;
+  borderRadius?: number | undefined;
+  borderBottomWidth?: number | undefined;
+  borderBottomColor?: string | undefined;
+  opacity?: number | undefined;
+  padding?: DimensionValue | number | undefined;
+  paddingTop?: DimensionValue | number | undefined;
+  paddingLeft?: DimensionValue | number | undefined;
+  paddingBottom?: DimensionValue | number | undefined;
+  paddingRight?: DimensionValue | number | undefined;
+  flex?: number | undefined;
+  display?: 'none' | 'flex';
 };
 
 export function SpacerView({
   style,
+  width,
   height = '10%',
   flexDirection = 'row',
   marginVertical = 0,
@@ -35,15 +42,20 @@ export function SpacerView({
   marginRight = 0,
   marginBottom = 0,
   justifyContent = 'flex-start',
+  alignItems = 'stretch',
   backgroundColor,
+  borderWidth,
+  borderRadius,
   borderBottomWidth,
   borderBottomColor,
-  opacity,
-  padding,
-  paddingTop,
-  paddingLeft,
-  paddingBottom,
-  paddingRight,
+  opacity = 100,
+  padding = 0,
+  paddingTop = 0,
+  paddingLeft = 0,
+  paddingBottom = 0,
+  paddingRight = 0,
+  flex,
+  display,
   ...rest
 }: SpacerViewProps) {
 
@@ -51,16 +63,20 @@ export function SpacerView({
   return (
     <View
       style={[
+        { width },
         { height },
-        {flexDirection},
-        {marginVertical},
-        {marginHorizontal},
-        {marginLeft},
-        {marginTop},
-        {marginRight},
-        {marginBottom},
-        {justifyContent},
-        {backgroundColor},
+        { flexDirection },
+        { marginVertical },
+        { marginHorizontal },
+        { marginLeft },
+        { marginTop },
+        { marginRight },
+        { marginBottom },
+        { justifyContent },
+        { alignItems },
+        { backgroundColor },
+        { borderWidth },
+        { borderRadius },
         {borderBottomWidth},
         {borderBottomColor},
         {opacity},
@@ -69,6 +85,8 @@ export function SpacerView({
         {paddingLeft},
         {paddingBottom},
         {paddingRight},
+        {flex},
+        {display},
         style,
       ]}
       {...rest}
