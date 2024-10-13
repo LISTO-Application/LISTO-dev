@@ -60,6 +60,25 @@ export default function RootLayout() {
             <Stack.Screen name="[id]" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" options={{ headerShown: false }} />
             <Stack.Screen name="changepass" options={{ headerShown: false }} />
+            <Stack.Screen name="adminLogin" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="changeUserInformation"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="changeAdminInformation"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name="viewReports" options={{ headerShown: false }} />
+            <Stack.Screen name="editReport" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="newReportsForm"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="validateReports"
+              options={{ headerShown: false }}
+            />
           </Stack>
         </ThemeProvider>
       </PortalProvider>

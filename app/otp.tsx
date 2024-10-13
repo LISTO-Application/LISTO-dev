@@ -191,7 +191,7 @@ export default function Forgot() {
               title="Clear"
               onPress={() => {
                 if (otpInputRef.current) {
-                  otpInputRef.current.clear(); // Call clear method only if ref is not null
+                  otpInputRef.current.clear();
                 } else {
                   console.warn("OTP input reference is null");
                 }

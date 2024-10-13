@@ -10,8 +10,8 @@
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/listo-splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "resizeMode": "cover",
+      "backgroundColor": "#115272"
     },
     "ios": {
       "supportsTablet": true
@@ -46,6 +46,7 @@
       "eas": {
         "projectId": "c90d6a18-1dbc-460c-9ea4-6e9e125a22b6"
       }
-    }
+    },
+    "owner": "listo-dev"
   }
 }
