@@ -1,114 +1,220 @@
 //React Imports
-import {Platform, KeyboardAvoidingView, ScrollView, Image} from 'react-native';
+import {
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+  Image,
+  StyleSheet,
+  View,
+  Text,
+} from "react-native";
 
 //Expo Imports
-import {router} from 'expo-router';
+import { router } from "expo-router";
 
 //Stylesheet Imports
-import { styles } from '@/styles/styles';
-import {utility} from '@/styles/utility';
+import { styles } from "@/styles/styles";
+import { utility } from "@/styles/utility";
 
 //Component Imports
-import { ThemedInput } from '@/components/ThemedInput';
-import { ThemedText } from '@/components/ThemedText';
-import { SpacerView } from '@/components/SpacerView';
-import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedInput } from "@/components/ThemedInput";
+import { ThemedText } from "@/components/ThemedText";
+import { SpacerView } from "@/components/SpacerView";
+import { ThemedButton } from "@/components/ThemedButton";
+
+//OTP Imports
+
+import { OtpInput, OtpInputRef } from "react-native-otp-entry";
+import { ThemedView } from "@/components/ThemedView";
+import { useEffect, useRef, useState } from "react";
+
+interface ExportOtpInputRef extends OtpInputRef {
+  clear: () => void;
+}
 
 export default function Forgot() {
+  const otpInputRef = useRef<ExportOtpInputRef>(null);
+  const [error, setError] = useState("");
 
-  const logo = require('../assets/images/logo.png');
+  const handleOtpFilled = (otp: string) => {
+    console.log("Entered OTP:", otp);
+    if (otp === "999999") {
+      console.log("OTP Accepted");
+      router.replace({
+        pathname: "/",
+      });
+    } else {
+      setError("Wrong OTP, please try again");
+      if (otpInputRef.current) {
+        otpInputRef.current.clear();
+      }
+    }
+  };
+  const logo = require("../assets/images/logo.png");
 
-  if(Platform.OS === 'android') {
-   
+  //Only for testing, making sure it works
+  // useEffect(() => {
+  //   if (otpInputRef.current) {
+  //     otpInputRef.current.setValue('999999');
+  //   }
+  // }, []);
+
+  if (Platform.OS === "android") {
     return (
-      <ScrollView 
-      contentContainerStyle={{ flexGrow: 1 }} 
-      style={[styles.mainContainer, utility.blueBackground]}
-      showsVerticalScrollIndicator = {false}
-      keyboardShouldPersistTaps = "handled"
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        style={[styles.mainContainer, utility.blueBackground]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-          <SpacerView height={100} />
-          <KeyboardAvoidingView
-            behavior='height'
-            keyboardVerticalOffset={0}
-            style={[styles.subContainer, utility.blueBackground]}
-          >
-            
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Enter OTP</ThemedText>
-              <ThemedInput type='outline' placeholder='_ _ _ _ _ _' />
-              <SpacerView height={40} />
-              <SpacerView height={40}>
-                <ThemedButton title="Submit" 
-                onPress={() => 
-                  router.replace({
-                    pathname: "/",
-                  })} />
-              </SpacerView>
-              <SpacerView height={55}/>
-  
-          </KeyboardAvoidingView>
-  
+        <SpacerView height={100} />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+          style={[styles.subContainer, utility.blueBackground]}
+        >
+          <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
+            Enter OTP
+          </ThemedText>
+          <ThemedInput type="outline" placeholder="_ _ _ _ _ _" />
+          <SpacerView height={40} />
+          <SpacerView height={40}>
+            <ThemedButton
+              title="Submit"
+              onPress={() =>
+                router.replace({
+                  pathname: "/",
+                })
+              }
+            />
+          </SpacerView>
+          <SpacerView height={55} />
+        </KeyboardAvoidingView>
       </ScrollView>
     );
-
-  }
-  else if(Platform.OS === 'web') {
+  } else if (Platform.OS === "web") {
     return (
       <SpacerView
-      height='100%'
-      width='100%'
-      style={[utility.blueBackground]}
-      flexDirection='row'
-      justifyContent='space-between'
-      alignItems = 'center'
+        height="100%"
+        width="100%"
+        style={[utility.blueBackground, { margin: 20 }]}
+        flexDirection="column"
+        alignItems="center"
       >
+        <SpacerView height="10%" />
+        <SpacerView
+          style={[utility.blueBackground]}
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          height="25%"
+          width="25%"
+        >
+          <Image source={logo} style={{ width: 200, height: 200 }}></Image>
 
+          <ThemedText lightColor="#FFF" darkColor="#FFF" type="subDisplay">
+            L I S T O
+          </ThemedText>
+        </SpacerView>
+        <SpacerView height="5%" />
+        <SpacerView
+          style={[utility.blueBackground]}
+          flexDirection="column"
+          justifyContent="center"
+          height="30%"
+          width="30%"
+        >
           <SpacerView
-            style={[utility.blueBackground]}
-            flexDirection='column'
-            justifyContent='center'
-            alignItems='center'
-            height='100%'
-            width='50%'
+            height="100%"
+            width="100%"
+            style={[utility.whiteBackground]}
+            borderRadius={20}
+            flexDirection="column"
+            justifyContent="center"
+            alignItems="center"
           >
-              <Image source={logo}></Image>
-
-              <SpacerView height='5%' />
-
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="display" >L I S T O</ThemedText>
-
-          </SpacerView>
-          
-          <SpacerView
-            style={[utility.blueBackground]}
-            flexDirection='column'
-            justifyContent='center'
-            height='50%'
-            width='50%'
-          >
-              <SpacerView
-              height='100%'
-              width='75%'
-              style={[utility.whiteBackground]}
-              borderRadius={20}
-              flexDirection='column'
-              justifyContent='center'
-              alignItems='center'
+            <ThemedText
+              lightColor="#115272"
+              darkColor="#115272"
+              type="default"
+              style={{ textAlign: "center", marginHorizontal: 70 }}
+            >
+              An One-Time Password (OTP) was sent to your email, insert your otp
+              before it expires
+            </ThemedText>
+            <ThemedText
+              lightColor="#115272"
+              darkColor="#115272"
+              type="subDisplay"
+            >
+              Enter OTP
+            </ThemedText>
+            <View
+              style={{
+                alignSelf: "center",
+                margin: 10,
+              }}
+            >
+              <OtpInput
+                numberOfDigits={6}
+                blurOnFilled={true}
+                type={"numeric"}
+                theme={{
+                  containerStyle: otpStyle.container,
+                  pinCodeContainerStyle: otpStyle.pinCodeContainer,
+                  focusedPinCodeContainerStyle: otpStyle.pinCodeFocusContainer,
+                  focusStickStyle: otpStyle.stickFocus,
+                }}
+                focusStickBlinkingDuration={500}
+                onFilled={handleOtpFilled}
+                onBlur={() => {
+                  console.log("input blurred");
+                }}
+                ref={otpInputRef}
+              />
+            </View>
+            {error ? (
+              <ThemedText
+                type="subtitle"
+                style={{ color: "red", marginTop: 5 }}
               >
-                <ThemedText lightColor='#115272' darkColor='#115272' type="subDisplay">Enter OTP</ThemedText>
-                <SpacerView height='5%' />
-                <ThemedInput width='75%' backgroundColor='#115272' type='outline' marginVertical='2.5%' placeholderTextColor = "#DDD" placeholder='_ _ _ _ _ _' />
-                <SpacerView height='5%' />
-                  <ThemedButton width='25%' title="Submit" onPress={() =>
-                    {router.replace({
-                      pathname: "/",
-                    })}} />
-                    <SpacerView height='2.5%'/>
-              </SpacerView>
-
+                {error}
+              </ThemedText>
+            ) : null}
+            <SpacerView height="5%" />
+            <ThemedButton
+              width="25%"
+              title="Clear"
+              onPress={() => {
+                if (otpInputRef.current) {
+                  otpInputRef.current.clear();
+                } else {
+                  console.warn("OTP input reference is null");
+                }
+              }}
+            />
+            <SpacerView height="2.5%" />
           </SpacerView>
-  
+        </SpacerView>
+        <SpacerView height="10%" />
       </SpacerView>
-    )
+    );
   }
 }
+
+const otpStyle = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "space-evenly",
+  },
+  pinCodeContainer: {
+    borderColor: "#7CB7D8",
+    margin: 5,
+  },
+  pinCodeFocusContainer: {
+    borderColor: "#115272",
+  },
+  stickFocus: {
+    backgroundColor: "#115272",
+  },
+});
