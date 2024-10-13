@@ -1,11 +1,14 @@
 //React Imports
-import {Platform, KeyboardAvoidingView, ScrollView, Image, StyleSheet, Pressable, View, Text} from 'react-native';
+import {Platform, KeyboardAvoidingView, ScrollView, Image, StyleSheet, Pressable, View, Text, TouchableOpacity} from 'react-native';
 import MapView from 'react-native-maps';
 import { Marker } from 'react-native-maps';
 import { PROVIDER_GOOGLE, Heatmap } from 'react-native-maps';
 import {Map, APIProvider, useMapsLibrary, useMap} from '@vis.gl/react-google-maps'
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useMemo, useCallback, useRef, useState, useEffect} from 'react';
+
+//Expo Imports
+import { useFocusEffect } from 'expo-router';
 
 //Component Imports
 import { ThemedText } from '@/components/ThemedText';
@@ -48,6 +51,7 @@ const PlacesLibrary = () => {
     return null;
   };
 
+
 export default function CrimeMap() {
 
   const sheetRef = useRef<BottomSheet>(null);
@@ -55,6 +59,12 @@ export default function CrimeMap() {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isHeatMapOn, setIsHeatMapOn] = useState(false);
   const position = {lat: 14.685992094228787, lng: 121.07589171824928};
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => sheetRef.current?.close()
+    }, [])
+  );
 
   // Static array of points for testing
   const heatmapPoints = [
@@ -157,7 +167,7 @@ export default function CrimeMap() {
                 source={toggler}/>
             </Pressable>
 
-            {!isBottomSheetOpen && <Pressable
+            {!isBottomSheetOpen && <TouchableOpacity
             style = {{
             position: 'absolute',
             top: 30,
@@ -169,9 +179,9 @@ export default function CrimeMap() {
                 height: 50,
                 }}
                 source={filter}/>
-            </Pressable>}
+            </TouchableOpacity>}
 
-            {isBottomSheetOpen && <Pressable
+            {isBottomSheetOpen && <TouchableOpacity
             style = {{
             position: 'absolute',
             top: 30,
@@ -183,10 +193,10 @@ export default function CrimeMap() {
                 height: 50,
                 }}
                 source={filter}/>
-            </Pressable>}
+            </TouchableOpacity>}
             
             
-            <Pressable
+            <TouchableOpacity
             style = {{
             position: 'absolute',
             top: 110,
@@ -199,7 +209,7 @@ export default function CrimeMap() {
                 height: 50,
                 }}
                 source={heatmap}/>
-            </Pressable>
+            </TouchableOpacity>
 
             <View style = {{position: 'absolute', bottom: 30, width: '75%', height: 'auto', justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row'}}>
                 

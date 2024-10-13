@@ -196,7 +196,7 @@ export default function UserAccount() {
                                 flexDirection='column'
                                 >
                                     <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> First Name </ThemedText>
-                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' placeholderTextColor = "#115272" placeholder={id}/>
+                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' placeholderTextColor = "#115272" placeholder='John Doe'/>
                                 </SpacerView>
 
                                 <SpacerView
@@ -204,7 +204,7 @@ export default function UserAccount() {
                                 width="45%"
                                 flexDirection='column'>
                                     <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical = {2}> Last Name </ThemedText>
-                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder={id} />
+                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder='John Doe' />
                                 </SpacerView>
 
                             </SpacerView>

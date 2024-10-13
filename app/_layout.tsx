@@ -39,6 +39,7 @@ export default function RootLayout() {
   console.log('Rendering Stack with initialRouteName:', isLoggedIn ? '(tabs)' : 'index');
   
   return (
+    
     <GestureHandlerRootView>
       <PortalProvider>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -49,6 +50,13 @@ export default function RootLayout() {
                     <Stack.Screen name="forgot" options={{ headerShown: false }}/>
                     <Stack.Screen name="otp" options={{ headerShown: false }}/>
                     <Stack.Screen name="[id]" options={{ headerShown: false }}/>
+                    <Stack.Screen name="adminLogin" options={{ headerShown: false }} />
+                    <Stack.Screen name="changeUserInformation" options={{ headerShown: false }} />
+                    <Stack.Screen name="changeAdminInformation" options={{ headerShown: false }} />
+                    <Stack.Screen name="viewReports" options={{ headerShown: false }} />
+                    <Stack.Screen name="editReport" options={{ headerShown: false }} />
+                    <Stack.Screen name="newReportsForm" options={{ headerShown: false }} />
+                    <Stack.Screen name="validateReports" options={{ headerShown: false }} />
                     <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
               </Stack>
           </ThemeProvider>
