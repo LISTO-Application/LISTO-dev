@@ -5,6 +5,7 @@ import {
   ScrollView,
   Image,
   Pressable,
+  StyleSheet,
 } from "react-native";
 
 //Expo Imports
@@ -35,6 +36,22 @@ export default function Register() {
   const logo = require("../assets/images/logo.png");
 
   const [toggleModal, setToggleModal] = useState(false);
+  const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
+
+  const handleCheckboxPress = (isChecked: any) => {
+    setIsCheckboxChecked(isChecked);
+    setToggleModal(isChecked);
+  };
+
+  const handleSignUp = () => {
+    if (isCheckboxChecked) {
+      router.replace({
+        pathname: "/otp",
+      });
+    } else {
+      console.log("Please agree to the terms and conditions");
+    }
+  };
 
   if (Platform.OS === "android") {
     return (
@@ -126,7 +143,7 @@ export default function Register() {
           <SpacerView
             height="100%"
             width="75%"
-            style={[utility.whiteBackground]}
+            style={[utility.whiteBackground, registerStyle.shadowBox]}
             borderRadius={20}
             flexDirection="column"
             justifyContent="center"
@@ -193,7 +210,15 @@ export default function Register() {
             <SpacerView height="2%" />
             <Modal isVisible={toggleModal}>
               <SpacerView
-                style={{ height: "75%", width: "50%", alignSelf: "center" }}
+                style={[
+                  registerStyle.shadowBox,
+                  {
+                    height: "75%",
+                    width: "50%",
+                    alignSelf: "center",
+                    borderRadius: 20,
+                  },
+                ]}
               >
                 <ThemedView
                   style={{
@@ -271,24 +296,14 @@ export default function Register() {
                 textDecorationLine: "none",
                 color: "black",
               }}
-              onPress={(isChecked: boolean) => {
-                console.log(isChecked, "checked");
-                if (isChecked) {
-                  setToggleModal(true);
-                } else {
-                  setToggleModal(false);
-                }
-              }}
+              onPress={handleCheckboxPress}
             />
             <SpacerView height="2%" />
             <ThemedButton
               width="25%"
               title="Sign up"
-              onPress={() => {
-                router.replace({
-                  pathname: "/otp",
-                });
-              }}
+              onPress={handleSignUp}
+              disabled={!isCheckboxChecked}
             />
             <SpacerView height="2.5%" />
             <Pressable
@@ -312,3 +327,15 @@ export default function Register() {
     );
   }
 }
+
+const registerStyle = StyleSheet.create({
+  shadowBox: {
+    shadowColor: "#333333",
+    shadowOffset: {
+      width: 10,
+      height: 10,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+  },
+});

@@ -41,7 +41,7 @@ export default function Forgot() {
     if (otp === "999999") {
       console.log("OTP Accepted");
       router.replace({
-        pathname: "/",
+        pathname: "/changepass",
       });
     } else {
       setError("Wrong OTP, please try again");
@@ -118,7 +118,11 @@ export default function Forgot() {
         </SpacerView>
         <SpacerView height="5%" />
         <SpacerView
-          style={[utility.blueBackground]}
+          style={[
+            utility.blueBackground,
+            otpStyle.shadowBox,
+            { borderRadius: 20 },
+          ]}
           flexDirection="column"
           justifyContent="center"
           height="30%"
@@ -216,5 +220,14 @@ const otpStyle = StyleSheet.create({
   },
   stickFocus: {
     backgroundColor: "#115272",
+  },
+  shadowBox: {
+    shadowColor: "#333333",
+    shadowOffset: {
+      width: 10,
+      height: 10,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
 });

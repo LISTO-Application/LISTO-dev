@@ -126,7 +126,7 @@ export default function Login() {
           <SpacerView
             height="75%"
             width="75%"
-            style={utility.whiteBackground}
+            style={[utility.whiteBackground, loginStyle.shadowBox]}
             borderRadius={20}
             flexDirection="column"
             justifyContent="center"
@@ -230,5 +230,14 @@ const loginStyle = StyleSheet.create({
   forgotPassword: {
     alignSelf: "flex-start",
     marginLeft: 90,
+  },
+  shadowBox: {
+    shadowColor: "#333333",
+    shadowOffset: {
+      width: 10,
+      height: 10,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
 });
