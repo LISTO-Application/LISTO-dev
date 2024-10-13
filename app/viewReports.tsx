@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, Alert} from 'react-native';
+
+import { ThemedButton } from '@/components/ThemedButton';
+
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { styles } from '@/styles/styles'; // Adjust the path if necessary
 import { router } from 'expo-router';
@@ -21,7 +24,7 @@ export default function ViewReports() {
   ]);
 
   // Delete report handler
-  const handleDeleteReport = (reportId) => {
+  const handleDeleteReport = (reportId : number) => {
     // Show confirmation alert
     Alert.alert(
       'Delete Report',
@@ -43,7 +46,7 @@ export default function ViewReports() {
   };
 
   // Edit report handler (redirect to editReport.tsx with report ID)
-  const handleEditReport = (reportId) => {
+  const handleEditReport = (reportId: number) => {
     // Redirect to the report edit page with the report ID in the query
     router.push(`/editReport?id=${reportId}`);
   };

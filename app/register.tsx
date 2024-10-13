@@ -34,7 +34,7 @@ const logo = require('../assets/images/logo.png');
           <KeyboardAvoidingView
             behavior={'height'}
             keyboardVerticalOffset={400}
-            style={[styles.subContainer, utility.blueBackground]}
+            style={[styles.container, utility.blueBackground]}
           >
             
               <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Sign up</ThemedText>

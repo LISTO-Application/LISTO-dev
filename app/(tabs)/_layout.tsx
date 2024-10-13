@@ -36,6 +36,14 @@ export default function TabLayout() {
                 title: 'Emergency',
               }}
             />
+
+            <Tabs.Screen
+              name="report"
+              options={{
+                tabBarShowLabel: false,
+                title: 'Report',
+              }}
+            />
         
             <Tabs.Screen
               name="index"

@@ -31,16 +31,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 30,
   },
-  reportContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#115272',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    width: '100%',
-  },
   reportIcon: {
     marginRight: 10,
     backgroundColor: '#DA4B46',
@@ -49,12 +39,6 @@ const styles = StyleSheet.create({
   },
   reportTextContainer: {
     flex: 1,
-  },
-  reportTitle: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
   },
   reportActions: {
     flexDirection: 'row',
@@ -263,7 +247,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'gray',
-  }, reportContainer: {
+  }, 
+  reportContainer: {
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 15,

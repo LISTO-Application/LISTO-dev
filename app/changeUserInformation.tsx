@@ -75,7 +75,7 @@ export default function UserAccount() {
 
         <SpacerView height={20} />
 
-        <ThemedView style={[styles.subContainer]}>
+        <ThemedView style={[styles.container]}>
           {/* Personal Information Section */}
           <SpacerView style={utility.row} borderBottomWidth={5} borderBottomColor='#115272' height={40} marginBottom={10}>
             <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle">Personal Information</ThemedText>
@@ -89,7 +89,7 @@ export default function UserAccount() {
             <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical={2}>Email</ThemedText>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.textInput}
                 value={email}
                 onChangeText={setEmail}
               />
@@ -102,7 +102,7 @@ export default function UserAccount() {
             <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical={2}>Phone Number</ThemedText>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.textInput}
                 value={number}
                 onChangeText={setNumber}
               />
@@ -117,7 +117,7 @@ export default function UserAccount() {
             <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical={2}>Name</ThemedText>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.textInput}
                 value={name}
                 onChangeText={setName}
               />
@@ -131,7 +131,7 @@ export default function UserAccount() {
             <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical={2}>Password</ThemedText>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.textInput}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={true} // Hide password input
@@ -159,7 +159,7 @@ export default function UserAccount() {
           </SpacerView>
 
           {/* Home Button */}
-          <ThemedButton title="Home" onPress={() => router.replace({ pathname: "/emergency" })} />
+          <ThemedButton title="Home" onPress={() => router.replace({ pathname: "/newReportsForm" })} />
 
         </ThemedView>
 

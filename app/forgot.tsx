@@ -31,7 +31,7 @@ export default function Forgot() {
           <KeyboardAvoidingView
             behavior='height'
             keyboardVerticalOffset= {0}
-            style={[styles.subContainer, utility.blueBackground]}
+            style={[styles.container, utility.blueBackground]}
           >
             
               <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Forgot your password?</ThemedText>

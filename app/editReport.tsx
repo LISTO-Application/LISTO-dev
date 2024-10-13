@@ -47,7 +47,7 @@ export default function EditReport() {
     { label: 'Vandalism', value: 'vandalism' },
   ];
 
-  const handleSelect = (item) => {
+  const handleSelect = (item : any) => {
     setSelectedValue(item.label);
     setModalVisible(false);
   };

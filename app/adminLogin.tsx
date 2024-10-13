@@ -25,7 +25,7 @@ export default function adminLogin() {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-          style={[styles.subContainer, utility.blueBackground]}
+          style={[styles.container, utility.blueBackground]}
         >
           
             <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" >Admin Login</ThemedText>
@@ -39,7 +39,7 @@ export default function adminLogin() {
             <SpacerView height={40}>
               <ThemedButton title="Login" onPress={() => 
                 {router.replace({
-                  pathname: "/register",
+                  pathname: "/changeAdminInformation",
                 })}} />
             </SpacerView>
             <SpacerView height={55} marginTop={20}>
