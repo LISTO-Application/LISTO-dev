@@ -46,14 +46,13 @@ const webstyles = StyleSheet.create({
     paddingBottom: 20,
   },
   reportContainer: {
-    backgroundColor: '#0078A8',
-    borderRadius: 25,
-    padding: 20,
-    marginBottom: 16,
     display: 'flex',
-    flexDirection: 'row', // Change this to row
-    justifyContent: 'space-between', // Space between title and actions
-    alignItems: 'center', // Center align items vertically
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: '15px',
+    backgroundColor: '#ffffff',
+    marginBottom: '10px',
+    borderRadius: '8px', // Center align items vertically
   },
   dropdownList: {
     position: 'absolute',
@@ -63,6 +62,71 @@ const webstyles = StyleSheet.create({
     width: '100%',
     zIndex: 1, // Ensure the dropdown appears above other content
 },
+
+  backIcon: {
+    position: 'absolute',
+    left: '10px',
+  },
+ 
+  scrollViewContent: {
+    display: 'block',
+    padding: '10px 20px',
+  },
+  
+  reportIcon: {
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ff3b30',
+    borderRadius: '50%',
+  },
+  reportTextContainer: {
+    flex: 1,
+    paddingLeft: '10px',
+  },
+  reportTitleValidate: {
+    fontWeight: 'bold',
+    fontSize: '16px',
+    color: '#115272', // Blue color for the title
+  },
+  // Updated details to blue
+  reportDetails: {
+    fontSize: '14px',
+    color: '#115272', // Blue color for the details
+  },
+  timeText: {
+    fontSize: '12px',
+    color: 'black',
+  },
+  statusContainer: {
+
+    marginRight: 10,
+    // Add padding to make it larger
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    // Optionally, set a fixed width or a minimum width
+    minWidth: 80, // Adjust as needed
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusBadge: {
+    paddingVertical: 8, // Increase vertical padding
+    paddingHorizontal: 12, // Increase horizontal padding
+    borderRadius: 15,
+    textAlign: 'center',
+    fontSize: 14, // Adjust font size if needed
+  },
+  validateIcon: {
+    paddingLeft: '5px',
+    color: '#115272',
+  },
+  horizontalLine: {
+    height: '1px',
+    backgroundColor: '#d3d3d3',
+    marginVertical: '10px',
+  },
 
 item: {
     padding: 10,
@@ -101,8 +165,8 @@ itemText: {
     cursor: 'pointer',
     marginLeft: 8,
   },
-  timeText: {
-    color: 'white',
+  timeTextValdiate: {
+    color: '#115272',
     fontSize: 14,
     marginLeft: 8,
   },
