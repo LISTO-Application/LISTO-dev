@@ -56,6 +56,7 @@ export default function RootLayout() {
                     <Stack.Screen name="viewReports" options={{ headerShown: false }} />
                     <Stack.Screen name="editReport" options={{ headerShown: false }} />
                     <Stack.Screen name="validateReports" options={{ headerShown: false }} />
+                    <Stack.Screen name="newReports" options={{ headerShown: false }} />
                     <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
               </Stack>
           </ThemeProvider>

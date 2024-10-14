@@ -1,10 +1,11 @@
 import React, { useState,useEffect } from 'react';
-import { View, ScrollView, Text, TouchableOpacity, Alert,Modal,FlatList,TextInput} from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, Alert,Modal,FlatList,TextInput, Platform} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { styles } from '@/styles/styles'; // Adjust the path if necessary
 import { router } from 'expo-router';
 import { SpacerView } from '@/components/SpacerView';// Adjust the path if necessary
 import { useLocalSearchParams } from 'expo-router'; // Ensure you have expo-router installed
+import { webstyles } from "@/styles/webstyles"; // For web styles
 
 export default function EditReport() {
   const { id } = useLocalSearchParams(); // Get the report ID from the URL
@@ -57,8 +58,9 @@ export default function EditReport() {
     console.log('Location:', location);
     console.log('Additional Information:', additionalInfo);
   };
-
-  return (
+  if (Platform.OS === "android" || Platform.OS === "ios") {
+    return (
+  
     <View style={styles.mainContainer}>
     {/* Blue Header */}
     <View style={styles.headerContainer}>
@@ -127,4 +129,87 @@ export default function EditReport() {
       </View>
     </View>
   );
+
+  }
+  else if (Platform.OS === "web") {
+    return (
+      <View style={webstyles.container}>
+      {/* Sidebar */}
+      <View style={webstyles.sidebar}>
+        <Text style={webstyles.sidebarTitle}>Beth Logan</Text>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+          <Text style={webstyles.sidebarText}>Emergency Dial</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+          <Text style={webstyles.sidebarText}>Report Incident</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+          <Text style={webstyles.sidebarText}>Report Tickets</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+          <Text style={webstyles.sidebarText}>Help</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+          <Text style={webstyles.sidebarText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={webstyles.mainContainer}>
+          <Text style={webstyles.headerText}>Edit Report</Text>
+          
+          <ScrollView contentContainerStyle={webstyles.reportList}>
+            {/* Report Details */}
+            <Text>Reporter's Username:</Text>
+            <TextInput
+              style={webstyles.inputField}
+              value="Mr. False Reporter"
+              editable={false}
+            />
+
+            <Text>Select Crime Type:</Text>
+            <TouchableOpacity style={webstyles.dropdown} onPress={() => setModalVisible(true)}>
+              <Text style={webstyles.selectedText}>{selectedValue}</Text>
+              <Ionicons name="chevron-down" size={24} color="gray" />
+            </TouchableOpacity>
+
+            <Text>Location:</Text>
+            <TextInput
+              style={webstyles.inputField}
+              value={location}
+              onChangeText={setLocation}
+            />
+
+            <Text>Additional Information:</Text>
+            <TextInput
+              style={webstyles.textArea}
+              multiline
+              numberOfLines={4}
+              value={additionalInfo}
+              onChangeText={setAdditionalInfo}
+            />
+
+            <Text>Image Upload:</Text>
+            <TextInput
+              style={webstyles.inputField}
+              value="https://cloud.com/BarangayBatasan/Virus.img"
+              editable={false}
+            />
+
+            {/* Buttons */}
+            <View style={webstyles.buttonContainereditReport}>
+              <TouchableOpacity style={webstyles.cancelButtoneditReport} onPress={()  => router.push('/viewReports')}>
+                <Text style={webstyles.buttonTexteditReport}>CANCEL</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={webstyles.submitButtoneditReport} onPress={handleSubmit}>
+                <Text style={[webstyles.buttonTexteditReport, { color: '#FFF' }]}>SAVE CHANGES</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      
+      </View>
+    
+    );
+  }
+  
 }
