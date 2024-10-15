@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet,Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpacerView } from '@/components/SpacerView'; // Assuming this component is available
 import { router } from 'expo-router';
+import { webstyles } from "@/styles/webstyles"; // For web styles
 
 export default function ValidateReports() {
   const [reports, setReports] = useState([
@@ -21,7 +22,7 @@ export default function ValidateReports() {
       )
     );
   };
-
+  if (Platform.OS === "android" || Platform.OS === "ios") {
   return (
     <View style={styles.mainContainer}>
       {/* Header */}
@@ -71,6 +72,81 @@ export default function ValidateReports() {
       </ScrollView>
     </View>
   );
+}else if (Platform.OS === "web") {
+  return (
+    <View style={webstyles.container}>
+    {/* Sidebar */}
+    <View style={webstyles.sidebar}>
+        <Text style={webstyles.sidebarTitle}>Admin</Text>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+            <Text style={webstyles.sidebarText}>Emergency Dial</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+            <Text style={webstyles.sidebarText}>Report Incident</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+            <Text style={webstyles.sidebarText}>Report Tickets</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+            <Text style={webstyles.sidebarText}>Generate</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+            <Text style={webstyles.sidebarText}>Help</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={webstyles.sidebarItem}>
+            <Text style={webstyles.sidebarText}>Logout</Text>
+        </TouchableOpacity>
+    </View>
+    
+      <View style={webstyles.mainContainer}>
+        <View style={webstyles.headerContainer}>
+          <TouchableOpacity onPress={() => router.back()} style={webstyles.backIcon}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={webstyles.headerText}>Listed Reports (ADMINS)</Text>
+          <SpacerView height="120px" />
+        </View>
+
+        <ScrollView contentContainerStyle={webstyles.scrollViewContent}>
+        {reports.map((report) => (
+          <View key={report.id}>
+            {/* Report content */}
+            <View style={webstyles.reportContainer}>
+              <View style={webstyles.reportIcon}>
+                <Ionicons name={report.title === 'HOMICIDE' ? 'alert-circle' : 'alert'} size={24} color="white" />
+              </View>
+
+              <View style={webstyles.reportTextContainer}>
+                <Text style={webstyles.reportTitleValidate}>{report.title}</Text>
+                <Text style={webstyles.reportDetails}>{report.details}</Text>
+                <Text style={webstyles.timeTextValdiate}>{report.time}</Text>
+              </View>
+
+              {/* Status badge */}
+              <View style={webstyles.statusContainer}>
+                <Text style={[webstyles.statusBadge, getStatusStyle(report.status)]}>
+                  {report.status}
+                </Text>
+              </View>
+
+              {/* Validation action (for admin) */}
+              <TouchableOpacity
+                style={webstyles.validateIcon}
+                onPress={() => handleValidate(report.id, report.status)}
+              >
+                <Ionicons name="settings" size={24} color="#115272" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Horizontal separator */}
+            <View style={webstyles.horizontalLine} />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+    </View>
+  );
+}
 }
 
 const styles = StyleSheet.create({
