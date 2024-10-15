@@ -299,7 +299,7 @@ export default function UserAccount() {
           {/* Home Button */}
           <ThemedButton
             title="Home"
-            onPress={() => router.replace({ pathname: "/newReportsForm" })}
+            onPress={() => router.replace({ pathname: "/report" })} //might change
           />
         </ThemedView>
 
