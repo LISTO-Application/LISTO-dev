@@ -1,20 +1,25 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 
-export function TabBar({ state, descriptors, navigation, }: BottomTabBarProps) {
+export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const phone = require("../../assets/images/phone-icon.png");
+  const report = require("../../assets/images/report-icon.png");
+  const person = require("../../assets/images/person-icon.png");
 
-    const phone = require('../../assets/images/phone-icon.png');
-    const report = require('../../assets/images/report-icon.png');
-    const person = require('../../assets/images/person-icon.png');
+  const icons = {
+    emergency: (props: any) => (
+      <Image style={{ width: 36, height: 45 }} source={phone} {...props} />
+    ),
+    index: (props: any) => (
+      <Image style={{ width: 75, height: 75 }} source={report} {...props} />
+    ),
+    "[id]": (props: any) => (
+      <Image style={{ width: 36, height: 45 }} source={person} {...props} />
+    ),
+  };
 
-    const icons = {
-        emergency : (props : any) => <Image style = {{width: 36, height: 45}} source={phone} {...props}/>,
-        index: (props: any) => <Image style = {{width: 75, height: 75}} source={report} {...props}/>,
-        "[id]": (props: any) => <Image style = {{width: 36, height: 45}} source={person} {...props}/>
-    }
-
-    return (
+  return (
     <View style={styles.tabBar}>
       {state.routes.map((route: any, index: any) => {
         const { options } = descriptors[route.key];
@@ -22,14 +27,14 @@ export function TabBar({ state, descriptors, navigation, }: BottomTabBarProps) {
           options.tabBarLabel !== undefined
             ? options.tabBarLabel
             : options.title !== undefined
-            ? options.title
-            : route.name;
+              ? options.title
+              : route.name;
 
         const isFocused = state.index === index;
 
         const onPress = () => {
           const event = navigation.emit({
-            type: 'tabPress',
+            type: "tabPress",
             target: route.key,
             canPreventDefault: true,
           });
@@ -41,7 +46,7 @@ export function TabBar({ state, descriptors, navigation, }: BottomTabBarProps) {
 
         const onLongPress = () => {
           navigation.emit({
-            type: 'tabLongPress',
+            type: "tabLongPress",
             target: route.key,
           });
         };
@@ -49,9 +54,7 @@ export function TabBar({ state, descriptors, navigation, }: BottomTabBarProps) {
         return (
           <TouchableOpacity
             key={route.name}
-            style={[
-              styles.tabBarItem,
-            ]}
+            style={[styles.tabBarItem]}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
@@ -59,17 +62,21 @@ export function TabBar({ state, descriptors, navigation, }: BottomTabBarProps) {
             onPress={onPress}
             onLongPress={onLongPress}
           >
+            {icons[route.name as keyof typeof icons]({
+              styles: { width: 25, height: 25 },
+            })}
 
-              {
-                icons[route.name as keyof typeof icons]({styles: {width: 25, height: 25}})
-              }
-              
-              {route.name !== 'index' && (
-                <Text style={{ color: isFocused ? '#673ab7' : '#222', fontWeight: 'bold', marginTop: '2.5%'}}>
-                  {label}
-                </Text>
-              )}
-
+            {route.name !== "index" && (
+              <Text
+                style={{
+                  color: isFocused ? "#673ab7" : "#222",
+                  fontWeight: "bold",
+                  marginTop: "2.5%",
+                }}
+              >
+                {label}
+              </Text>
+            )}
           </TouchableOpacity>
         );
       })}
@@ -78,17 +85,17 @@ export function TabBar({ state, descriptors, navigation, }: BottomTabBarProps) {
 }
 
 const styles = StyleSheet.create({
-    tabBar: {
-        flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        alignItems: 'center',
-        height: '12.5%',
-        backgroundColor: '#FFF',
-    },
-    tabBarItem: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-    },
-})
+  tabBar: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    height: "12.5%",
+    backgroundColor: "#FFF",
+  },
+  tabBarItem: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+  },
+});

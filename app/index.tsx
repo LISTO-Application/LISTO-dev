@@ -36,7 +36,7 @@ export default function Login() {
         <KeyboardAvoidingView
           behavior="height"
           keyboardVerticalOffset={0}
-          style={[styles.subContainer, utility.blueBackground]}
+          style={[styles.container, utility.blueBackground]}
         >
           <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
             Login
