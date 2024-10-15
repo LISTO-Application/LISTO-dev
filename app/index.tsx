@@ -58,7 +58,7 @@ export default function Login() {
               <SpacerView height={40}>
                 <ThemedButton title="Login" onPress={() => 
                   {router.replace({
-                    pathname: "/(tabs)",
+                    pathname: "/summary",
                   })}} />
               </SpacerView>
               <SpacerView height={55} marginTop={20}>

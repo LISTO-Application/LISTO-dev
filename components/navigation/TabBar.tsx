@@ -88,10 +88,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         height: '10%',
         backgroundColor: '#FFF',
-        borderTopLeftRadius: 50,
-        borderTopRightRadius: 50,
-        borderWidth: 2,
-        borderColor: '#115272'
+        borderTopWidth: 2,
+        borderTopColor: '#115272'
     },
     tabBarItem: {
         flex: 1,
