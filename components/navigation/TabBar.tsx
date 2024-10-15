@@ -6,16 +6,20 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const phone = require("../../assets/images/phone-icon.png");
   const report = require("../../assets/images/report-icon.png");
   const person = require("../../assets/images/person-icon.png");
+  const map = require("../../assets/images/map-icon.png");
 
   const icons = {
     emergency: (props: any) => (
-      <Image style={{ width: 36, height: 45 }} source={phone} {...props} />
+      <Image style={{ width: 36, height: 36 }} source={phone} {...props} />
+    ),
+    report: (props: any) => (
+      <Image style={{ width: 36, height: 36 }} source={report} {...props} />
     ),
     index: (props: any) => (
-      <Image style={{ width: 75, height: 75 }} source={report} {...props} />
+      <Image style={{ width: 36, height: 36 }} source={map} {...props} />
     ),
     "[id]": (props: any) => (
-      <Image style={{ width: 36, height: 45 }} source={person} {...props} />
+      <Image style={{ width: 36, height: 36 }} source={person} {...props} />
     ),
   };
 
@@ -62,21 +66,18 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             onPress={onPress}
             onLongPress={onLongPress}
           >
-            {icons[route.name as keyof typeof icons]({
-              styles: { width: 25, height: 25 },
-            })}
+            {icons[route.name as keyof typeof icons]({}) as React.JSX.Element}
 
-            {route.name !== "index" && (
-              <Text
-                style={{
-                  color: isFocused ? "#673ab7" : "#222",
-                  fontWeight: "bold",
-                  marginTop: "2.5%",
-                }}
-              >
-                {label}
-              </Text>
-            )}
+            <Text
+              style={{
+                opacity: isFocused ? 1 : 0.5,
+                fontSize: 16,
+                fontWeight: "bold",
+                marginTop: "2.5%",
+              }}
+            >
+              {label}
+            </Text>
           </TouchableOpacity>
         );
       })}
@@ -89,8 +90,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-evenly",
     alignItems: "center",
-    height: "12.5%",
+    height: "10%",
     backgroundColor: "#FFF",
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
+    borderWidth: 2,
+    borderColor: "#115272",
   },
   tabBarItem: {
     flex: 1,

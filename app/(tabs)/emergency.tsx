@@ -588,6 +588,7 @@ export default function Emergency() {
 }
 
 const style = StyleSheet.create({
+  //GENERAL STYLES
   container: {
     flex: 1,
     paddingTop: 200,
@@ -595,9 +596,44 @@ const style = StyleSheet.create({
   contentContainer: {
     backgroundColor: "white",
   },
-  itemContainer: {
-    padding: 6,
-    margin: 6,
-    backgroundColor: "#00F",
+
+  //DISTRESS MESSAGE STYLES
+  scrollViewItem: {
+    width: "auto",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 25,
+    marginHorizontal: 5,
+    borderWidth: 3,
+    borderRadius: 50,
+  },
+  scrollViewText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  //BOTTOM SHEET STYLES
+  bottomSheet: {
+    position: "absolute",
+    bottom: 0,
+  },
+  bottomSheetItem: {
+    width: 100,
+    height: "100%",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginHorizontal: 10,
+  },
+  bottomSheetImageContainer: {
+    width: "100%",
+    height: "60%",
+    backgroundColor: "#FFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderRadius: 100,
+    borderColor: "#FFF",
   },
 });

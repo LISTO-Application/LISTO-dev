@@ -77,7 +77,7 @@ export default function Login() {
               }}
               onPress={() => {
                 router.replace({
-                  pathname: "/register",
+                  pathname: "/adminLogin",
                 });
               }}
             >

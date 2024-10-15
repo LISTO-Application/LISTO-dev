@@ -111,7 +111,7 @@ export default function TabLayout() {
   } else if (isLoggedIn && Platform.OS === "android") {
     return (
       <Tabs
-        initialRouteName="emergency"
+        initialRouteName="index"
         screenOptions={{
           headerShown: false,
         }}
@@ -130,6 +130,13 @@ export default function TabLayout() {
           options={{
             tabBarShowLabel: false,
             title: "Crime Map",
+          }}
+        />
+        <Tabs.Screen
+          name="report"
+          options={{
+            tabBarShowLabel: false,
+            title: "Report",
           }}
         />
 

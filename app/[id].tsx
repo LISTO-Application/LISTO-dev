@@ -45,7 +45,7 @@ export default function UserAccount() {
             </ImageBackground>
             <SpacerView height={20} />
             <ThemedView
-            style={[styles.subContainer]}
+            style={[styles.container]}
             >
                 <SpacerView
                 style = {utility.row}
@@ -101,8 +101,8 @@ export default function UserAccount() {
                       height: 'auto'
                     }}
                     onPress={() => {
-                      router.replace({
-                      pathname: "/",
+                      router.push({
+                      pathname: "../",
                     })}}>
                     <ThemedText lightColor='#DA4B46' darkColor='#DA4B46' type="body" paddingVertical = {2}>  Logout </ThemedText>
                 </Pressable>

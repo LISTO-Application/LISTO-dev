@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpacerView } from '@/components/SpacerView';
+
+import { ThemedButton } from '@/components/ThemedButton';
+
 import { styles } from '@/styles/styles'; // Adjust the path if necessary
 import { router } from 'expo-router';
-export default function NewReportForm() {
+
+export default function Report() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedValue, setSelectedValue] = useState('Select Crime Type');
   const [location, setLocation] = useState('');
@@ -17,7 +21,7 @@ export default function NewReportForm() {
     { label: 'Vandalism', value: 'vandalism' },
   ];
 
-  const handleSelect = (item) => {
+  const handleSelect = (item: any) => {
     setSelectedValue(item.label);
     setModalVisible(false);
   };

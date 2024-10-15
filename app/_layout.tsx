@@ -58,8 +58,6 @@ export default function RootLayout() {
             <Stack.Screen name="forgot" options={{ headerShown: false }} />
             <Stack.Screen name="otp" options={{ headerShown: false }} />
             <Stack.Screen name="[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" options={{ headerShown: false }} />
-            <Stack.Screen name="changepass" options={{ headerShown: false }} />
             <Stack.Screen name="adminLogin" options={{ headerShown: false }} />
             <Stack.Screen
               name="changeUserInformation"
@@ -79,6 +77,7 @@ export default function RootLayout() {
               name="validateReports"
               options={{ headerShown: false }}
             />
+            <Stack.Screen name="+not-found" options={{ headerShown: false }} />
           </Stack>
         </ThemeProvider>
       </PortalProvider>

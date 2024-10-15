@@ -1,11 +1,12 @@
 //React Imports
-import {Platform, KeyboardAvoidingView, ScrollView, Image, StyleSheet, Pressable, View, Text, TouchableOpacity} from 'react-native';
+import {Platform, KeyboardAvoidingView, ScrollView, Image, StyleSheet, Pressable, View, Text, TouchableOpacity, ImageSourcePropType} from 'react-native';
 import MapView from 'react-native-maps';
 import { Marker } from 'react-native-maps';
 import { PROVIDER_GOOGLE, Heatmap } from 'react-native-maps';
 import {Map, APIProvider, useMapsLibrary, useMap} from '@vis.gl/react-google-maps'
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useMemo, useCallback, useRef, useState, useEffect} from 'react';
+import {Calendar, CalendarUtils} from 'react-native-calendars';
 
 //Expo Imports
 import { useFocusEffect } from 'expo-router';
@@ -24,6 +25,7 @@ import { Portal } from '@gorhom/portal';
 const toggler = require('../../assets/images/toggler.png');
 const filter = require('../../assets/images/filter.png');
 const heatmap = require('../../assets/images/heatmap.png');
+const marker = require('../../assets/images/marker-icon.png');
 const leftArrow = require('../../assets/images/left-arrow-icon.png');
 const rightArrow = require('../../assets/images/right-arrow-icon.png');
 
@@ -52,56 +54,104 @@ const PlacesLibrary = () => {
   };
 
 
+
 export default function CrimeMap() {
 
-  const sheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ["3%", "25%"], []);
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+    //FILTER SETTINGS
+    const filterSheetRef = useRef<BottomSheet>(null);
+    const filterSnapPoints = useMemo(() => ["3%", "23%"], []);
+    const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+    const categories = [
+        { id: 1, name: 'Murder', icon: murder as ImageSourcePropType},
+        { id: 2, name: 'Theft', icon: theft as ImageSourcePropType},
+        { id: 3, name: 'Carnapping', icon: carnapping as ImageSourcePropType},
+        { id: 4, name: 'Homicide', icon: homicide as ImageSourcePropType},
+        { id: 5, name: 'Injury', icon: injury as ImageSourcePropType},
+        { id: 6, name: 'Robbery', icon: theft as ImageSourcePropType},
+        { id: 7, name: 'Rape', icon: rape as ImageSourcePropType},
+      ];
+
+      const [categoryStates, setCategoryStates] = useState(
+        categories.map(() => false)
+      );
+    
+  
+    // FILTER CALLBACKS
+
+    const handleFilterSheetChange = useCallback((index: any) => {
+    setIsFilterSheetOpen(index !== -1);
+    }, []);
+    
+    const handleFilterSnapPress = useCallback((index: number) => {
+        filterSheetRef.current?.snapToIndex(index);
+      }, []);
+    
+    const handleFilterClosePress = useCallback(() => {
+    filterSheetRef.current?.close();
+    }, []);
+
+    const handleCategoryPress = (index: number) => {
+        setCategoryStates((prevStates) =>
+          prevStates.map((state, i) => (i === index ? !state : state))
+        );
+      };
+
+      //CALENDAR SETTINGS
+      const calendarSheetRef = useRef<BottomSheet>(null);
+      const calendarSnapPoints = useMemo(() => ["40%"], []);
+      const [isCalendarSheetOpen, setIsCalendarSheetOpen] = useState(false);
+      const [selectedDate, setSelectedDate] = useState('2024-10-12');
+      const [markedDates, setMarkedDates] = useState<{ [key: string]: { selected: boolean; selectedColor: string } }>({});
+
+      const handleCalendarSheetChange = useCallback((index: any) => {
+        setIsCalendarSheetOpen(index !== -1);
+        }, []);
+        
+        const handleCalendarSnapPress = useCallback((index: number) => {
+            calendarSheetRef.current?.snapToIndex(index);
+          }, []);
+        
+        const handleCalendarClosePress = useCallback(() => {
+        calendarSheetRef.current?.close();
+        }, []);
+    
+          useFocusEffect(
+            useCallback(() => {
+                return () => filterSheetRef.current?.close() || calendarSheetRef.current?.close()
+            }, [])
+            );
+
+
+      
+  
+    //HEAT MAP SETTINGS
+    // Static array of points for testing
+    const heatmapPoints = [
+        {type: 'theft', date: '10/20/2024', latitude: 14.685992094228787, longitude: 121.07589171824928, weight: 1 },
+        {type: 'homicide', date: '10/20/2024', latitude: 14.686502094228787, longitude: 121.07629171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.685502094228787, longitude: 121.07539171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.685002094228787, longitude: 121.07679171824928, weight: 1 },
+        {type: 'robbery', date: '10/20/2024', latitude: 14.6857002094228787, longitude: 121.07489171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.686992094228787, longitude: 121.07789171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.687992094228787, longitude: 121.07889171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.688992094228787, longitude: 121.07989171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.689992094228787, longitude: 121.08089171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.690992094228787, longitude: 121.08189171824928, weight: 1 },
+        {type: 'theft', date: '10/21/2024', latitude: 14.691992094228787, longitude: 121.08289171824928, weight: 1 },
+        {type: 'injury', date: '10/20/2024', latitude: 14.692992094228787, longitude: 121.08389171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.693992094228787, longitude: 121.08489171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.694992094228787, longitude: 121.08589171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.695992094228787, longitude: 121.08689171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.696992094228787, longitude: 121.08789171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.697992094228787, longitude: 121.08889171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.698992094228787, longitude: 121.08989171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.699992094228787, longitude: 121.09089171824928, weight: 1 },
+        {type: 'theft', date: '10/20/2024', latitude: 14.700992094228787, longitude: 121.09189171824928, weight: 1 },
+    ];
+
   const [isHeatMapOn, setIsHeatMapOn] = useState(false);
   const position = {lat: 14.685992094228787, lng: 121.07589171824928};
-
-  useFocusEffect(
-    useCallback(() => {
-      return () => sheetRef.current?.close()
-    }, [])
-  );
-
-  // Static array of points for testing
-  const heatmapPoints = [
-    { latitude: 14.685992094228787, longitude: 121.07589171824928, weight: 1 },
-    { latitude: 14.686502094228787, longitude: 121.07629171824928, weight: 1 },
-    { latitude: 14.685502094228787, longitude: 121.07539171824928, weight: 1 },
-    { latitude: 14.685002094228787, longitude: 121.07679171824928, weight: 1 },
-    { latitude: 14.6857002094228787, longitude: 121.07489171824928, weight: 1 },
-    { latitude: 14.686992094228787, longitude: 121.07789171824928, weight: 1 },
-    { latitude: 14.687992094228787, longitude: 121.07889171824928, weight: 1 },
-    { latitude: 14.688992094228787, longitude: 121.07989171824928, weight: 1 },
-    { latitude: 14.689992094228787, longitude: 121.08089171824928, weight: 1 },
-    { latitude: 14.690992094228787, longitude: 121.08189171824928, weight: 1 },
-    { latitude: 14.691992094228787, longitude: 121.08289171824928, weight: 1 },
-    { latitude: 14.692992094228787, longitude: 121.08389171824928, weight: 1 },
-    { latitude: 14.693992094228787, longitude: 121.08489171824928, weight: 1 },
-    { latitude: 14.694992094228787, longitude: 121.08589171824928, weight: 1 },
-    { latitude: 14.695992094228787, longitude: 121.08689171824928, weight: 1 },
-    { latitude: 14.696992094228787, longitude: 121.08789171824928, weight: 1 },
-    { latitude: 14.697992094228787, longitude: 121.08889171824928, weight: 1 },
-    { latitude: 14.698992094228787, longitude: 121.08989171824928, weight: 1 },
-    { latitude: 14.699992094228787, longitude: 121.09089171824928, weight: 1 },
-    { latitude: 14.700992094228787, longitude: 121.09189171824928, weight: 1 },
-  ];
-
-  // callbacks
-  const handleSheetChange = useCallback((index: any) => {
-    setIsBottomSheetOpen(index !== -1);
-  }, []);
-
-  const handlePresentModalPress = useCallback((index: number) => {
-    sheetRef.current?.snapToIndex(index);
-  }, []);
-
-  const handleClosePress = useCallback(() => {
-    sheetRef.current?.close();
-  }, []);
 
   if(Platform.OS === 'android') {
 
@@ -167,13 +217,13 @@ export default function CrimeMap() {
                 source={toggler}/>
             </Pressable>
 
-            {!isBottomSheetOpen && <TouchableOpacity
+            {!isFilterSheetOpen && <TouchableOpacity
             style = {{
             position: 'absolute',
             top: 30,
             right: 20,
             }}
-            onPress={() => handlePresentModalPress(1)}>
+            onPress={() => handleFilterSnapPress(1)}>
                 <Image style = {{
                 width: 50,
                 height: 50,
@@ -181,13 +231,13 @@ export default function CrimeMap() {
                 source={filter}/>
             </TouchableOpacity>}
 
-            {isBottomSheetOpen && <TouchableOpacity
+            {isFilterSheetOpen && <TouchableOpacity
             style = {{
             position: 'absolute',
             top: 30,
             right: 20,
             }}
-            onPress={() => handleClosePress()}>
+            onPress={() => handleFilterClosePress()}>
                 <Image style = {{
                 width: 50,
                 height: 50,
@@ -195,14 +245,31 @@ export default function CrimeMap() {
                 source={filter}/>
             </TouchableOpacity>}
             
-            
+            {!isHeatMapOn &&
             <TouchableOpacity
             style = {{
             position: 'absolute',
             top: 110,
             right: 20,
             }} 
-            onPress={() => {setIsHeatMapOn(!isHeatMapOn)}}
+            onPress={() => {setIsHeatMapOn(true)}}
+            >
+                <Image style = {{
+                width: 50,
+                height: 50,
+                }}
+                source={marker}/>
+            </TouchableOpacity>
+            }
+
+            {isHeatMapOn &&
+            <TouchableOpacity
+            style = {{
+            position: 'absolute',
+            top: 110,
+            right: 20,
+            }} 
+            onPress={() => {setIsHeatMapOn(false)}}
             >
                 <Image style = {{
                 width: 50,
@@ -210,6 +277,7 @@ export default function CrimeMap() {
                 }}
                 source={heatmap}/>
             </TouchableOpacity>
+            }
 
             <View style = {{position: 'absolute', bottom: 30, width: '75%', height: 'auto', justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row'}}>
                 
@@ -224,11 +292,11 @@ export default function CrimeMap() {
 
                 </Pressable>
                 
-                <Pressable
+                <TouchableOpacity
                 style = {{
                     
                 }}
-                onPress={() => {}}
+                onPress={() => {handleCalendarSnapPress(0)}}
                 >
                         <Text style = {{ 
                         width: 'auto',
@@ -241,9 +309,9 @@ export default function CrimeMap() {
                         fontSize: 18,
                         borderRadius: 50
                         }}>
-                            09/02/2024
+                            {selectedDate}
                         </Text>
-                </Pressable>
+                </TouchableOpacity>
 
                 <Pressable
                 style = {{
@@ -260,72 +328,74 @@ export default function CrimeMap() {
         </SpacerView>
 
         <Portal>
-            <BottomSheet
-                ref={sheetRef}
-                index={-1}
-                snapPoints={snapPoints}
-                onChange={handleSheetChange}
-                backgroundStyle={{backgroundColor: '#115272'}}
-                handleIndicatorStyle={{backgroundColor: '#FFF', width: '40%'}}
-                enablePanDownToClose={true}
-                >
+            <BottomSheet ref={filterSheetRef} index={-1} snapPoints={filterSnapPoints} onChange={handleFilterSheetChange} backgroundStyle={{backgroundColor: '#115272'}} handleIndicatorStyle={{backgroundColor: '#FFF', width: '40%'}} enablePanDownToClose={true}>
+                    <View style = {{ width: "100%", height: "100%",}}>
+                            <BottomSheetScrollView contentContainerStyle = {{alignItems: "center", padding: '2.5%'}} horizontal = {true}>
 
-                <BottomSheetScrollView style = {{height: 'auto', backgroundColor: "#115272",}} horizontal = {true} contentContainerStyle = {{alignItems:"center", width: 'auto', paddingVertical: '2.5%' }}>
-                    
-                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
-                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='25%' paddingRight='25%' paddingTop='25%' paddingBottom='25%' borderRadius = {10} borderWidth={3} >
-                            <Image source = {murder} />
-                        </SpacerView>
-                            <ThemedText style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Murder</ThemedText>
-                    </SpacerView>
+                            {/* CRIME CATEGORIES */}
+                            {categories.map((category, index) => (
+                                
+                                    <Pressable key={category.id} onPress={() => handleCategoryPress(index)}>
+                                            <View style={style.filterSheetItem}>
+                                                    <View style={[style.filterSheetImageContainer, !categoryStates[index] && {opacity:0.50} ]}>
+                                                        <Image style={style.filterSheetImage} source={category.icon} />
+                                                    </View>
+                                                    <ThemedText style={style.filterSheetItemTitle} lightColor='#FFF' darkColor='#FFF' type='subtitle'>
+                                                        {category.name}
+                                                    </ThemedText>
+                                            </View>
+                                    </Pressable>
+                            ))}
 
-                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
-                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='25%' paddingRight='25%' paddingTop='25%' paddingBottom='25%' borderRadius = {10} borderWidth={3}>
-                            <Image source = {theft} />
-                        </SpacerView>
-                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Theft</ThemedText>
-                    </SpacerView>
-
-                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
-                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='21%' paddingRight='21%' paddingTop='30%' paddingBottom='30%' borderRadius = {10} borderWidth={3}>
-                            <Image source = {carnapping} />
-                        </SpacerView>
-                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Carnapping</ThemedText>
-                    </SpacerView>
-
-                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
-                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='23%' paddingRight='23%' paddingTop='29%' paddingBottom='29%' borderRadius = {10} borderWidth={3}>
-                            <Image source = {homicide} />
-                        </SpacerView>
-                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Homicide</ThemedText>
-                    </SpacerView>
-
-                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
-                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='30%' paddingRight='30%' paddingTop='22%' paddingBottom='22%' borderRadius = {10} borderWidth={3}>
-                            <Image source = {injury} />
-                        </SpacerView>
-                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Injury</ThemedText>
-                    </SpacerView>
-
-                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
-                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='26%' paddingRight='26%' paddingTop='22%' paddingBottom='22%' borderRadius = {10} borderWidth={3}>
-                            <Image source = {robbery} />
-                        </SpacerView>
-                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Robbery</ThemedText>
-                    </SpacerView>
-
-                    <SpacerView width = "14%" height = "100%" flexDirection = "column" justifyContent = "center" alignItems = "center" backgroundColor = "#115272" padding='2.5%'>
-                        <SpacerView style = {{borderColor: "#FFF"}}  width = "auto" height = "auto" backgroundColor = "#DA4B46" justifyContent = "center" paddingLeft='19%' paddingRight='19%' paddingTop='19%' paddingBottom='19%' borderRadius = {10} borderWidth={3}>
-                            <Image source = {rape} />
-                        </SpacerView>
-                            <ThemedText  style = {{marginTop: '3%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Rape</ThemedText>
-                    </SpacerView>
-
-                    <SpacerView width={560} height='auto'></SpacerView>
-
-                </BottomSheetScrollView>
-
+                            </BottomSheetScrollView>
+                    </View>
             </BottomSheet>
+
+            <BottomSheet 
+            ref={calendarSheetRef} 
+            index={-1} 
+            snapPoints={calendarSnapPoints} 
+            onChange={handleCalendarSheetChange} 
+            backgroundStyle={{backgroundColor: '#115272'}} 
+            handleIndicatorStyle={{
+              backgroundColor: '#FFF', 
+              width: '40%'}} 
+            enablePanDownToClose={true}>
+
+                    <View style = {{ width: "100%", height: "100%", paddingHorizontal:'5%', paddingVertical: '2.5%'}}>
+
+                            <Calendar 
+                            theme={{
+                              calendarBackground: '#115272', 
+                              textDayFontWeight: 'bold', 
+                              textDayHeaderFontWeight: 'bold', 
+                              selectedDayBackgroundColor: '#DA4B46', 
+                              dayTextColor: '#FFF', arrowColor: '#FFF', 
+                              selectedDayTextColor: '#FFF',
+                              textSectionTitleColor: '#FFF',
+                              monthTextColor: '#FFF',
+                              textMonthFontWeight: 'black',
+                              todayTextColor: '#FECF1A',
+                              arrowWidth: 5}} 
+                              
+                              headerStyle = {{}}
+
+                              hideExtraDays = {true} 
+                              
+                              markingType='dot'
+                              style = {{
+                                width: '100%', 
+                                height: '100%',}}   
+
+                                markedDates={markedDates}
+
+                                onDayPress={day => {
+                                    setSelectedDate(day.dateString);
+                                    setMarkedDates({ [day.dateString]: { selected: true, selectedColor: '#DA4B46' } });
+                            }}/>
+                    </View>
+            </BottomSheet>
+            
         </Portal>
 
     </GestureHandlerRootView>
@@ -380,13 +450,13 @@ export default function CrimeMap() {
                 source={toggler}/>
             </Pressable>
 
-            {!isBottomSheetOpen && <Pressable
+            {!isFilterSheetOpen && <Pressable
             style = {{
             position: 'absolute',
             top: 30,
             right: 20,
             }}
-            onPress={() => handlePresentModalPress(1)}>
+            onPress={() => handleFilterSnapPress(1)}>
                 <Image style = {{
                 width: 50,
                 height: 50,
@@ -394,13 +464,13 @@ export default function CrimeMap() {
                 source={filter}/>
             </Pressable>}
 
-            {isBottomSheetOpen && <Pressable
+            {isFilterSheetOpen && <Pressable
             style = {{
             position: 'absolute',
             top: 30,
             right: 20,
             }}
-            onPress={() => handleClosePress()}>
+            onPress={() => handleFilterClosePress()}>
                 <Image style = {{
                 width: 50,
                 height: 50,
@@ -442,11 +512,37 @@ const style = StyleSheet.create({
     width: '100%',
     height: '100%'
   },
-  bottomSheet: {
-    position: 'absolute',
-    bottom:0,
-  },
-  bottomSheetTitle: {
+  filterSheetItem: {
+    width: 130,
+    height: '100%',
+    flexDirection: "column",
     justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+  filterSheetImageContainer: {
+    width: "75%",
+    height: "65%",
+    backgroundColor: "#DA4B46",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderRadius: 10,
+    borderColor: "#FFF",
+  },
+  filterSheetImage: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+  },
+  filterSheetItemTitle: {
+    width: "100%",
+    height: "25%",
+    marginTop: 10,
+    textAlign: "center",
+    verticalAlign: "top",
+  },
+  calendarHeader: {
+    color: "#FFF",
   }
 })

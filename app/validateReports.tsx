@@ -14,7 +14,7 @@ export default function ValidateReports() {
   ]);
 
   // Handle report validation status
-  const handleValidate = (reportId, status) => {
+  const handleValidate = (reportId: number, status : string) => {
     setReports((prevReports) =>
       prevReports.map((report) =>
         report.id === reportId ? { ...report, status: status === 'PENDING' ? 'VALID' : 'PENDING' } : report
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const getStatusStyle = (status) => {
+const getStatusStyle = (status : string) => {
   switch (status) {
     case 'VALID':
       return { backgroundColor: '#115272', color: 'white' };

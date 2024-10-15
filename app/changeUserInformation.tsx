@@ -156,7 +156,7 @@ export default function UserAccount() {
             </ThemedText>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.textInput}
                 value={number}
                 onChangeText={setNumber}
               />
@@ -190,7 +190,7 @@ export default function UserAccount() {
             </ThemedText>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.textInput}
                 value={name}
                 onChangeText={setName}
               />
@@ -223,7 +223,7 @@ export default function UserAccount() {
             </ThemedText>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={styles.textInput}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={true} // Hide password input
@@ -299,7 +299,7 @@ export default function UserAccount() {
           {/* Home Button */}
           <ThemedButton
             title="Home"
-            onPress={() => router.replace({ pathname: "/emergency" })}
+            onPress={() => router.replace({ pathname: "/newReportsForm" })}
           />
         </ThemedView>
 

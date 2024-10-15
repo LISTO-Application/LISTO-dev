@@ -32,29 +32,27 @@ export default function Forgot() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <SpacerView height={100} />
-        <KeyboardAvoidingView
-          behavior={keyboardBehavior}
-          keyboardVerticalOffset={0}
-          style={[styles.subContainer, utility.blueBackground]}
-        >
-          <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
-            Forgot your password?
-          </ThemedText>
-          <ThemedInput type="outline" placeholder="Email" />
-          <SpacerView height={40} />
-          <SpacerView height={40}>
-            <ThemedButton
-              title="Submit"
-              onPress={() =>
-                router.replace({
-                  pathname: "/",
-                })
-              }
-            />
-          </SpacerView>
-          <SpacerView height={55} />
-        </KeyboardAvoidingView>
+          <SpacerView height={100} />
+          <KeyboardAvoidingView
+            behavior='height'
+            keyboardVerticalOffset= {0}
+            style={[styles.container, utility.blueBackground]}
+          >
+            
+              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Forgot your password?</ThemedText>
+              <ThemedInput type='outline' placeholder='Email' />
+              <SpacerView height={40} />
+              <SpacerView height={40}>
+                <ThemedButton title="Submit" 
+                onPress={() => 
+                  router.replace({
+                    pathname: "/",
+                  })} />
+              </SpacerView>
+              <SpacerView height={55}/>
+  
+          </KeyboardAvoidingView>
+  
       </ScrollView>
     );
   } else if (Platform.OS === "web") {

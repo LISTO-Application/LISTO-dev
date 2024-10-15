@@ -61,49 +61,43 @@ export default function Register() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <SpacerView height={60} />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 400}
-          style={[styles.subContainer, utility.blueBackground]}
-        >
-          <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
-            Sign up
-          </ThemedText>
-          <ThemedInput type="outline" placeholder="First Name" />
-          <ThemedInput type="outline" placeholder="Last Name" />
-          <ThemedInput type="outline" placeholder="+63" />
-          <ThemedInput type="outline" placeholder="Email" />
-          <ThemedInput type="outline" placeholder="********" secureTextEntry />
-          <SpacerView height={40} />
-          <SpacerView height={40}>
-            <ThemedButton
-              title="Sign up"
-              onPress={() => {
-                router.replace({
-                  pathname: "/otp",
-                });
-              }}
-            />
-          </SpacerView>
-          <SpacerView height={55} marginTop={20}>
-            <Pressable
-              style={{
-                width: "auto",
-                height: "auto",
-              }}
-              onPress={() => {
-                router.replace({
-                  pathname: "/",
-                });
-              }}
-            >
-              <ThemedText lightColor="#FFF" darkColor="#FFF" type="body">
-                Already have an account?{" "}
-              </ThemedText>
-            </Pressable>
-          </SpacerView>
-        </KeyboardAvoidingView>
+          <SpacerView height={60} />
+          <KeyboardAvoidingView
+            behavior={'height'}
+            keyboardVerticalOffset={400}
+            style={[styles.container, utility.blueBackground]}
+          >
+            
+              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Sign up</ThemedText>
+              <ThemedInput type='outline' placeholder='First Name' />
+              <ThemedInput type='outline' placeholder='Last Name' />
+              <ThemedInput type='outline' placeholder='+63' />
+              <ThemedInput type='outline' placeholder='Email' />
+              <ThemedInput type='outline' placeholder='********' secureTextEntry />
+              <SpacerView height={40} />
+              <SpacerView height={40}>
+                <ThemedButton title="Sign up" onPress={() => 
+                  {router.replace({
+                    pathname: "/otp",
+                  })}}/>
+              </SpacerView>
+              <SpacerView height={55} marginTop={20}>
+              <Pressable 
+                    style = 
+                    {{
+                      width: 'auto',
+                      height: 'auto'
+                    }}
+                    onPress={() => {
+                      router.replace({
+                      pathname: "/",
+                    })}}>
+                  <ThemedText lightColor='#FFF' darkColor='#FFF' type="body">Already have an account? </ThemedText>
+              </Pressable>
+              </SpacerView>
+  
+          </KeyboardAvoidingView>
+  
       </ScrollView>
     );
   } else if (Platform.OS === "web") {
