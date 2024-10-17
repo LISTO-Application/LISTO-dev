@@ -41,7 +41,8 @@ export default function Forgot() {
     if (otp === "999999") {
       console.log("OTP Accepted");
       router.replace({
-        pathname: "/",
+        pathname: "/changepass",
+        params: {},
       });
     } else {
       setError("Wrong OTP, please try again");
@@ -67,27 +68,29 @@ export default function Forgot() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-          <SpacerView height={100} />
-          <KeyboardAvoidingView
-            behavior='height'
-            keyboardVerticalOffset={0}
-            style={[styles.container, utility.blueBackground]}
-          >
-            
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Enter OTP</ThemedText>
-              <ThemedInput type='outline' placeholder='_ _ _ _ _ _' />
-              <SpacerView height={40} />
-              <SpacerView height={40}>
-                <ThemedButton title="Submit" 
-                onPress={() => 
-                  router.replace({
-                    pathname: "/",
-                  })} />
-              </SpacerView>
-              <SpacerView height={55}/>
-  
-          </KeyboardAvoidingView>
-  
+        <SpacerView height={100} />
+        <KeyboardAvoidingView
+          behavior="height"
+          keyboardVerticalOffset={0}
+          style={[styles.container, utility.blueBackground]}
+        >
+          <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
+            Enter OTP
+          </ThemedText>
+          <ThemedInput type="outline" placeholder="_ _ _ _ _ _" />
+          <SpacerView height={40} />
+          <SpacerView height={40}>
+            <ThemedButton
+              title="Submit"
+              onPress={() =>
+                router.replace({
+                  pathname: "/",
+                })
+              }
+            />
+          </SpacerView>
+          <SpacerView height={55} />
+        </KeyboardAvoidingView>
       </ScrollView>
     );
   } else if (Platform.OS === "web") {
@@ -116,7 +119,11 @@ export default function Forgot() {
         </SpacerView>
         <SpacerView height="5%" />
         <SpacerView
-          style={[utility.blueBackground]}
+          style={[
+            utility.blueBackground,
+            otpStyle.shadowBox,
+            { borderRadius: 20 },
+          ]}
           flexDirection="column"
           justifyContent="center"
           height="30%"
@@ -214,5 +221,14 @@ const otpStyle = StyleSheet.create({
   },
   stickFocus: {
     backgroundColor: "#115272",
+  },
+  shadowBox: {
+    shadowColor: "#333333",
+    shadowOffset: {
+      width: 10,
+      height: 10,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
 });

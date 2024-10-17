@@ -1,16 +1,24 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import {Button, Image, Platform, KeyboardAvoidingView, ScrollView, TouchableOpacity, Pressable} from 'react-native';
-import { styles } from '@/styles/styles';
-import { utility } from '@/styles/utility';
-import {router} from 'expo-router';
+import Ionicons from "@expo/vector-icons/Ionicons";
+import {
+  Button,
+  Image,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableOpacity,
+  Pressable,
+} from "react-native";
+import { styles } from "@/styles/styles";
+import { utility } from "@/styles/utility";
+import { router } from "expo-router";
 import { ThemedView } from "@/components/ThemedView";
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
+import { Collapsible } from "@/components/Collapsible";
+import { ExternalLink } from "@/components/ExternalLink";
 import Modal from "react-native-modal";
-import { ThemedInput } from '@/components/ThemedInput';
-import { ThemedText } from '@/components/ThemedText';
-import { SpacerView } from '@/components/SpacerView';
-import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedInput } from "@/components/ThemedInput";
+import { ThemedText } from "@/components/ThemedText";
+import { SpacerView } from "@/components/SpacerView";
+import { ThemedButton } from "@/components/ThemedButton";
 import { useState } from "react";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 export default function adminLogin() {
@@ -19,49 +27,55 @@ export default function adminLogin() {
   const [toggleModal, setToggleModal] = useState(false);
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
-    
-  return (
-    
-    <ScrollView 
-    contentContainerStyle={{ flexGrow: 1 }} 
-    style={[styles.mainContainer, utility.blueBackground]}
-    showsVerticalScrollIndicator = {false}
-    keyboardShouldPersistTaps = "handled"
-    >
+    return (
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        style={[styles.mainContainer, utility.blueBackground]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <SpacerView height={80} />
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
           style={[styles.container, utility.blueBackground]}
         >
-          
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" >Admin Login</ThemedText>
-            <ThemedInput type='outline' placeholder='Email' />
-            
-            <ThemedInput type='outline' placeholder='********' secureTextEntry />
-            <TouchableOpacity onPress={() => router.push("/forgot")}>
-            <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Forgot Password?</ThemedText>
-            </TouchableOpacity>
-            <SpacerView height={40} />
-            <SpacerView height={40}>
-              <ThemedButton title="Login" onPress={() => 
-                {router.replace({
+          <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
+            Admin Login
+          </ThemedText>
+          <ThemedInput type="outline" placeholder="Email" />
+
+          <ThemedInput type="outline" placeholder="********" secureTextEntry />
+          <TouchableOpacity onPress={() => router.push("/forgot")}>
+            <ThemedText lightColor="#FFF" darkColor="#FFF" type="body">
+              Forgot Password?
+            </ThemedText>
+          </TouchableOpacity>
+          <SpacerView height={40} />
+          <SpacerView height={40}>
+            <ThemedButton
+              title="Login"
+              onPress={() => {
+                router.replace({
                   pathname: "/changeAdminInformation",
-                })}} />
-            </SpacerView>
-            <SpacerView height={55} marginTop={20}>
-                <TouchableOpacity onPress={() => router.push("/register")}>
-                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Don't have an account? </ThemedText>
-                </TouchableOpacity>
-            </SpacerView>
-
+                  params: {},
+                });
+              }}
+            />
+          </SpacerView>
+          <SpacerView height={55} marginTop={20}>
+            <TouchableOpacity onPress={() => router.push("/register")}>
+              <ThemedText lightColor="#FFF" darkColor="#FFF" type="body">
+                Don't have an account?{" "}
+              </ThemedText>
+            </TouchableOpacity>
+          </SpacerView>
         </KeyboardAvoidingView>
-
-    </ScrollView>
-  );
-} else if (Platform.OS === "web") {
-  return (
-    <SpacerView
+      </ScrollView>
+    );
+  } else if (Platform.OS === "web") {
+    return (
+      <SpacerView
         height="100%"
         width="100%"
         style={[utility.blueBackground]}
@@ -110,8 +124,7 @@ export default function adminLogin() {
               Admin Login
             </ThemedText>
             <SpacerView height="5%" />
-          
-          
+
             <ThemedInput
               width="75%"
               backgroundColor="#fff"
@@ -248,6 +261,6 @@ export default function adminLogin() {
           </SpacerView>
         </SpacerView>
       </SpacerView>
-  );
-}
+    );
+  }
 }

@@ -1,75 +1,123 @@
 //React Imports
-import React from 'react';
-import { View } from 'react-native';
+import { Platform } from "react-native";
 
 //Expo Imports
-import { useRouter, Tabs, useFocusEffect} from 'expo-router';
-
+import {
+  useRouter,
+  Tabs,
+  useFocusEffect,
+  useNavigation,
+  router,
+} from "expo-router";
 //Component Imports
-import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { TabBar } from '@/components/navigation/TabBar';
+import { TabBarIcon } from "@/components/navigation/TabBarIcon";
+import { TabBar } from "@/components/navigation/TabBar";
+import { ThemedText } from "@/components/ThemedText";
 
+import { createDrawerNavigator } from "@react-navigation/drawer";
+import { NavigationContainer } from "@react-navigation/native";
 
 //Hooks
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from "@/hooks/useColorScheme";
+import Emergency from "./emergency";
+import CrimeMap from ".";
+import UserAccount from "./[id]";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import ViewReports from "../viewReports";
+import ValidateReports from "../validateReports";
+import Login from "..";
+import { AuthContext, AuthProvider } from "../AuthContext";
+import MyHeader from "../(drawer)/MyHeader";
+import UserBanner from "../(drawer)/UserBanner";
+import DrawerScreenOptions from "../(drawer)/DrawerScreenOptions";
 
-const report = require('../../assets/images/report-icon.png');
+const report = require("../../assets/images/report-icon.png");
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const isLoggedIn = true;
+  const Drawer = createDrawerNavigator();
 
-  if(isLoggedIn) {
-
+  if (Platform.OS === "web") {
     return (
-          <Tabs
-            initialRouteName='index'
-            screenOptions={{
-              headerShown: false,
+      <AuthProvider>
+        <NavigationContainer independent={true}>
+          <Drawer.Navigator
+            initialRouteName="Report Incident"
+            screenOptions={({ route, navigation }) =>
+              DrawerScreenOptions({ route, navigation })
+            }
+            drawerContent={(props) => {
+              return <UserBanner {...props} />;
             }}
-            tabBar={props => <TabBar {...props}/>}>
-            <Tabs.Screen
-              name="emergency"
+          >
+            <Drawer.Screen name="Emergency" component={Emergency} />
+            <Drawer.Screen name="Report Incident" component={CrimeMap} />
+            <Drawer.Screen name="Account" component={UserAccount} />
+            <Drawer.Screen
+              name="Reports"
+              component={ViewReports}
               options={{
-                tabBarShowLabel: false,
-                title: 'Emergency',
+                title: "View Reports",
               }}
             />
-
-            <Tabs.Screen
-              name="report"
+            <Drawer.Screen
+              name="Validate"
+              component={ValidateReports}
               options={{
-                tabBarShowLabel: false,
-                title: 'Report',
+                title: "Validate Reports",
               }}
             />
-        
-            <Tabs.Screen
-              name="index"
-              options={{
-                tabBarShowLabel: false,
-                title: 'Crime Map',
-              }}
-            />
-
-            <Tabs.Screen
-              name="[id]"
-              options={{
-                tabBarShowLabel: false,
-                title: 'Account',
-              }}
-            />
-          </Tabs>
-
+          </Drawer.Navigator>
+        </NavigationContainer>
+      </AuthProvider>
     );
+  } else if (Platform.OS === "android") {
+    return (
+      <Tabs
+        initialRouteName="index"
+        screenOptions={{
+          headerShown: false,
+        }}
+        tabBar={(props) => <TabBar {...props} />}
+      >
+        <Tabs.Screen
+          name="emergency"
+          options={{
+            tabBarShowLabel: false,
+            title: "Emergency",
+          }}
+        />
 
-  }
-  else
-  {
-    console.log('User is not logged in');
+        <Tabs.Screen
+          name="index"
+          options={{
+            tabBarShowLabel: false,
+            title: "Crime Map",
+          }}
+        />
+        <Tabs.Screen
+          name="report"
+          options={{
+            tabBarShowLabel: false,
+            title: "Report",
+          }}
+        />
+
+        <Tabs.Screen
+          name="[id]"
+          options={{
+            tabBarShowLabel: false,
+            title: "Account",
+          }}
+        />
+      </Tabs>
+    );
+  } else {
+    console.log("User is not logged in");
     router.replace({
-      pathname: '/',
+      pathname: "/",
     });
-  };
+  }
 }

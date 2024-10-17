@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Image,
+  StyleSheet,
 } from "react-native";
 
 //Expo Imports
@@ -91,7 +92,7 @@ export default function Forgot() {
           <SpacerView
             height="100%"
             width="75%"
-            style={[utility.whiteBackground]}
+            style={[utility.whiteBackground, forgetStyle.shadowBox]}
             borderRadius={20}
             flexDirection="column"
             justifyContent="center"
@@ -131,3 +132,15 @@ export default function Forgot() {
     );
   }
 }
+
+const forgetStyle = StyleSheet.create({
+  shadowBox: {
+    shadowColor: "#333333",
+    shadowOffset: {
+      width: 10,
+      height: 10,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+  },
+});
