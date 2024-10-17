@@ -48,6 +48,7 @@ export default function Register() {
     if (isCheckboxChecked) {
       router.replace({
         pathname: "/otp",
+        params: {},
       });
     } else {
       console.log("Please agree to the terms and conditions");
@@ -83,6 +84,7 @@ export default function Register() {
               onPress={() => {
                 router.replace({
                   pathname: "/otp",
+                  params: {},
                 });
               }}
             />

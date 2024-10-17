@@ -1,19 +1,18 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import React from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 const DateModal = ({ setToggleModal }: { setToggleModal: any }) => {
   return (
     <View style={styles.centeredView}>
       <View style={styles.modalView}>
-        <Text style={styles.modalText}>This is the modal content!</Text>
-
-        {/* Button to hide modal */}
         <Pressable
           style={[styles.button, styles.buttonClose]}
           onPress={() => setToggleModal(false)}
         >
-          <Text style={styles.textStyle}>Close Modal</Text>
+          <Ionicons name="close" size={24} />
         </Pressable>
+        <Text style={styles.modalText}>Calendar</Text>
       </View>
     </View>
   );
