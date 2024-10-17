@@ -64,7 +64,7 @@ export default function Login() {
               title="Login"
               onPress={() => {
                 router.replace({
-                  pathname: "/(tabs)",
+                  pathname: "/summary",
                 });
               }}
             />
@@ -213,7 +213,7 @@ export default function Login() {
                 style={{ fontWeight: "600" }} // Use string for fontWeight values
               >
                 Don't have an account?
-                <ThemedText style={{ color: "yellow", fontWeight: "600" }}>
+                <ThemedText style={{ color: "#FECF1A", fontWeight: "600" }}>
                   {" "}
                   Sign Up
                 </ThemedText>

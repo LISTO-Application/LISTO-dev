@@ -628,7 +628,7 @@ const style = StyleSheet.create({
   },
   bottomSheetImageContainer: {
     width: "100%",
-    height: "60%",
+    aspectRatio: 1,
     backgroundColor: "#FFF",
     justifyContent: "center",
     alignItems: "center",

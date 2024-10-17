@@ -81,6 +81,7 @@ export default function CrimeMap() {
   const filterSnapPoints = useMemo(() => ["3%", "23%"], []);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
+  //FILTER CATEGORIES & STATE
   const categories = [
     { id: 1, name: "Murder", icon: murder as ImageSourcePropType },
     { id: 2, name: "Theft", icon: theft as ImageSourcePropType },
@@ -707,7 +708,7 @@ const style = StyleSheet.create({
   },
   filterSheetImageContainer: {
     width: "75%",
-    height: "65%",
+    aspectRatio: 1,
     backgroundColor: "#DA4B46",
     justifyContent: "center",
     alignItems: "center",

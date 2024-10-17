@@ -2,7 +2,6 @@
   "expo": {
     "name": "LISTO-dev",
     "slug": "LISTO-dev",
-    "owner": "listo-dev",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -18,15 +17,17 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#115272"
       },
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"
         }
       },
-      "package": "com.pingusbingus.LISTOdev"
+      "permissions": ["android.permission.WRITE_EXTERNAL_STORAGE"],
+      "package": "com.pingusbingus.LISTOdev",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -34,7 +35,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "@react-native-firebase/app"
     ],
     "experiments": {
       "typedRoutes": true
