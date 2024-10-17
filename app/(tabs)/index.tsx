@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   ImageSourcePropType,
+  Modal,
 } from "react-native";
 import MapView from "react-native-maps";
 import { Marker } from "react-native-maps";
@@ -31,12 +32,14 @@ import { useFocusEffect } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { SpacerView } from "@/components/SpacerView";
 import { ThemedButton } from "@/components/ThemedButton";
+import DateDisplay from "@/components/DateDisplay";
 
 //Bottom Sheet Import
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 //Portal Imports
 import { Portal } from "@gorhom/portal";
+import { styles } from "@/styles/styles";
 
 const toggler = require("../../assets/images/toggler.png");
 const filter = require("../../assets/images/filter.png");
@@ -52,6 +55,11 @@ const carnapping = require("../../assets/images/car-icon.png");
 const injury = require("../../assets/images/injury-icon.png");
 const robbery = require("../../assets/images/robbery-icon.png");
 const rape = require("../../assets/images/rape-icon.png");
+
+import { addMonths, format, subMonths } from "date-fns";
+import { Ionicons } from "@expo/vector-icons";
+import FilterHeatMap from "@/components/FilterHeatMap";
+import DateModal from "@/components/DateModal";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -588,6 +596,8 @@ export default function CrimeMap() {
       </GestureHandlerRootView>
     );
   } else if (Platform.OS === "web") {
+    const [toggleModal, setToggleModal] = useState(false);
+
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -621,6 +631,15 @@ export default function CrimeMap() {
               <PlacesLibrary />
             </Map>
           </APIProvider>
+
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={toggleModal}
+            onRequestClose={() => setToggleModal(false)}
+          >
+            <DateModal setToggleModal={setToggleModal} />
+          </Modal>
 
           {!isFilterSheetOpen && (
             <Pressable
@@ -660,22 +679,9 @@ export default function CrimeMap() {
             </Pressable>
           )}
 
-          <Pressable
-            style={{
-              position: "absolute",
-              top: 180,
-              right: 20,
-            }}
-            onPress={() => {}}
-          >
-            <Image
-              style={{
-                width: 50,
-                height: 50,
-              }}
-              source={heatmap}
-            />
-          </Pressable>
+          <DateDisplay setToggleModal={setToggleModal} />
+
+          <FilterHeatMap heatmap={heatmap} />
         </SpacerView>
       </GestureHandlerRootView>
     );
