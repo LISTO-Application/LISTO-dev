@@ -20,17 +20,18 @@ import { NavigationContainer } from "@react-navigation/native";
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
 import Emergency from "./emergency";
-import CrimeMap from ".";
+import CrimeMap from "./crimemap";
 import UserAccount from "./[id]";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ViewReports from "../viewReports";
-import ValidateReports from "../validateReports";
+import ViewReports from "../(drawer)/viewReports";
+import ValidateReports from "../(drawer)/validateReports";
 import Login from "..";
 import { AuthContext, AuthProvider } from "../AuthContext";
 import MyHeader from "../(drawer)/MyHeader";
 import UserBanner from "../(drawer)/UserBanner";
 import DrawerScreenOptions from "../(drawer)/DrawerScreenOptions";
+import RootReports from "../(drawer)/RootReports";
 
 const report = require("../../assets/images/report-icon.png");
 
@@ -57,7 +58,7 @@ export default function TabLayout() {
             <Drawer.Screen name="Account" component={UserAccount} />
             <Drawer.Screen
               name="Reports"
-              component={ViewReports}
+              component={RootReports}
               options={{
                 title: "View Reports",
               }}

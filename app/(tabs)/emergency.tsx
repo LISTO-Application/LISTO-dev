@@ -377,27 +377,24 @@ export default function Emergency() {
     );
   } else if (Platform.OS === "web") {
     return (
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        style={[styles.mainContainer, utility.redBackground]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <SpacerView
+        width="100%"
+        height="100%"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        style={[utility.blueBackground, { margin: 20 }]}
       >
+        <SpacerView height="10%" />
         <SpacerView
           backgroundColor="#DA4B46"
-          flex={1}
+          height="90%"
           flexDirection="column"
           justifyContent="center"
           alignItems="center"
-          marginBottom="5%"
+          style={[utility.redBackground, style.shadowBox, { borderRadius: 20 }]}
         >
-          <SpacerView
-            height="auto"
-            width="40%"
-            justifyContent="center"
-            marginTop="2.5%"
-            marginBottom="2.5%"
-          >
+          <SpacerView height="auto" width="40%" justifyContent="center">
             <ThemedText
               lightColor="#FFF"
               darkColor="#FFF"
@@ -427,25 +424,12 @@ export default function Emergency() {
           <SpacerView
             width="50%"
             height="auto"
-            justifyContent="space-between"
+            justifyContent="space-evenly"
             marginBottom="5%"
           >
             <ThemedButton
-              title="Batasan Hills"
-              width="auto"
-              height="100%"
-              paddingHorizontal="5%"
-              paddingVertical="0.5%"
-              type="white-outline"
-              onPress={() => {
-                router.replace({
-                  pathname: "/",
-                });
-              }}
-            />
-            <ThemedButton
               title="Holy Spirit"
-              width="auto"
+              width="50%"
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
@@ -458,7 +442,7 @@ export default function Emergency() {
             />
             <ThemedButton
               title="Matandang Balara"
-              width="auto"
+              width="50%"
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
@@ -490,12 +474,12 @@ export default function Emergency() {
           <SpacerView
             width="50%"
             height="auto"
-            justifyContent="space-between"
+            justifyContent="space-evenly"
             marginBottom="5%"
           >
             <ThemedButton
               title="Violent Crime"
-              width="auto"
+              width="33%"
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
@@ -508,7 +492,7 @@ export default function Emergency() {
             />
             <ThemedButton
               title="Active Fire"
-              width="auto"
+              width="33%"
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
@@ -521,7 +505,7 @@ export default function Emergency() {
             />
             <ThemedButton
               title="Serious Injury"
-              width="auto"
+              width="33%"
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
@@ -536,6 +520,21 @@ export default function Emergency() {
 
           <SpacerView height="auto" flexDirection="column" width="50%">
             <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
+              Location
+            </ThemedText>
+            <ThemedInput
+              width="100%"
+              height="100%"
+              borderRadius={15}
+              placeholder="Location"
+              textAlign="left"
+              textAlignVertical="top"
+              placeholderTextColor="#EDA5A3"
+            />
+          </SpacerView>
+
+          <SpacerView height="auto" flexDirection="column" width="50%">
+            <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
               Additional Information
             </ThemedText>
             <ThemedInput
@@ -543,7 +542,7 @@ export default function Emergency() {
               height={150}
               borderRadius={15}
               placeholder="Additional Information"
-              textAlign="left"
+              textAlign="center"
               textAlignVertical="top"
               placeholderTextColor="#EDA5A3"
             />
@@ -568,21 +567,10 @@ export default function Emergency() {
               }}
             />
             <SpacerView height="5%" />
-            <ThemedButton
-              title="Submit"
-              width="auto"
-              height="auto"
-              paddingVertical="2.5%"
-              type="blue"
-              onPress={() => {
-                router.replace({
-                  pathname: "/(tabs)",
-                });
-              }}
-            />
           </SpacerView>
         </SpacerView>
-      </ScrollView>
+        <SpacerView height="10%" />
+      </SpacerView>
     );
   }
 }
@@ -593,8 +581,22 @@ const style = StyleSheet.create({
     flex: 1,
     paddingTop: 200,
   },
+  mainContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   contentContainer: {
     backgroundColor: "white",
+  },
+  shadowBox: {
+    shadowColor: "#333333",
+    shadowOffset: {
+      width: 10,
+      height: 10,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
 
   //DISTRESS MESSAGE STYLES

@@ -3,8 +3,8 @@ import MyHeader from "./MyHeader";
 import { Ionicons } from "@expo/vector-icons";
 
 const DrawerScreenOptions = ({
-  navigation,
   route,
+  navigation,
 }: {
   navigation: any;
   route: any;
