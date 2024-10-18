@@ -3,6 +3,7 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ViewReports from "./viewReports";
 import newReports from "./newReports";
+import EditReport from "./editReport";
 
 const RootReports = () => {
   const Stack = createNativeStackNavigator();
@@ -17,6 +18,11 @@ const RootReports = () => {
         name="NewReports"
         component={newReports}
         options={{ headerShown: false, title: "Create Reports" }}
+      />
+      <Stack.Screen
+        name="EditReports"
+        component={EditReport}
+        options={{ headerShown: false, title: "Edit Reports" }}
       />
     </Stack.Navigator>
   );

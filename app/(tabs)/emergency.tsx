@@ -59,6 +59,14 @@ export default function Emergency() {
     }, [])
   );
 
+  //useStates
+
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handlePress = () => {
+    setIsPressed((prev) => !prev);
+  };
+
   if (Platform.OS === "android") {
     return (
       <GestureHandlerRootView>
@@ -433,12 +441,8 @@ export default function Emergency() {
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
-              type="white-outline"
-              onPress={() => {
-                router.replace({
-                  pathname: "/",
-                });
-              }}
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
             />
             <ThemedButton
               title="Matandang Balara"
@@ -446,12 +450,8 @@ export default function Emergency() {
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
-              type="white-outline"
-              onPress={() => {
-                router.replace({
-                  pathname: "/",
-                });
-              }}
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
             />
           </SpacerView>
 
@@ -483,12 +483,8 @@ export default function Emergency() {
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
-              type="white-outline"
-              onPress={() => {
-                router.replace({
-                  pathname: "/",
-                });
-              }}
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
             />
             <ThemedButton
               title="Active Fire"
@@ -496,12 +492,8 @@ export default function Emergency() {
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
-              type="white-outline"
-              onPress={() => {
-                router.replace({
-                  pathname: "/",
-                });
-              }}
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
             />
             <ThemedButton
               title="Serious Injury"
@@ -509,12 +501,8 @@ export default function Emergency() {
               height="100%"
               paddingHorizontal="5%"
               paddingVertical="0.5%"
-              type="white-outline"
-              onPress={() => {
-                router.replace({
-                  pathname: "/",
-                });
-              }}
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
             />
           </SpacerView>
 
@@ -562,7 +550,7 @@ export default function Emergency() {
               type="blue"
               onPress={() => {
                 router.replace({
-                  pathname: "/",
+                  pathname: "/(tabs)",
                 });
               }}
             />

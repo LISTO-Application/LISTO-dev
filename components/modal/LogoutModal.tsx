@@ -14,18 +14,28 @@ const LogoutModal = ({ setModalLogout }: { setModalLogout: any }) => {
     <View style={styles.centeredView}>
       <View style={styles.modalView}>
         <Text style={styles.modalText}>Are you sure you want to logout?</Text>
-        <Pressable
-          style={[styles.button, styles.buttonClose]}
-          onPress={() => setModalLogout(false)}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          Cancel
-        </Pressable>
-        <Pressable
-          style={[styles.button, styles.buttonClose]}
-          onPress={handleLogout}
-        >
-          Confirm
-        </Pressable>
+          {" "}
+          <Pressable
+            style={[styles.button, styles.buttonClose]}
+            onPress={() => setModalLogout(false)}
+          >
+            Cancel
+          </Pressable>
+          <View style={{ width: 10 }} />
+          <Pressable
+            style={[styles.button, styles.buttonConfirm]}
+            onPress={handleLogout}
+          >
+            Confirm
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -48,9 +58,12 @@ const styles = StyleSheet.create({
   modalView: {
     margin: 20,
     backgroundColor: "white",
+    width: 400,
+    height: 200,
     borderRadius: 20,
-    padding: 35,
+    padding: 30,
     alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -61,12 +74,25 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   button: {
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     elevation: 2,
+    fontWeight: "bold",
+    width: "75%",
+    fontFamily: "sans-serif",
+    justifyContent: "center",
+    alignItems: "center",
   },
   buttonClose: {
-    backgroundColor: "#2196F3",
+    backgroundColor: "#115272",
+    color: "white",
+  },
+  buttonConfirm: {
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#115272",
+    color: "#115272",
   },
   textStyle: {
     color: "white",
@@ -76,5 +102,8 @@ const styles = StyleSheet.create({
   modalText: {
     marginBottom: 15,
     textAlign: "center",
+    fontWeight: "bold",
+    color: "#115272",
+    fontSize: 20,
   },
 });

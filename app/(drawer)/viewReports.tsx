@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Image,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -14,17 +15,123 @@ import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
 
 export default function ViewReports({ navigation }: { navigation: any }) {
+  const murder = require("../../assets/images/knife-icon.png");
+  const homicide = require("../../assets/images/homicide-icon.png");
+  const theft = require("../../assets/images/thief-icon.png");
+  const carnapping = require("../../assets/images/car-icon.png");
+  const injury = require("../../assets/images/injury-icon.png");
+  const robbery = require("../../assets/images/robbery-icon.png");
+  const rape = require("../../assets/images/rape-icon.png");
+
   // Example report data stored in state
   const [reports, setReports] = useState([
     {
       id: 1,
       title: "Violent Activity near 6th street",
       time: "9:41 AM",
+      icon: robbery,
     },
     {
       id: 2,
       title: "Theft near 6th street",
       time: "9:41 AM",
+      icon: theft,
+    },
+    {
+      id: 3,
+      title: "Violent Activity near 6th street",
+      time: "9:41 AM",
+      icon: robbery,
+    },
+    {
+      id: 4,
+      title: "Theft near 6th street",
+      time: "9:41 AM",
+      icon: theft,
+    },
+    {
+      id: 5,
+      title: "Violent Activity near 6th street",
+      time: "9:41 AM",
+      icon: robbery,
+    },
+    {
+      id: 6,
+      title: "Theft near 6th street",
+      time: "9:41 AM",
+      icon: theft,
+    },
+    {
+      id: 7,
+      title: "Violent Activity near 6th street",
+      time: "9:41 AM",
+      icon: robbery,
+    },
+    {
+      id: 8,
+      title: "Theft near 6th street",
+      time: "9:41 AM",
+      icon: theft,
+    },
+    {
+      id: 9,
+      title: "Violent Activity near 6th street",
+      time: "9:41 AM",
+      icon: robbery,
+    },
+    {
+      id: 10,
+      title: "Theft near 6th street",
+      time: "9:41 AM",
+      icon: theft,
+    },
+    {
+      id: 11,
+      title: "Violent Activity near 6th street",
+      time: "9:41 AM",
+      icon: robbery,
+    },
+    {
+      id: 12,
+      title: "Theft near 6th street",
+      time: "9:41 AM",
+      icon: theft,
+    },
+    {
+      id: 13,
+      title: "Violent Activity near 6th street",
+      time: "9:41 AM",
+      icon: robbery,
+    },
+    {
+      id: 14,
+      title: "Theft near 6th street",
+      time: "9:41 AM",
+      icon: theft,
+    },
+    {
+      id: 15,
+      title: "Violent Activity near 6th street",
+      time: "9:41 AM",
+      icon: robbery,
+    },
+    {
+      id: 16,
+      title: "Theft near 6th street",
+      time: "9:41 AM",
+      icon: theft,
+    },
+    {
+      id: 17,
+      title: "Violent Activity near 6th street",
+      time: "9:41 AM",
+      icon: robbery,
+    },
+    {
+      id: 18,
+      title: "Theft near 6th street",
+      time: "9:41 AM",
+      icon: theft,
     },
   ]);
 
@@ -53,13 +160,13 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   // Edit report handler (redirect to editReport.tsx with report ID)
   const handleEditReport = (reportId: number) => {
     // Redirect to the report edit page with the report ID in the query
-    router.push(`/editReport?id=${reportId}`);
+    navigation.navigate("EditReports", { id: reportId });
   };
 
   // Submit report handler (redirect to new report form)
   const handleSubmitReport = () => {
     // Redirect to the page where the user can fill in new report details
-    router.push("/newReportsForm"); // Adjust this path based on your routing setup
+    navigation.navigate("/newReportsForm"); // Adjust this path based on your routing setup
   };
 
   // Render for Android and iOS
@@ -133,25 +240,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     return (
       <View style={webstyles.container}>
         {/* Sidebar */}
-        <View style={webstyles.sidebar}>
-          <Text style={webstyles.sidebarTitle}>Beth Logan</Text>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Emergency Dial</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Report Incident</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Report Tickets</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Help</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Main Content */}
         <View style={webstyles.mainContainer}>
           <Text style={webstyles.headerText}>Reports</Text>
@@ -164,19 +252,24 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                   index === reports.length - 1 ? { marginBottom: 60 } : {},
                 ]}
               >
+                <Image source={report.icon} style={webstyles.reportIcon} />
                 <Text style={webstyles.reportTitle}>{report.title}</Text>
                 <View style={webstyles.reportActions}>
                   <TouchableOpacity
                     style={webstyles.editIcon}
                     onPress={() => handleEditReport(report.id)}
                   >
-                    <Ionicons name="pencil" size={24} color="white" />
+                    <Ionicons name="create-outline" size={30} color="white" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={webstyles.editIcon}
                     onPress={() => handleDeleteReport(report.id)}
                   >
-                    <Ionicons name="trash-bin" size={24} color="white" />
+                    <Ionicons
+                      name="trash-bin-outline"
+                      size={30}
+                      color="#DA4B46"
+                    />
                   </TouchableOpacity>
                   <Text style={webstyles.timeText}>{report.time}</Text>
                 </View>

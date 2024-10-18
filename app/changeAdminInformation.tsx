@@ -27,7 +27,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useLocalSearchParams } from "expo-router";
 import { ThemedIcon } from "@/components/ThemedIcon";
 
-export default function UserAccount() {
+export default function AdminAccount() {
   const { id } = useLocalSearchParams();
   const texture = require("../assets/images/texture.png");
   const image = require("../assets/images/user-icon.png");
