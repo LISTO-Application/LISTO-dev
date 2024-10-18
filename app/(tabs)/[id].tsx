@@ -217,12 +217,17 @@ export default function UserAccount() {
   } else if (Platform.OS === "web") {
     const [modalDelete, setModalDelete] = useState(false);
     const [modalLogout, setModalLogout] = useState(false);
+    const [isEditable, setIsEditable] = useState(false);
     const handleModalDelete = () => {
       setModalDelete(true);
     };
 
     const handleModalLogout = () => {
       setModalLogout(true);
+    };
+
+    const handleEdit = () => {
+      setIsEditable((prev) => !prev);
     };
 
     return (
@@ -270,12 +275,37 @@ export default function UserAccount() {
                 paddingTop="2%"
                 paddingBottom="2%"
               >
-                <Image source={image} />
+                <Image
+                  source={texture}
+                  style={{
+                    width: "90%", // Cover full width
+                    height: 100, // Adjust based on your texture image size
+                    resizeMode: "cover",
+                    borderTopLeftRadius: 20, // Ensure the top is rounded
+                    borderTopRightRadius: 20,
+                  }}
+                />
+                <Image
+                  source={image}
+                  style={{
+                    width: 80, // Adjust size of the circular image
+                    height: 80,
+                    borderRadius: 40, // Make the image circular
+                    position: "absolute", // Position it on top of the texture
+                    top: 50, // Adjust this based on how much you want it to overlap
+                    zIndex: 1, // Ensure it's above the texture
+                    borderColor: "#FFF", // Add white border around the image
+                    borderWidth: 3, // Adjust the thickness of the border
+                    marginTop: 30,
+                  }}
+                />
+
                 <ThemedText
                   lightColor="#115272"
                   darkColor="#115272"
                   type="title"
                   paddingVertical={2}
+                  style={{ marginTop: 30 }}
                 >
                   {" "}
                   John Doe{" "}
@@ -334,7 +364,9 @@ export default function UserAccount() {
                         backgroundColor="#FFF"
                         type="blueOutline"
                         placeholderTextColor="#115272"
-                        placeholder="John Doe"
+                        placeholder="John" //where we put the params etc
+                        editable={isEditable}
+                        aria-disabled={!isEditable}
                       />
                     </SpacerView>
 
@@ -358,7 +390,9 @@ export default function UserAccount() {
                         type="blueOutline"
                         marginVertical="2.5%"
                         placeholderTextColor="#115272"
-                        placeholder="John Doe"
+                        placeholder="Doe"
+                        editable={isEditable}
+                        aria-disabled={!isEditable}
                       />
                     </SpacerView>
                   </SpacerView>
@@ -380,6 +414,8 @@ export default function UserAccount() {
                       marginVertical="2.5%"
                       placeholderTextColor="#115272"
                       placeholder="@gmail.com"
+                      editable={isEditable}
+                      aria-disabled={!isEditable}
                     />
 
                     <ThemedText
@@ -398,6 +434,10 @@ export default function UserAccount() {
                       marginVertical="2.5%"
                       placeholderTextColor="#115272"
                       placeholder="+63"
+                      editable={isEditable}
+                      aria-disabled={!isEditable}
+                      keyboardType="numeric"
+                      maxLength={11}
                     />
                   </SpacerView>
 
@@ -409,12 +449,8 @@ export default function UserAccount() {
                   >
                     <ThemedButton
                       width="35%"
-                      title="Edit"
-                      onPress={() => {
-                        router.replace({
-                          pathname: "/emergency",
-                        });
-                      }}
+                      title={isEditable ? "Save" : "Edit"}
+                      onPress={handleEdit}
                     />
                   </SpacerView>
                 </SpacerView>
@@ -432,7 +468,6 @@ export default function UserAccount() {
                     borderBottomColor="#115272"
                     height="auto"
                     marginTop="5%"
-                    marginBottom="5%"
                     width="90%"
                   >
                     <ThemedText
