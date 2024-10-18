@@ -32,7 +32,7 @@ interface ExportOtpInputRef extends OtpInputRef {
   clear: () => void;
 }
 
-export default function Forgot() {
+export default function OTPForgot() {
   const otpInputRef = useRef<ExportOtpInputRef>(null);
   const [error, setError] = useState("");
 

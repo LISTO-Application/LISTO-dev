@@ -59,7 +59,7 @@ const rape = require("../../assets/images/rape-icon.png");
 import { addMonths, format, subMonths } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 import FilterHeatMap from "@/components/FilterHeatMap";
-import DateModal from "@/components/DateModal";
+import DateModal from "@/components/modal/DateModal";
 
 const PlacesLibrary = () => {
   const map = useMap();
