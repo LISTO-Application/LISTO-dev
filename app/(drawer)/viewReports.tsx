@@ -16,32 +16,72 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 import { Report } from "../(tabs)/data/reports";
 import { Route } from "expo-router/build/Route";
 import { useRoute } from "@react-navigation/native";
+import { initializeApp } from "@react-native-firebase/app";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  getFirestore,
+} from "@react-native-firebase/firestore";
+import { db } from "../FirebaseConfig";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
+
+  const fetchReports = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "reports"));
+      const reportList: Report[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        icon: doc.data().icon || "", // Add a default value if icon is missing
+        category: doc.data().category || "Unknown", // Default value
+        title: doc.data().title || "Untitled", // Default value
+        name: doc.data().name || "Anonymous", // Default value
+        time: doc.data().time || new Date().toISOString(), // Default to current time
+      }));
+      setReports(reportList);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
-      console.log("Navigation params:", navigation.params);
-      const updatedReport =
-        navigation.getState().routes[navigation.getState().index].params
-          ?.updatedReport;
-      if (updatedReport) {
-        setReports((prevReports) => [...prevReports, updatedReport]);
-      }
+      fetchReports();
     });
+    return unsubscribe;
+
+    // navigation.addListener("focus", () => {
+    //   console.log("Navigation params:", navigation.params);
+    //   const updatedReport =
+    //     navigation.getState().routes[navigation.getState().index].params
+    //       ?.updatedReport;
+    //   if (updatedReport) {
+    //     setReports((prevReports) => [...prevReports, updatedReport]);
+    //   }
+    // });
     // console.log(
     //   "Navigation State:",
     //   navigation.getState().routes[navigation.getState().index].params
     //     .updatedReport
     // );
-    console.log("Navigation State:", navigation.getState());
-    return unsubscribe;
+    // console.log("Navigation State:", navigation.getState());
+    // return unsubscribe;
   }, [navigation]);
 
-  const handleDeleteReport = (reportId: number) => {
-    setReports((prevReports) =>
-      prevReports.filter((report) => report.id !== reportId)
-    );
+  const handleDeleteReport = async (reportId: any) => {
+    try {
+      await deleteDoc(doc(db, "reports", reportId));
+      setReports((prevReports) => prevReports.filter((r) => r.id !== reportId));
+      Alert.alert("Report deleted successfully");
+    } catch (error) {
+      console.error("Error deleting report: ", error);
+    }
+
+    // setReports((prevReports) =>
+    //   prevReports.filter((report) => report.id !== reportId)
+    // );
   };
 
   // Edit report handler (redirect to editReport.tsx with report ID)

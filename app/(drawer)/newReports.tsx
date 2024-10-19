@@ -16,6 +16,10 @@ import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { useRoute } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
+import { db } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
+import { collection, addDoc } from "@react-native-firebase/firestore";
+
+const database = db;
 
 interface CrimeType {
   label: string;
@@ -78,7 +82,7 @@ export default function NewReports({
     setIsDropdownVisible(false); // Close the dropdown
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newReport = {
       id: uuidv4(),
       icon:
@@ -93,11 +97,21 @@ export default function NewReports({
       location: location,
     };
 
-    // setReports((prevReports: any) => [...prevReports, newReport]);
-    console.log("Newly Created Report:", newReport);
-
-    navigation.navigate("ViewReports", { updatedReport: newReport });
+    try {
+      const reportRef = collection(database, "reports"); // Ensure 'database' is the Firestore instance
+      await addDoc(reportRef, newReport);
+      navigation.navigate("ViewReports", { updatedReport: newReport });
+    } catch (error) {
+      console.error("Error saving report:", error);
+      alert("Failed to save report. Please try again.");
+    }
   };
+
+  // setReports((prevReports: any) => [...prevReports, newReport]);
+  //   console.log("Newly Created Report:", newReport);
+
+  //   navigation.navigate("ViewReports", { updatedReport: newReport });
+  // };
 
   if (Platform.OS === "web") {
     return (

@@ -18,6 +18,8 @@ import { useLocalSearchParams } from "expo-router"; // Ensure you have expo-rout
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { RouteProp, useRoute } from "@react-navigation/native";
 import EditReportMobile from "./mobile/EditReport";
+import { doc, updateDoc } from "@react-native-firebase/firestore";
+import { db } from "../FirebaseConfig";
 
 interface CrimeType {
   label: string;
@@ -59,7 +61,7 @@ export default function EditReport({ navigation }: { navigation: any }) {
 
   console.log(report);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     console.log("Crime Type:", selectedValue);
     console.log("Location:", location);
     console.log("Additional Information:", additionalInfo);
@@ -71,9 +73,21 @@ export default function EditReport({ navigation }: { navigation: any }) {
       location: location,
     };
 
-    console.log("UpdatedReport: ", updatedReport);
+    try {
+      // Update the Firestore document with the new report data
+      const reportRef = doc(db, "reports", report.id); // Ensure 'report.id' holds the correct document ID
+      await updateDoc(reportRef, updatedReport);
 
-    navigation.navigate("ViewReports", { updatedReport });
+      console.log("Report updated successfully:", updatedReport);
+      Alert.alert("Success", "Report updated successfully");
+      navigation.navigate("ViewReports");
+    } catch (error) {
+      console.error("Error updating report:", error);
+      Alert.alert("Error", "Error updating report. Please try again.");
+    }
+    // console.log("UpdatedReport: ", updatedReport);
+
+    // navigation.navigate("ViewReports", { updatedReport });
   };
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
