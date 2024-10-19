@@ -37,26 +37,11 @@ export default function newReports({ navigation }: { navigation: any }) {
     return (
       <View style={webstyles.container}>
         {/* Sidebar */}
-        <View style={webstyles.sidebar}>
-          <Text style={webstyles.sidebarTitle}>Beth Logan</Text>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Emergency Dial</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Report Incident</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Report Tickets</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Help</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={webstyles.sidebarItem}>
-            <Text style={webstyles.sidebarText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
 
         <View style={webstyles.mainContainer}>
+          <View style={webstyles.sidebar}>
+            <Ionicons name="backspace" size={30} color="white" />
+          </View>
           <Text style={webstyles.headerText}>New Report</Text>
           <ScrollView contentContainerStyle={webstyles.reportList}>
             {/* Report Details */}

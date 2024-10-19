@@ -19,10 +19,10 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 
 export default function EditReport({ navigation }: { navigation: any }) {
   const { id } = useLocalSearchParams(); // Get the report ID from the URL
-  const [modalVisible, setModalVisible] = useState(false);
   const [selectedValue, setSelectedValue] = useState("Select Crime Type");
   const [location, setLocation] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
 
   // Example report data (this should come from your data source, such as an API or state)
   const reportData = [
@@ -58,9 +58,9 @@ export default function EditReport({ navigation }: { navigation: any }) {
     { label: "Vandalism", value: "vandalism" },
   ];
 
-  const handleSelect = (item: any) => {
-    setModalVisible(true);
-    setSelectedValue(item.label);
+  const handleSelect = (item: { label: any; value?: string }) => {
+    setSelectedValue(item.label); // Update the selected value
+    setIsDropdownVisible(false); // Close the dropdown
   };
 
   const handleSubmit = () => {
@@ -89,34 +89,31 @@ export default function EditReport({ navigation }: { navigation: any }) {
         </View>
 
         <View style={styles.formContainer}>
-          <TouchableOpacity style={styles.dropdown} onPress={handleSelect}>
-            <Text style={styles.selectedText}>{selectedValue}</Text>
+          <TouchableOpacity
+            style={webstyles.dropdown}
+            onPress={() => setIsDropdownVisible(!isDropdownVisible)}
+          >
+            <Text style={webstyles.selectedText}>
+              {selectedValue || "Select Crime Type"}
+            </Text>
             <Ionicons name="chevron-down" size={24} color="gray" />
           </TouchableOpacity>
 
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setModalVisible(false)}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <FlatList
-                  data={crimeTypes}
-                  keyExtractor={(item) => item.value}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.item}
-                      onPress={() => handleSelect(item)}
-                    >
-                      <Text style={styles.itemText}>{item.label}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            </View>
-          </Modal>
+          {isDropdownVisible && (
+            <FlatList
+              data={crimeTypes}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={webstyles.item}
+                  onPress={() => handleSelect(item)}
+                >
+                  <Text style={webstyles.itemText}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+              style={webstyles.dropdownList} // Optional: Add styles to control dropdown position
+            />
+          )}
 
           <TextInput
             style={styles.textInput}
@@ -180,29 +177,6 @@ export default function EditReport({ navigation }: { navigation: any }) {
         <View style={webstyles.mainContainer}>
           <Text style={webstyles.headerText}>Edit Report</Text>
 
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setModalVisible(false)}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <FlatList
-                  data={crimeTypes}
-                  keyExtractor={(item) => item.value}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.item}
-                      onPress={() => handleSelect(item)}
-                    >
-                      <Text style={styles.itemText}>{item.label}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            </View>
-          </Modal>
           <ScrollView contentContainerStyle={webstyles.reportList}>
             {/* Report Details */}
             <Text>Reporter's Username:</Text>
@@ -213,10 +187,31 @@ export default function EditReport({ navigation }: { navigation: any }) {
             />
 
             <Text>Select Crime Type:</Text>
-            <TouchableOpacity style={webstyles.dropdown} onPress={handleSelect}>
-              <Text style={webstyles.selectedText}>{selectedValue}</Text>
+            <TouchableOpacity
+              style={webstyles.dropdown}
+              onPress={() => setIsDropdownVisible(!isDropdownVisible)}
+            >
+              <Text style={webstyles.selectedText}>
+                {selectedValue || "Select Crime Type"}
+              </Text>
               <Ionicons name="chevron-down" size={24} color="gray" />
             </TouchableOpacity>
+
+            {isDropdownVisible && (
+              <FlatList
+                data={crimeTypes}
+                keyExtractor={(item) => item.value}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={webstyles.item}
+                    onPress={() => handleSelect(item)}
+                  >
+                    <Text style={webstyles.itemText}>{item.label}</Text>
+                  </TouchableOpacity>
+                )}
+                style={webstyles.dropdownList} // Optional: Add styles to control dropdown position
+              />
+            )}
 
             <Text>Location:</Text>
             <TextInput

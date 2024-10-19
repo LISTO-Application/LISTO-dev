@@ -618,6 +618,7 @@ export default function CrimeMap() {
               mapTypeControl={false}
               streetViewControl={false}
               mapTypeId="roadmap"
+              scrollwheel={true}
               restriction={{
                 latLngBounds: {
                   north: 14.693963,
