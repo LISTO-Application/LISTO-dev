@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
+
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ViewReports from "./viewReports";
 import newReports from "./newReports";
@@ -27,7 +28,7 @@ const RootReports = () => {
       <Stack.Screen
         name="ReportDetails"
         component={ReportDetails}
-        options={{ headerShown: false, title: "Edit Reports" }}
+        options={{ headerShown: false, title: "Report Details" }}
       />
     </Stack.Navigator>
   );

@@ -212,6 +212,26 @@ const webstyles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  detailItem: {
+    marginBottom: 15,
+  },
+  detailLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  detailValue: {
+    fontSize: 16,
+    color: '#333',
+  },
+  button: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+ 
   approvedButtonText: {
     color: 'white',
     fontWeight: 'bold',
@@ -239,7 +259,16 @@ const webstyles = StyleSheet.create({
     cursor: "pointer",
     marginHorizontal: 10, // Add margin to space out buttons
   },
-  
+  selectedText: {
+    fontSize: 16,
+    color: "black",
+    padding: 10,
+  },
+  reportIdText: {
+    fontSize: 16,
+    color: "black",
+    padding: 10,
+  },
   paginationText: {
     color: "white",
     fontSize: 18, // Increased font size
@@ -305,12 +334,7 @@ const webstyles = StyleSheet.create({
     border: "none",
     cursor: "pointer",
   },
-  buttonText: {
-    // Add this line for the button text style
-    color: "#FFF", // Text color
-    fontSize: 16, // Text size
-    textAlign: "center", // Center align the text
-  },
+ 
 
   inputField: {
     borderWidth: 1,

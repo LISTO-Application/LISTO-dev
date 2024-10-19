@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { webstyles } from "@/styles/webstyles"; // For web styles
@@ -43,8 +43,9 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   };
 
   const handleTitlePress = (reportId: number) => {
-    // Ensure the navigation to reportDetails works
-    navigation.navigate("reportDetails", { id: reportId });
+    console.log(`Navigating to Report Details for ID: ${reportId}`); // Log the report ID
+    navigation.navigate('ReportDetails', { id: String(reportId) });
+    // Navigate to ReportDetails screen
   };
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
@@ -114,9 +115,6 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                   </TouchableOpacity>
                 ) : null}
               </View>
-
-              {/* Horizontal separator */}
-             
             </View>
           ))}
         </ScrollView>

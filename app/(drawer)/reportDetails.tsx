@@ -6,21 +6,18 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
-  TextInput,
   Platform,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { styles } from "@/styles/styles"; // Adjust the path if necessary
 import { router } from "expo-router";
+import { SpacerView } from "@/components/SpacerView"; // Adjust the path if necessary
 import { useLocalSearchParams } from "expo-router"; // Ensure you have expo-router installed
 import { webstyles } from "@/styles/webstyles"; // For web styles
 
 export default function ReportDetails({ navigation }: { navigation: any }) {
   const { id } = useLocalSearchParams(); // Get the report ID from the URL
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedValue, setSelectedValue] = useState("Select Crime Type");
-  const [location, setLocation] = useState("");
-  const [additionalInfo, setAdditionalInfo] = useState("");
+  const [report, setReport] = useState<any>(null);
 
   // Example report data (this should come from your data source, such as an API or state)
   const reportData = [
@@ -42,116 +39,56 @@ export default function ReportDetails({ navigation }: { navigation: any }) {
 
   useEffect(() => {
     // Find the report data based on the ID
-    const report = reportData.find((report) => report.id === id);
-    if (report) {
-      setSelectedValue(report.crimeType);
-      setLocation(report.location);
-      setAdditionalInfo(report.additionalInfo);
+    const foundReport = reportData.find((r) => r.id === id);
+    if (foundReport) {
+      setReport(foundReport);
     }
   }, [id]);
 
-  const crimeTypes = [
-    { label: "Theft", value: "theft" },
-    { label: "Assault", value: "assault" },
-    { label: "Vandalism", value: "vandalism" },
-  ];
+  if (!report) {
+    return (
+      <View style={styles.mainContainer}>
+        <Text style={styles.headerText}>Report Not Found</Text>
+      </View>
+    );
+  }
 
-  const handleSelect = (item: any) => {
-    setModalVisible(true);
-    setSelectedValue(item.label);
-  };
-
-  const handleSubmit = () => {
-    console.log("Crime Type:", selectedValue);
-    console.log("Location:", location);
-    console.log("Additional Information:", additionalInfo);
-    // You can navigate or perform any action with the updated details
-    navigation.navigate("ViewReports", {
-      selectedValue: selectedValue,
-      location: location,
-      additionalInfo: additionalInfo,
-    });
-  };
+  const { title, crimeType, location, additionalInfo } = report;
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
       <View style={styles.mainContainer}>
         {/* Blue Header */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backIcon}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Report Details</Text>
+          <SpacerView height={120} />
         </View>
 
-        <View style={styles.formContainer}>
-          <TouchableOpacity style={styles.dropdown} onPress={handleSelect}>
-            <Text style={styles.selectedText}>{selectedValue}</Text>
-            <Ionicons name="chevron-down" size={24} color="gray" />
-          </TouchableOpacity>
+        <ScrollView style={styles.formContainer}>
+          <Text style={styles.reportTitle}>{title}</Text>
+          
+          <View style={webstyles.detailItem}>
+            <Text style={webstyles.detailLabel}>Crime Type:</Text>
+            <Text style={webstyles.detailValue}>{crimeType}</Text>
+          </View>
 
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setModalVisible(false)}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <FlatList
-                  data={crimeTypes}
-                  keyExtractor={(item) => item.value}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.item}
-                      onPress={() => {
-                        setSelectedValue(item.label);
-                        setModalVisible(false); // Close the modal after selection
-                      }}
-                    >
-                      <Text style={styles.itemText}>{item.label}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            </View>
-          </Modal>
+          <View style={webstyles.detailItem}>
+            <Text style={webstyles.detailLabel}>Location:</Text>
+            <Text style={webstyles.detailValue}>{location}</Text>
+          </View>
 
-          <TextInput
-            style={styles.textInput}
-            placeholder="Location"
-            value={location}
-            onChangeText={setLocation}
-          />
-
-          <TextInput
-            style={[styles.textInput, styles.textArea]}
-            placeholder="Additional Information"
-            value={additionalInfo}
-            onChangeText={setAdditionalInfo}
-            multiline={true}
-          />
-
-          <TouchableOpacity style={styles.imageUpload}>
-            <Ionicons name="image-outline" size={24} color="gray" />
-            <Text style={styles.uploadText}>Add file</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={webstyles.detailItem}>
+            <Text style={webstyles.detailLabel}>Additional Information:</Text>
+            <Text style={webstyles.detailValue}>{additionalInfo}</Text>
+          </View>
+        </ScrollView>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => console.log("Cancel")}
-          >
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={[styles.buttonText, { color: "#FFF" }]}>
-              Submit Report
-            </Text>
+          <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
+            <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -162,74 +99,26 @@ export default function ReportDetails({ navigation }: { navigation: any }) {
         <View style={webstyles.mainContainer}>
           <Text style={webstyles.headerText}>Report Details</Text>
 
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setModalVisible(false)}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <FlatList
-                  data={crimeTypes}
-                  keyExtractor={(item) => item.value}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.item}
-                      onPress={() => {
-                        setSelectedValue(item.label);
-                        setModalVisible(false); // Close the modal after selection
-                      }}
-                    >
-                      <Text style={styles.itemText}>{item.label}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            </View>
-          </Modal>
-
           <ScrollView contentContainerStyle={webstyles.reportList}>
-            {/* Report Details */}
-            <Text>Reporter's Username:</Text>
-            <TextInput
-              style={webstyles.inputField}
-              value="Mr. False Reporter"
-              editable={false}
-            />
+            <View style={webstyles.detailItem}>
+              <Text style={webstyles.detailLabel}>Crime Type:</Text>
+              <Text style={webstyles.detailValue}>{crimeType}</Text>
+            </View>
 
-            <Text>Selected Crime Type:</Text>
-            <TouchableOpacity style={webstyles.dropdown} onPress={handleSelect}>
-              <Text style={webstyles.selectedText}>{selectedValue}</Text>
-              <Ionicons name="chevron-down" size={24} color="gray" />
-            </TouchableOpacity>
+            <View style={webstyles.detailItem}>
+              <Text style={webstyles.detailLabel}>Location:</Text>
+              <Text style={webstyles.detailValue}>{location}</Text>
+            </View>
 
-            <Text>Location:</Text>
-            <TextInput
-              style={webstyles.inputField}
-              value={location}
-              onChangeText={setLocation}
-            />
-
-            <Text>Additional Information:</Text>
-            <TextInput
-              style={webstyles.textArea}
-              multiline
-              numberOfLines={4}
-              value={additionalInfo}
-              onChangeText={setAdditionalInfo}
-            />
-
-            <Text>Image Upload:</Text>
-            <TextInput
-              style={webstyles.inputField}
-              value="https://cloud.com/BarangayBatasan/Virus.img"
-              editable={false}
-            />
-
-           
-            
+            <View style={webstyles.detailItem}>
+              <Text style={webstyles.detailLabel}>Additional Information:</Text>
+              <Text style={webstyles.detailValue}>{additionalInfo}</Text>
+            </View>
           </ScrollView>
+
+          <TouchableOpacity style={webstyles.button} onPress={() => router.back()}>
+            <Text style={webstyles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
