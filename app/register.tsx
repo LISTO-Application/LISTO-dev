@@ -41,7 +41,9 @@ export default function Register() {
 
   const handleCheckboxPress = (isChecked: any) => {
     setIsCheckboxChecked(isChecked);
-    setToggleModal(isChecked);
+    setToggleModal(isChecked); 
+
+
   };
 
   const handleSignUp = () => {
@@ -119,6 +121,15 @@ export default function Register() {
         justifyContent="space-between"
         alignItems="center"
       >
+          <Modal 
+        isVisible={toggleModal} 
+        coverScreen={true} 
+        hasBackdrop={true} 
+        backdropOpacity={0.7} 
+        onBackdropPress={() => setToggleModal(false)} // Optional: Close modal on backdrop press
+      >
+        <TermsConditions setToggleModal={setToggleModal} />
+      </Modal>
         <SpacerView
           style={[utility.blueBackground]}
           flexDirection="column"
@@ -211,9 +222,7 @@ export default function Register() {
               secureTextEntry
             />
             <SpacerView height="2%" />
-            <Modal isVisible={toggleModal}>
-              <TermsConditions setToggleModal={setToggleModal} />
-            </Modal>
+            
             <BouncyCheckbox
               style={{
                 flexDirection: "row",

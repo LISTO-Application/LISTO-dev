@@ -15,6 +15,7 @@ import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
 
 export default function ViewReports({ navigation }: { navigation: any }) {
+  // Icons for reports
   const murder = require("../../assets/images/knife-icon.png");
   const homicide = require("../../assets/images/homicide-icon.png");
   const theft = require("../../assets/images/thief-icon.png");
@@ -24,116 +25,24 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const rape = require("../../assets/images/rape-icon.png");
 
   // Example report data stored in state
-  const [reports, setReports] = useState([
-    {
-      id: 1,
-      title: "Violent Activity near 6th street",
+  const [reports, setReports] = useState([...Array(20).keys()].map(i => ({
+      id: i + 1,
+      title: `Report ${i + 1}`,
       time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 2,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 3,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 4,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 5,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 6,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 7,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 8,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 9,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 10,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 11,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 12,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 13,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 14,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 15,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 16,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 17,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 18,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-  ]);
+      icon: i % 2 === 0 ? robbery : theft,
+    })));
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const reportsPerPage = 10;
+
+  // Calculate total pages
+  const totalPages = Math.ceil(reports.length / reportsPerPage);
+
+  // Get the current reports based on the page
+  const currentReports = reports.slice(
+    (currentPage - 1) * reportsPerPage,
+    currentPage * reportsPerPage
+  );
 
   // Delete report handler
   const handleDeleteReport = (reportId: number) => {
@@ -159,14 +68,12 @@ export default function ViewReports({ navigation }: { navigation: any }) {
 
   // Edit report handler (redirect to editReport.tsx with report ID)
   const handleEditReport = (reportId: number) => {
-    // Redirect to the report edit page with the report ID in the query
     navigation.navigate("EditReports", { id: reportId });
   };
 
   // Submit report handler (redirect to new report form)
   const handleSubmitReport = () => {
-    // Redirect to the page where the user can fill in new report details
-    navigation.navigate("/newReportsForm"); // Adjust this path based on your routing setup
+    navigation.navigate("/newReportsForm");
   };
 
   // Render for Android and iOS
@@ -175,10 +82,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       <View style={styles.mainContainer}>
         {/* Blue Header */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backIcon}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Submitted Reports</Text>
@@ -188,7 +92,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         {/* Report List */}
         <SpacerView height={90} />
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          {reports.map((report) => (
+          {currentReports.map((report) => (
             <View key={report.id} style={styles.reportContainer}>
               <SpacerView height={20} />
               <View style={styles.reportIcon}>
@@ -219,6 +123,27 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             </View>
           ))}
 
+          {/* Pagination Controls */}
+          <View style={styles.paginationContainer}>
+            <TouchableOpacity
+              disabled={currentPage === 1}
+              onPress={() => setCurrentPage(currentPage - 1)}
+              style={styles.paginationButton}
+            >
+              <Text style={styles.paginationText}>Previous</Text>
+            </TouchableOpacity>
+            <Text style={styles.paginationText}>
+              Page {currentPage} of {totalPages}
+            </Text>
+            <TouchableOpacity
+              disabled={currentPage === totalPages}
+              onPress={() => setCurrentPage(currentPage + 1)}
+              style={styles.paginationButton}
+            >
+              <Text style={styles.paginationText}>Next</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Submit & Cancel Buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.cancelButton}>
@@ -239,19 +164,13 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        {/* Sidebar */}
         {/* Main Content */}
         <View style={webstyles.mainContainer}>
           <Text style={webstyles.headerText}>Reports</Text>
+          
           <ScrollView contentContainerStyle={webstyles.reportList}>
-            {reports.map((report, index) => (
-              <View
-                key={report.id}
-                style={[
-                  webstyles.reportContainer,
-                  index === reports.length - 1 ? { marginBottom: 60 } : {},
-                ]}
-              >
+            {currentReports.map((report) => (
+              <View key={report.id} style={webstyles.reportContainer}>
                 <Image source={report.icon} style={webstyles.reportIcon} />
                 <Text style={webstyles.reportTitle}>{report.title}</Text>
                 <View style={webstyles.reportActions}>
@@ -265,26 +184,50 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     style={webstyles.editIcon}
                     onPress={() => handleDeleteReport(report.id)}
                   >
-                    <Ionicons
-                      name="trash-bin-outline"
-                      size={30}
-                      color="#DA4B46"
-                    />
+                    <Ionicons name="trash-bin-outline" size={30} color="#DA4B46" />
                   </TouchableOpacity>
                   <Text style={webstyles.timeText}>{report.time}</Text>
+                  
                 </View>
+                
               </View>
+              
             ))}
           </ScrollView>
 
+          {/* Pagination Controls */}
+        
+
           {/* Plus Sign Button */}
-          <TouchableOpacity
+         
+          <View style={webstyles.paginationContainer}>
+            <TouchableOpacity
+              disabled={currentPage === 1}
+              onPress={() => setCurrentPage(currentPage - 1)}
+              style={webstyles.paginationButton}
+            >
+              <Text style={webstyles.paginationText}>Previous</Text>
+            </TouchableOpacity>
+            <Text style={webstyles.paginationText}>
+              Page {currentPage} of {totalPages}
+            </Text>
+            <TouchableOpacity
+              disabled={currentPage === totalPages}
+              onPress={() => setCurrentPage(currentPage + 1)}
+              style={webstyles.paginationButton}
+            >
+              <Text style={webstyles.paginationText}>Next</Text>
+            </TouchableOpacity>
+            
+          </View>
+          
+        </View>
+        <TouchableOpacity
             style={webstyles.fab}
-            onPress={() => navigation.navigate("NewReports")} // Change this to the desired action
+            onPress={() => navigation.navigate("NewReports")}
           >
             <Ionicons name="add" size={30} color="white" />
           </TouchableOpacity>
-        </View>
       </View>
     );
   }

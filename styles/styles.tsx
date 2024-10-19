@@ -287,11 +287,57 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   
+ 
+ 
+  
+  
+    reportDetails: {
+      fontSize: 14,
+      color: '#6c757d',
+    },
+  
+    statusContainer: {
+      marginRight: 10,
+    },
+    statusBadge: {
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 15,
+      textAlign: 'center',
+    },
+    validateIcon: {
+      paddingHorizontal: 5,
+    },
+   
+    actionContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    
 
   blueBackground: {
     backgroundColor: '#003366',  // Blue background for the top section
   },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    marginTop: 20,
+  },
   
+  paginationButton: {
+    backgroundColor: "#007BFF",
+    padding: 10,
+    borderRadius: 5,
+    opacity: 1, // You can control the opacity for disabled state in the component
+  },
+  
+  paginationText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
 
 

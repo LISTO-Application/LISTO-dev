@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ViewReports from "./viewReports";
 import newReports from "./newReports";
 import EditReport from "./editReport";
-
+import ReportDetails from "./reportDetails";
 const RootReports = () => {
   const Stack = createNativeStackNavigator();
   return (
@@ -22,6 +22,11 @@ const RootReports = () => {
       <Stack.Screen
         name="EditReports"
         component={EditReport}
+        options={{ headerShown: false, title: "Edit Reports" }}
+      />
+      <Stack.Screen
+        name="ReportDetails"
+        component={ReportDetails}
         options={{ headerShown: false, title: "Edit Reports" }}
       />
     </Stack.Navigator>

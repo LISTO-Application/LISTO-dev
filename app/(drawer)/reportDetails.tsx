@@ -4,7 +4,6 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  Alert,
   Modal,
   FlatList,
   TextInput,
@@ -13,11 +12,10 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { styles } from "@/styles/styles"; // Adjust the path if necessary
 import { router } from "expo-router";
-import { SpacerView } from "@/components/SpacerView"; // Adjust the path if necessary
 import { useLocalSearchParams } from "expo-router"; // Ensure you have expo-router installed
 import { webstyles } from "@/styles/webstyles"; // For web styles
 
-export default function EditReport({ navigation }: { navigation: any }) {
+export default function ReportDetails({ navigation }: { navigation: any }) {
   const { id } = useLocalSearchParams(); // Get the report ID from the URL
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedValue, setSelectedValue] = useState("Select Crime Type");
@@ -67,12 +65,14 @@ export default function EditReport({ navigation }: { navigation: any }) {
     console.log("Crime Type:", selectedValue);
     console.log("Location:", location);
     console.log("Additional Information:", additionalInfo);
+    // You can navigate or perform any action with the updated details
     navigation.navigate("ViewReports", {
       selectedValue: selectedValue,
       location: location,
       additionalInfo: additionalInfo,
     });
   };
+
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
       <View style={styles.mainContainer}>
@@ -84,8 +84,7 @@ export default function EditReport({ navigation }: { navigation: any }) {
           >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerText}>Edit a Report</Text>
-          <SpacerView height={120} />
+          <Text style={styles.headerText}>Report Details</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -108,7 +107,10 @@ export default function EditReport({ navigation }: { navigation: any }) {
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       style={styles.item}
-                      onPress={() => handleSelect(item)}
+                      onPress={() => {
+                        setSelectedValue(item.label);
+                        setModalVisible(false); // Close the modal after selection
+                      }}
                     >
                       <Text style={styles.itemText}>{item.label}</Text>
                     </TouchableOpacity>
@@ -157,10 +159,8 @@ export default function EditReport({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        {/* Sidebar */}
-        
         <View style={webstyles.mainContainer}>
-          <Text style={webstyles.headerText}>Edit Report</Text>
+          <Text style={webstyles.headerText}>Report Details</Text>
 
           <Modal
             visible={modalVisible}
@@ -176,7 +176,10 @@ export default function EditReport({ navigation }: { navigation: any }) {
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       style={styles.item}
-                      onPress={() => handleSelect(item)}
+                      onPress={() => {
+                        setSelectedValue(item.label);
+                        setModalVisible(false); // Close the modal after selection
+                      }}
                     >
                       <Text style={styles.itemText}>{item.label}</Text>
                     </TouchableOpacity>
@@ -185,6 +188,7 @@ export default function EditReport({ navigation }: { navigation: any }) {
               </View>
             </View>
           </Modal>
+
           <ScrollView contentContainerStyle={webstyles.reportList}>
             {/* Report Details */}
             <Text>Reporter's Username:</Text>
@@ -194,7 +198,7 @@ export default function EditReport({ navigation }: { navigation: any }) {
               editable={false}
             />
 
-            <Text>Select Crime Type:</Text>
+            <Text>Selected Crime Type:</Text>
             <TouchableOpacity style={webstyles.dropdown} onPress={handleSelect}>
               <Text style={webstyles.selectedText}>{selectedValue}</Text>
               <Ionicons name="chevron-down" size={24} color="gray" />
@@ -223,25 +227,8 @@ export default function EditReport({ navigation }: { navigation: any }) {
               editable={false}
             />
 
-            {/* Buttons */}
-            <View style={webstyles.buttonContainereditReport}>
-              <TouchableOpacity
-                style={webstyles.cancelButtoneditReport}
-                onPress={() => navigation.navigate("ViewReports")}
-              >
-                <Text style={webstyles.buttonTexteditReport}>CANCEL</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={webstyles.submitButtoneditReport}
-                onPress={handleSubmit}
-              >
-                <Text
-                  style={[webstyles.buttonTexteditReport, { color: "#FFF" }]}
-                >
-                  SAVE CHANGES
-                </Text>
-              </TouchableOpacity>
-            </View>
+           
+            
           </ScrollView>
         </View>
       </View>

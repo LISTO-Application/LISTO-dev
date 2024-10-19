@@ -183,7 +183,7 @@ export default function Login() {
             <SpacerView height="5%" />
             <ThemedButton
               width="25%"
-              title="Login"
+              title="Sign In"
               onPress={() => {
                 router.replace({
                   pathname: "/summary",
@@ -213,7 +213,9 @@ export default function Login() {
                 style={{ fontWeight: "600" }} // Use string for fontWeight values
               >
                 Don't have an account?
-                <ThemedText style={{ color: "#FECF1A", fontWeight: "600" }}>
+                <ThemedText style={{ color: "#DA4B46", fontWeight: "bold" }}>
+                  
+
                   {" "}
                   Sign Up
                 </ThemedText>

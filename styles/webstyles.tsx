@@ -5,7 +5,7 @@ const webstyles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     height: "100%",
-    backgroundColor: "#115272",
+    backgroundColor: "white",
     padding: "3%",
   },
   sidebar: {
@@ -47,10 +47,17 @@ const webstyles = StyleSheet.create({
     color: "#115272",
   },
   reportList: {
+    borderColor: "white",
     padding: 20,
     borderWidth: 2,
     borderRadius: 10,
     margin: 5,
+  },
+  reportIconContainer: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15
   },
   reportContainer: {
     display: "flex",
@@ -60,6 +67,17 @@ const webstyles = StyleSheet.create({
     backgroundColor: "#115272",
     marginBottom: 10,
     borderRadius: 8, // Center align items vertically
+  },
+  reportContainerValidate: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "white",
+    marginBottom: 10,
+     // Rounded corners
+    borderBottomWidth: .5, // Add a border at the bottom
+    borderBottomColor: "grey", // Set the bottom border color to grey
   },
   dropdownList: {
     position: "absolute",
@@ -110,6 +128,35 @@ const webstyles = StyleSheet.create({
     marginLeft: 20,
     fontWeight: 600,
   },
+  statusButtonsContainer: {
+    color:"black",
+    flexDirection: 'row',
+  },
+  pendingButton: {
+    marginLeft: 10,
+    padding: 10,
+    backgroundColor: 'grey',
+    borderRadius: 5,
+  },
+  pendingButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    marginLeft: 5,
+  },
+ 
+  statusButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
   statusContainer: {
     marginRight: 10,
     // Add padding to make it larger
@@ -132,9 +179,10 @@ const webstyles = StyleSheet.create({
     color: "#115272",
   },
   horizontalLine: {
-    height: "1px",
-    backgroundColor: "#d3d3d3",
-    marginVertical: "10px",
+    color: "black",
+    height: 10,
+    backgroundColor: '#ccc',
+    marginVertical: 10,
   },
 
   item: {
@@ -144,6 +192,61 @@ const webstyles = StyleSheet.create({
   itemText: {
     fontSize: 16,
   },
+  approveButton: {
+    backgroundColor: '#4caf50',
+    padding: 10,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  rejectedButton: {
+    backgroundColor: '#f44336',
+    padding: 10,
+    borderRadius: 5,
+  },
+  approvedButton: {
+    backgroundColor: '#115272',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  approvedButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  rejectedButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  // Add this inside your webstyles object
+  paginationContainer: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center", // Center the buttons
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 0,
+    marginTop: 20,
+  },
+  
+  paginationButton: {
+    backgroundColor: "#115272",
+    paddingVertical: 15,
+    paddingHorizontal: 25, // Increased padding
+    borderRadius: 5,
+    cursor: "pointer",
+    marginHorizontal: 10, // Add margin to space out buttons
+  },
+  
+  paginationText: {
+    color: "white",
+    fontSize: 18, // Increased font size
+    fontWeight: "bold",
+    textAlign: "center", // Center-align the text
+  },
+
 
   fab: {
     position: "absolute",
