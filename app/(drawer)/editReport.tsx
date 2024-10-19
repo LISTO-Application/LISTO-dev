@@ -70,6 +70,7 @@ export default function EditReport({ navigation }: { navigation: any }) {
       category: selectedValue,
       location: location,
     };
+
     console.log("UpdatedReport: ", updatedReport);
 
     navigation.navigate("ViewReports", { updatedReport });
