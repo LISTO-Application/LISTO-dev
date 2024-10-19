@@ -60,6 +60,8 @@ import { addMonths, format, subMonths } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 import FilterHeatMap from "@/components/FilterHeatMap";
 import DateModal from "@/components/modal/DateModal";
+import WebHeatmap from "@/components/WebHeatmap";
+import heatmapData from "./data/heatmap";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -103,6 +105,8 @@ export default function CrimeMap() {
   }, []);
 
   const handleFilterSnapPress = useCallback((index: number) => {
+    console.log(filterSheetRef.current?.snapToIndex(index));
+    console.log(index);
     filterSheetRef.current?.snapToIndex(index);
   }, []);
 
@@ -146,150 +150,28 @@ export default function CrimeMap() {
 
   //HEAT MAP SETTINGS
   // Static array of points for testing
-  const heatmapPoints = [
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.685992094228787,
-      longitude: 121.07589171824928,
-      weight: 1,
-    },
-    {
-      type: "homicide",
-      date: "10/20/2024",
-      latitude: 14.686502094228787,
-      longitude: 121.07629171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.685502094228787,
-      longitude: 121.07539171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.685002094228787,
-      longitude: 121.07679171824928,
-      weight: 1,
-    },
-    {
-      type: "robbery",
-      date: "10/20/2024",
-      latitude: 14.6857002094228787,
-      longitude: 121.07489171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.686992094228787,
-      longitude: 121.07789171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.687992094228787,
-      longitude: 121.07889171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.688992094228787,
-      longitude: 121.07989171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.689992094228787,
-      longitude: 121.08089171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.690992094228787,
-      longitude: 121.08189171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/21/2024",
-      latitude: 14.691992094228787,
-      longitude: 121.08289171824928,
-      weight: 1,
-    },
-    {
-      type: "injury",
-      date: "10/20/2024",
-      latitude: 14.692992094228787,
-      longitude: 121.08389171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.693992094228787,
-      longitude: 121.08489171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.694992094228787,
-      longitude: 121.08589171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.695992094228787,
-      longitude: 121.08689171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.696992094228787,
-      longitude: 121.08789171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.697992094228787,
-      longitude: 121.08889171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.698992094228787,
-      longitude: 121.08989171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.699992094228787,
-      longitude: 121.09089171824928,
-      weight: 1,
-    },
-    {
-      type: "theft",
-      date: "10/20/2024",
-      latitude: 14.700992094228787,
-      longitude: 121.09189171824928,
-      weight: 1,
-    },
-  ];
+  const heatmapPoints = heatmapData;
+  const [isHeatmapVisible, setIsHeatmapVisible] = useState(false);
+
+  const toggleHeatmap = useCallback(() => {
+    setIsHeatmapVisible((prev) => {
+      console.log("Previous State", prev);
+      const newState = !prev;
+      console.log("New State", newState);
+      return newState;
+    });
+  }, []);
+
+  const filteredHeatmap = heatmapPoints.filter((point: any) => {
+    const selectedCategories = categories
+      .filter((_: any, i: any) => categoryStates[i])
+      .map((category) => category.name.toLowerCase());
+
+    return selectedCategories.includes(point.type);
+  });
 
   const [isHeatMapOn, setIsHeatMapOn] = useState(false);
+
   const position = { lat: 14.685992094228787, lng: 121.07589171824928 };
 
   if (Platform.OS === "android") {
@@ -615,7 +497,7 @@ export default function CrimeMap() {
               disableDoubleClickZoom={true}
               defaultZoom={15}
               mapId="5cc51025f805d25d"
-              mapTypeControl={false}
+              mapTypeControl={true}
               streetViewControl={false}
               mapTypeId="roadmap"
               scrollwheel={true}
@@ -630,6 +512,7 @@ export default function CrimeMap() {
               minZoom={15}
               maxZoom={18}
             >
+              {isHeatmapVisible && <WebHeatmap heatmap={filteredHeatmap} />}
               <PlacesLibrary />
             </Map>
           </APIProvider>
@@ -650,7 +533,7 @@ export default function CrimeMap() {
                 top: 120,
                 right: 20,
               }}
-              onPress={() => handleFilterSnapPress(1)}
+              onPress={() => filterSheetRef.current?.snapToIndex(1)}
             >
               <Image
                 style={{
@@ -669,7 +552,7 @@ export default function CrimeMap() {
                 top: 120,
                 right: 20,
               }}
-              onPress={() => handleFilterClosePress()}
+              onPress={() => filterSheetRef.current?.close()}
             >
               <Image
                 style={{
@@ -683,7 +566,7 @@ export default function CrimeMap() {
 
           <DateDisplay setToggleModal={setToggleModal} />
 
-          <FilterHeatMap heatmap={heatmap} />
+          <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
         </SpacerView>
       </GestureHandlerRootView>
     );

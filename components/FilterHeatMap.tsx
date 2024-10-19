@@ -2,7 +2,13 @@ import { Pressable, StyleSheet, Text, View, Image } from "react-native";
 
 import React from "react";
 
-const FilterHeatMap = ({ heatmap }: { heatmap: any }) => {
+const FilterHeatMap = ({
+  heatmap,
+  toggleHeatmap,
+}: {
+  heatmap: any;
+  toggleHeatmap: any;
+}) => {
   return (
     <Pressable
       style={{
@@ -10,7 +16,7 @@ const FilterHeatMap = ({ heatmap }: { heatmap: any }) => {
         top: 180,
         right: 20,
       }}
-      onPress={() => {}}
+      onPress={toggleHeatmap}
     >
       <Image
         style={{

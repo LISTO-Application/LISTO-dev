@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   ScrollView,
@@ -13,160 +13,47 @@ import { router } from "expo-router";
 import { SpacerView } from "@/components/SpacerView";
 import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
+import { Report } from "../(tabs)/data/reports";
+import { Route } from "expo-router/build/Route";
+import { useRoute } from "@react-navigation/native";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
-  const murder = require("../../assets/images/knife-icon.png");
-  const homicide = require("../../assets/images/homicide-icon.png");
-  const theft = require("../../assets/images/thief-icon.png");
-  const carnapping = require("../../assets/images/car-icon.png");
-  const injury = require("../../assets/images/injury-icon.png");
-  const robbery = require("../../assets/images/robbery-icon.png");
-  const rape = require("../../assets/images/rape-icon.png");
+  const [reports, setReports] = useState<Report[]>([]);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      console.log("Navigation params:", navigation.params);
+      const updatedReport =
+        navigation.getState().routes[navigation.getState().index].params
+          ?.updatedReport;
+      if (updatedReport) {
+        setReports((prevReports) => [...prevReports, updatedReport]);
+      }
+    });
+    // console.log(
+    //   "Navigation State:",
+    //   navigation.getState().routes[navigation.getState().index].params
+    //     .updatedReport
+    // );
+    console.log("Navigation State:", navigation.getState());
+    return unsubscribe;
+  }, [navigation]);
 
-  // Example report data stored in state
-  const [reports, setReports] = useState([
-    {
-      id: 1,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 2,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 3,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 4,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 5,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 6,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 7,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 8,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 9,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 10,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 11,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 12,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 13,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 14,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 15,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 16,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-    {
-      id: 17,
-      title: "Violent Activity near 6th street",
-      time: "9:41 AM",
-      icon: robbery,
-    },
-    {
-      id: 18,
-      title: "Theft near 6th street",
-      time: "9:41 AM",
-      icon: theft,
-    },
-  ]);
-
-  // Delete report handler
   const handleDeleteReport = (reportId: number) => {
-    // Show confirmation alert
-    Alert.alert(
-      "Delete Report",
-      "Are you sure you want to delete this report?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          onPress: () => {
-            // Remove the report from the state
-            setReports(reports.filter((report) => report.id !== reportId));
-          },
-        },
-      ]
+    setReports((prevReports) =>
+      prevReports.filter((report) => report.id !== reportId)
     );
   };
 
   // Edit report handler (redirect to editReport.tsx with report ID)
-  const handleEditReport = (reportId: number) => {
+  const handleEditReport = (report: Report) => {
     // Redirect to the report edit page with the report ID in the query
-    navigation.navigate("EditReports", { id: reportId });
+    navigation.navigate("EditReports", { report });
   };
 
   // Submit report handler (redirect to new report form)
   const handleSubmitReport = () => {
     // Redirect to the page where the user can fill in new report details
-    navigation.navigate("/newReportsForm"); // Adjust this path based on your routing setup
+    navigation.navigate("NewReports"); // Adjust this path based on your routing setup
   };
 
   // Render for Android and iOS
@@ -201,7 +88,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 {/* Edit Icon */}
                 <TouchableOpacity
                   style={styles.editIcon}
-                  onPress={() => handleEditReport(report.id)}
+                  onPress={() => handleEditReport(report)}
                 >
                   <Ionicons name="pencil" size={24} color="white" />
                 </TouchableOpacity>
@@ -257,7 +144,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 <View style={webstyles.reportActions}>
                   <TouchableOpacity
                     style={webstyles.editIcon}
-                    onPress={() => handleEditReport(report.id)}
+                    onPress={() => handleEditReport(report)}
                   >
                     <Ionicons name="create-outline" size={30} color="white" />
                   </TouchableOpacity>
