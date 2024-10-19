@@ -32,52 +32,61 @@ export default function Login() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-          <SpacerView height={80} />
-          <KeyboardAvoidingView
-            behavior='height'
-            keyboardVerticalOffset={0}
-            style={[styles.container, utility.blueBackground]}
+        <SpacerView height={80} />
+        <KeyboardAvoidingView
+          behavior="height"
+          keyboardVerticalOffset={0}
+          style={[styles.container, utility.blueBackground]}
+        >
+          <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
+            Login
+          </ThemedText>
+          <ThemedInput type="outline" placeholder="Email" />
+          <ThemedInput type="outline" placeholder="********" secureTextEntry />
+          <Pressable
+            style={{
+              width: "auto",
+              height: "auto",
+            }}
+            onPress={() => {
+              router.replace({
+                pathname: "/forgot",
+              });
+            }}
           >
-            
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" >Login</ThemedText>
-              <ThemedInput type='outline' placeholder='Email' />
-              <ThemedInput type='outline' placeholder='********' secureTextEntry />
-              <Pressable 
-                    style = 
-                    {{
-                      width: 'auto',
-                      height: 'auto'
-                    }}
-                    onPress={() => {
-                      router.replace({
-                      pathname: "/forgot",
-                    })}}>
-              <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Forgot Password?</ThemedText>
-              </Pressable>
-              <SpacerView height={40} />
-              <SpacerView height={40}>
-                <ThemedButton title="Login" onPress={() => 
-                  {router.replace({
-                    pathname: "/summary",
-                  })}} />
-              </SpacerView>
-              <SpacerView height={55} marginTop={20}>
-              <Pressable 
-                    style = 
-                    {{
-                      width: 'auto',
-                      height: 'auto'
-                    }}
-                    onPress={() => {
-                      router.replace({
-                      pathname: "/adminLogin",
-                    })}}>
-                  <ThemedText lightColor='#FFF' darkColor='#FFF' type="body" >Don't have an account? </ThemedText>
-              </Pressable>
-              </SpacerView>
-  
-          </KeyboardAvoidingView>
-  
+            <ThemedText lightColor="#FFF" darkColor="#FFF" type="body">
+              Forgot Password?
+            </ThemedText>
+          </Pressable>
+          <SpacerView height={40} />
+          <SpacerView height={40}>
+            <ThemedButton
+              title="Login"
+              onPress={() => {
+                router.replace({
+                  pathname: "/summary",
+                });
+              }}
+            />
+          </SpacerView>
+          <SpacerView height={55} marginTop={20}>
+            <Pressable
+              style={{
+                width: "auto",
+                height: "auto",
+              }}
+              onPress={() => {
+                router.replace({
+                  pathname: "/adminLogin",
+                });
+              }}
+            >
+              <ThemedText lightColor="#FFF" darkColor="#FFF" type="body">
+                Don't have an account?{" "}
+              </ThemedText>
+            </Pressable>
+          </SpacerView>
+        </KeyboardAvoidingView>
       </ScrollView>
     );
   } else if (Platform.OS === "web") {
@@ -117,7 +126,7 @@ export default function Login() {
           <SpacerView
             height="75%"
             width="75%"
-            style={utility.whiteBackground}
+            style={[utility.whiteBackground, loginStyle.shadowBox]}
             borderRadius={20}
             flexDirection="column"
             justifyContent="center"
@@ -205,7 +214,6 @@ export default function Login() {
               >
                 Don't have an account?
                 <ThemedText style={{ color: "#FECF1A", fontWeight: "600" }}>
-
                   {" "}
                   Sign Up
                 </ThemedText>
@@ -222,5 +230,14 @@ const loginStyle = StyleSheet.create({
   forgotPassword: {
     alignSelf: "flex-start",
     marginLeft: 90,
+  },
+  shadowBox: {
+    shadowColor: "#333333",
+    shadowOffset: {
+      width: 10,
+      height: 10,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
 });

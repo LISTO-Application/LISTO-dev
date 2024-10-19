@@ -1,340 +1,596 @@
-//REACT IMPORTS
-import {Image, Platform, KeyboardAvoidingView, ScrollView, StyleSheet, View, ImageSourcePropType, Pressable, TouchableOpacity, Linking, Text} from 'react-native';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {useMemo, useCallback, useRef, useState,} from 'react';
+//React Imports
+import {
+  Image,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useMemo, useCallback, useRef, useState } from "react";
 
-//EXPO IMPORTS
-import {router, useFocusEffect} from 'expo-router';
+//Expo Imports
+import { router, useFocusEffect } from "expo-router";
 
-//STYLESHEET IMPORTS
-import { styles } from '@/styles/styles';
-import { utility } from '@/styles/utility';
+//Stylesheet Imports
+import { styles } from "@/styles/styles";
+import { utility } from "@/styles/utility";
 
-//COMPONENT IMPORTS
-import { ThemedInput } from '@/components/ThemedInput';
-import { ThemedText } from '@/components/ThemedText';
-import { SpacerView } from '@/components/SpacerView';
-import { ThemedButton } from '@/components/ThemedButton';
+//Component Imports
+import { ThemedInput } from "@/components/ThemedInput";
+import { ThemedText } from "@/components/ThemedText";
+import { SpacerView } from "@/components/SpacerView";
+import { ThemedButton } from "@/components/ThemedButton";
 
-//PORTAL IMPORTS
-import { Portal } from '@gorhom/portal';
+//Portal Imports
+import { Portal } from "@gorhom/portal";
 
-//BOTTOM SHEET IMPORT
-import BottomSheet, { BottomSheetScrollView, BottomSheetView, } from "@gorhom/bottom-sheet";
+//Bottom Sheet Import
+import BottomSheet, {
+  BottomSheetScrollView,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
 
-//IMAGE IMPORTS
-const qcLogo = require('../../assets/images/qc-logo.png');
-const holyspiritLogo = require('../../assets/images/holyspirit-logo.png');
-const balaraLogo = require('../../assets/images/balara-logo.png')
-const backArrow = require('../../assets/images/back-button-white.png');
-const hotline = require('../../assets/images/hotline-icon.png');
+const qcLogo = require("../../assets/images/qc-logo.png");
+const holyspiritLogo = require("../../assets/images/holyspirit-logo.png");
+const balaraLogo = require("../../assets/images/balara-logo.png");
 
 export default function Emergency() {
+  const sheetRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ["3%", "25%"], []);
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
 
-  //REPORT TO SETTINGS
-  const reportTo = [
-    { id: 1, name: 'Holy Spirit'},
-    { id: 2, name: 'Matandang Balara'},
-  ]
+  // callbacks
+  const handleSheetChange = useCallback((index: any) => {
+    setIsBottomSheetOpen(index !== -1);
+  }, []);
 
-  const [reportToStates, setReportToStates] = useState(
-    reportTo.map(() => false)
+  const handleSnapPress = useCallback((index: number) => {
+    sheetRef.current?.snapToIndex(index);
+  }, []);
+
+  const handleClosePress = useCallback(() => {
+    sheetRef.current?.close();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => sheetRef.current?.close();
+    }, [])
   );
 
-  const handleReportToPress = (index: number) => {
-    setReportToStates((prevStates) =>
-      prevStates.map((state, i) => (i === index ? !state : state))
-    );
+  //useStates
+
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handlePress = () => {
+    setIsPressed((prev) => !prev);
   };
 
-  //EMERGENCY TYPE SETTINGS
-
-  const emergencyType = [
-    { id: 1, name: 'Violent Crime'},
-    { id: 2, name: 'Active Fire'},
-    { id: 3, name: 'Serious Injury'},
-  ]
-
-  const [emergencyTypeStates, setEmergencyTypeStates] = useState(
-    emergencyType.map(() => false)
-  );
-
-  const handleEmergencyTypePress = (index: number) => {
-    setEmergencyTypeStates((prevStates) =>
-      prevStates.map((state, i) => (i === index ? !state : state))
-    );
-  };
-
-    //BOTTOM SHEET SETTINGS
-    const sheetRef = useRef<BottomSheet>(null);
-    const snapPoints = useMemo(() => ["25%"], []);
-    const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-
-    //BOTTOM SHEET CONTACTS
-    const barangays = [
-      { id: 1, name: 'QC Hotline', icon: qcLogo as ImageSourcePropType, phone: '09123456789'},
-      { id: 2, name: 'Holy Spirit', icon: holyspiritLogo as ImageSourcePropType, phone: '09123456789'},
-      { id: 3, name: 'Old Balara', icon: balaraLogo as ImageSourcePropType, phone: '09123456789'},
-    ];
-
-
-    // BOTTOM SHEET CALLBACKS
-    const handleSheetChange = useCallback((index: any) => {
-      setIsBottomSheetOpen(index !== -1);
-    }, []);
-
-    const handleSnapPress = useCallback((index: number) => {
-      sheetRef.current?.snapToIndex(index);
-    }, []);
-
-    const handleClosePress = useCallback(() => {
-      sheetRef.current?.close();
-    }, []);
-
-    useFocusEffect(
-      useCallback(() => {
-        return () => sheetRef.current?.close()
-      }, [])
-    );
-  
-  if(Platform.OS === 'android') {
+  if (Platform.OS === "android") {
     return (
-    
       <GestureHandlerRootView>
         <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        style={[styles.mainContainer, utility.redBackground]}
-        showsVerticalScrollIndicator = {false}
-        keyboardShouldPersistTaps = "handled"
+          contentContainerStyle={{ flexGrow: 1 }}
+          style={[styles.mainContainer, utility.redBackground]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-            <TouchableOpacity onPress={() => {
-                      router.replace({
-                        pathname: "/",
-                      })}}>
-                <Image 
-                style = {{
-                  width: 40, 
-                  height: 40,
-                  position: 'absolute',
-                  top: 40,
-                  left: 20
-                }} 
-                source={backArrow} />
-            </TouchableOpacity>
-
-            <SpacerView height={100} />
-            <KeyboardAvoidingView
-              behavior='height'
-              keyboardVerticalOffset={0}
-              style={[styles.container, utility.redBackground]}
+          <SpacerView height={80} />
+          <KeyboardAvoidingView
+            behavior="height"
+            keyboardVerticalOffset={0}
+            style={[styles.container, utility.redBackground]}
+          >
+            <ThemedText lightColor="#FFF" darkColor="#FFF" type="subDisplay">
+              Send a distress message
+            </ThemedText>
+            <ThemedText
+              style={{ marginBottom: "2.5%" }}
+              lightColor="#FFF"
+              darkColor="#FFF"
+              type="subtitle"
             >
-        
-                <ThemedText lightColor='#FFF' darkColor='#FFF' type="subDisplay" >Send a distress message</ThemedText>
-                <ThemedText style = {{marginBottom: '2.5%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle">Send to</ThemedText>
-        
-                <SpacerView height = "5%" marginBottom = '5%'>
-                    <ScrollView
-                    horizontal = {true}
-                    showsHorizontalScrollIndicator = {false}
-                    contentContainerStyle = {{paddingHorizontal: '2.5%'}}
-                    >   
+              Send to
+            </ThemedText>
 
-                        {/* REPORT TO CATEGORIES */}
-                        {reportTo.map((report, index) => (
-                        
-                        <Pressable key={report.id} style = {[style.scrollViewItem, reportToStates[index] && {backgroundColor: "#FFF", borderColor: '#FFF'}, !reportToStates[index] && {borderColor: '#FFF'}]} onPress={() => {handleReportToPress(index)}}>
-                            <Text style = {[style.scrollViewText, reportToStates[index] && {color: "#DA4B46"}, !reportToStates[index] && {color: '#FFF'}]}> {report.name} </Text>
-                        </Pressable>
-                          ))}
+            <SpacerView height="5%" marginBottom="5%">
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                overScrollMode="always"
+              >
+                <ThemedButton
+                  title="Holy Spirit"
+                  width="50%"
+                  height="100%"
+                  paddingHorizontal={25}
+                  marginHorizontal="2.5%"
+                  type="white-outline"
+                  onPress={() => {
+                    router.replace({
+                      pathname: "/(tabs)",
+                    });
+                  }}
+                />
 
-                    </ScrollView>
-                </SpacerView>
+                <ThemedButton
+                  title="Matandang Balara"
+                  width="50%"
+                  height="100%"
+                  paddingHorizontal={25}
+                  marginHorizontal="2.5%"
+                  type="white-outline"
+                  onPress={() => {
+                    router.replace({
+                      pathname: "/(tabs)",
+                    });
+                  }}
+                />
 
+                <SpacerView width={160} height="auto"></SpacerView>
+              </ScrollView>
+            </SpacerView>
+            <ThemedText
+              style={{ marginBottom: "2.5%" }}
+              lightColor="#FFF"
+              darkColor="#FFF"
+              type="subtitle"
+            >
+              Emergency Type
+            </ThemedText>
+            <SpacerView height="5%" marginBottom="5%">
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                scrollToOverflowEnabled={true}
+              >
+                <ThemedButton
+                  title="Violent Crime"
+                  width="33%"
+                  marginHorizontal={5}
+                  paddingHorizontal={25}
+                  height="100%"
+                  type="white-outline"
+                  onPress={() => {
+                    router.replace({
+                      pathname: "/(tabs)",
+                    });
+                  }}
+                />
 
+                <ThemedButton
+                  title="Active Fire"
+                  width="33%"
+                  marginHorizontal={5}
+                  paddingHorizontal={25}
+                  height="100%"
+                  type="white-outline"
+                  onPress={() => {
+                    router.replace({
+                      pathname: "/(tabs)",
+                    });
+                  }}
+                />
 
-                <ThemedText style = {{marginBottom: '2.5%'}} lightColor='#FFF' darkColor='#FFF' type="subtitle">Emergency Type</ThemedText>
-                <SpacerView height = "5%" marginBottom = '5%'>
-                    <ScrollView
-                    horizontal = {true}
-                    showsHorizontalScrollIndicator = {false}
-                    contentContainerStyle = {{paddingHorizontal: '2.5%'}}>   
+                <ThemedButton
+                  title="Serious Injury"
+                  width="33%"
+                  marginHorizontal={5}
+                  paddingHorizontal={25}
+                  height="100%"
+                  type="white-outline"
+                  onPress={() => {
+                    router.replace({
+                      pathname: "/(tabs)",
+                    });
+                  }}
+                />
 
-                        {/* EMERGENCY CATEGORIES */}
-                        {emergencyType.map((emergency, index) => (
-                        
-                        <Pressable key={emergency.id} style = {[style.scrollViewItem, emergencyTypeStates[index] && {backgroundColor: "#FFF", borderColor: '#FFF'}, !emergencyTypeStates[index] && {borderColor: '#FFF'}]} onPress={() => {handleEmergencyTypePress(index)}}>
-                            <Text style = {[style.scrollViewText, emergencyTypeStates[index] && {color: "#DA4B46"}, !emergencyTypeStates[index] && {color: '#FFF'}]}> {emergency.name} </Text>
-                        </Pressable>
-                          ))}
+                <SpacerView width={120} height="auto"></SpacerView>
+              </ScrollView>
+            </SpacerView>
+            <ThemedText lightColor="#FFF" darkColor="#FFF" type="subtitle">
+              Additional Information
+            </ThemedText>
+            <ThemedInput
+              marginTop={10}
+              borderRadius={15}
+              height={100}
+              placeholder="Additional Information"
+              textAlign="left"
+              textAlignVertical="top"
+              placeholderTextColor="#EDA5A3"
+            />
+            <SpacerView height={20} />
+            <SpacerView
+              flexDirection="column"
+              justifyContent="space-evenly"
+              alignItems="center"
+              height="auto"
+            >
+              <ThemedButton
+                title="Submit"
+                width="50%"
+                height="auto"
+                type="blue"
+                paddingVertical="2.5%"
+                onPress={() => {
+                  router.replace({
+                    pathname: "/",
+                  });
+                }}
+              />
 
-                    </ScrollView>
-                </SpacerView>
-                
-                <ThemedText lightColor='#FFF' darkColor='#FFF' type="subtitle" >Additional Information</ThemedText>
-                <ThemedInput marginTop = {10} borderRadius = {15} height = {100} placeholder='Additional Information' textAlign = "left" textAlignVertical = "top" placeholderTextColor = '#EDA5A3'/>
-                <SpacerView height={20} />
-                <SpacerView width='100%' flexDirection='column' justifyContent = "space-evenly" alignItems = 'center' height = 'auto'>
-                    <TouchableOpacity style = {{width: '50%', height: 'auto', backgroundColor: '#FFF', paddingVertical: '2.5%', borderRadius: 50, justifyContent: 'center'}} onPress={() =>
-                    {router.replace({
-                      pathname: "/",
-                    })}} >
-                        <ThemedText style = {{width: "100%", textAlign: 'center'}} lightColor='#DA4B46' darkColor='#DA4B46' type="subtitle" >Submit</ThemedText>
-                    </TouchableOpacity>
+              {!isBottomSheetOpen && (
+                <ThemedButton
+                  title="Speed Dial"
+                  width="50%"
+                  height="auto"
+                  type="blue"
+                  marginVertical="2.5%"
+                  paddingVertical="2.5%"
+                  onPress={() => handleSnapPress(1)}
+                />
+              )}
 
-                </SpacerView>
-
-            </KeyboardAvoidingView>
+              {isBottomSheetOpen && (
+                <ThemedButton
+                  title="Close"
+                  width="50%"
+                  height="auto"
+                  type="blue"
+                  marginVertical="2.5%"
+                  paddingVertical="2.5%"
+                  onPress={() => handleClosePress()}
+                />
+              )}
+            </SpacerView>
+          </KeyboardAvoidingView>
         </ScrollView>
-
-              <TouchableOpacity
-                    style = {[{
-                    position: 'absolute',
-                    bottom: 20,
-                    right: 20
-                    }, isBottomSheetOpen && {display: 'none'}]} 
-                    onPress={() => handleSnapPress(0)}
-                    >
-                      <Image style = {{
-                      width: 50,
-                      height: 50,
-                      }}
-                      source={hotline}/>
-                </TouchableOpacity>
-
         <Portal>
-            <BottomSheet ref={sheetRef} index={-1} snapPoints={snapPoints} onChange={handleSheetChange} backgroundStyle={{backgroundColor: '#115272'}} handleIndicatorStyle={{backgroundColor: '#FFF', width: '40%'}} enablePanDownToClose={true}>
-                    <View style = {{ width: "100%", height: "100%",}}>
-                            <BottomSheetScrollView contentContainerStyle = {{justifyContent: 'center', alignItems: "center", padding: '2.5%'}} horizontal = {true}>
+          <BottomSheet
+            ref={sheetRef}
+            index={-1}
+            snapPoints={snapPoints}
+            onChange={handleSheetChange}
+            backgroundStyle={{ backgroundColor: "#115272" }}
+            handleIndicatorStyle={{ backgroundColor: "#FFF", width: "40%" }}
+            enablePanDownToClose={true}
+          >
+            <BottomSheetScrollView
+              style={{ height: "auto", backgroundColor: "#115272" }}
+              horizontal={true}
+              contentContainerStyle={{ alignItems: "center", width: "auto" }}
+            >
+              <SpacerView
+                width="33%"
+                height="auto"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                marginLeft="1.5%"
+                marginRight="1.5%"
+                backgroundColor="#115272"
+                paddingLeft="2.5%"
+                paddingRight="2.5%"
+              >
+                <SpacerView
+                  width="auto"
+                  height="auto"
+                  backgroundColor="#FFF"
+                  justifyContent="center"
+                  padding="10%"
+                  borderRadius={10}
+                >
+                  <Image source={qcLogo} />
+                </SpacerView>
+                <SpacerView
+                  width="auto"
+                  height="auto"
+                  justifyContent="center"
+                  marginTop="1%"
+                >
+                  <ThemedText
+                    lightColor="#FFF"
+                    darkColor="#FFF"
+                    type="subtitle"
+                  >
+                    QC Hotline
+                  </ThemedText>
+                </SpacerView>
+              </SpacerView>
 
-                            {/* CRIME CATEGORIES */}
-                            {barangays.map((category, index) => (
-                                
-                                            <View key={category.id} style={style.bottomSheetItem}>
-                                                <TouchableOpacity style={[style.bottomSheetImageContainer]} onPress={() => {Linking.openURL(`tel:${category.phone}`)}}>
-                                                        <Image style={style.bottomSheetImage} source={category.icon} />
-                                                </TouchableOpacity>
-                                                <ThemedText style={style.bottomSheetItemTitle} lightColor='#FFF' darkColor='#FFF' type='subtitle'>
-                                                    {category.name}
-                                                </ThemedText>
-                                            </View>
-                            ))}
+              <SpacerView
+                width="33%"
+                height="auto"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                marginLeft="1.5%"
+                marginRight="1.5%"
+                backgroundColor="#115272"
+                paddingLeft="2.5%"
+                paddingRight="2.5%"
+              >
+                <SpacerView
+                  width="auto"
+                  height="auto"
+                  backgroundColor="#FFF"
+                  justifyContent="center"
+                  padding="10%"
+                  borderRadius={10}
+                >
+                  <Image source={holyspiritLogo} />
+                </SpacerView>
+                <SpacerView
+                  width="auto"
+                  height="auto"
+                  justifyContent="center"
+                  marginTop="1%"
+                >
+                  <ThemedText
+                    lightColor="#FFF"
+                    darkColor="#FFF"
+                    type="subtitle"
+                  >
+                    Holy Spirit
+                  </ThemedText>
+                </SpacerView>
+              </SpacerView>
 
-                            </BottomSheetScrollView>
-                    </View>
-            </BottomSheet>
+              <SpacerView
+                width="33%"
+                height="auto"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                marginLeft="1.5%"
+                marginRight="1.5%"
+                backgroundColor="#115272"
+                paddingLeft="2.5%"
+                paddingRight="2.5%"
+              >
+                <SpacerView
+                  width="auto"
+                  height="auto"
+                  backgroundColor="#FFF"
+                  justifyContent="center"
+                  padding="10%"
+                  borderRadius={10}
+                >
+                  <Image source={balaraLogo} />
+                </SpacerView>
+                <SpacerView
+                  width="auto"
+                  height="auto"
+                  justifyContent="center"
+                  marginTop="1%"
+                >
+                  <ThemedText
+                    lightColor="#FFF"
+                    darkColor="#FFF"
+                    type="subtitle"
+                  >
+                    Old Balara
+                  </ThemedText>
+                </SpacerView>
+              </SpacerView>
+
+              <SpacerView width={160} height="auto"></SpacerView>
+            </BottomSheetScrollView>
+          </BottomSheet>
         </Portal>
       </GestureHandlerRootView>
     );
-  }
-  else if (Platform.OS === 'web') {
+  } else if (Platform.OS === "web") {
     return (
-    
-        <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        style={[styles.mainContainer, utility.redBackground]}
-        showsVerticalScrollIndicator = {false}
-        keyboardShouldPersistTaps = "handled"
+      <SpacerView
+        width="100%"
+        height="100%"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        style={[utility.blueBackground, { margin: 20 }]}
+      >
+        <SpacerView height="10%" />
+        <SpacerView
+          backgroundColor="#DA4B46"
+          height="90%"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          style={[utility.redBackground, style.shadowBox, { borderRadius: 20 }]}
         >
-            <SpacerView
-              backgroundColor='#DA4B46'
-              flex={1}
-              flexDirection='column'
-              justifyContent='center'
-              alignItems='center'
-              marginBottom = "5%"
+          <SpacerView height="auto" width="40%" justifyContent="center">
+            <ThemedText
+              lightColor="#FFF"
+              darkColor="#FFF"
+              type="display"
+              textAlign="center"
             >
-        
-                <SpacerView height = 'auto' width='40%' justifyContent='center' marginTop='2.5%' marginBottom='2.5%'>
-                  <ThemedText lightColor='#FFF' darkColor='#FFF' type="display" textAlign='center'>Send a distress message</ThemedText>
-                </SpacerView>
+              Send a distress message
+            </ThemedText>
+          </SpacerView>
 
-                  
-                    <SpacerView justifyContent='flex-start' width = '50%' height='auto' marginBottom = '1%'>
-                      <ThemedText style = {{marginBottom: '2.5%'}} lightColor='#FFF' darkColor='#FFF' type="title">Send to</ThemedText>
-                    </SpacerView>
-                    
-                    <SpacerView
-                    width='50%'
-                    height='auto'
-                    justifyContent='space-between'
-                    marginBottom = "5%"
-                    >
-                        <ThemedButton title='Batasan Hills' width = "auto" height = '100%' paddingHorizontal = '5%' paddingVertical = '0.5%' type = "white-outline" onPress={() =>
-                            {router.replace({
-                              pathname: "/",
-                            })}} />
-                        <ThemedButton title='Holy Spirit' width = "auto" height = '100%' paddingHorizontal = '5%' paddingVertical = '0.5%' type = "white-outline" onPress={() =>
-                            {router.replace({
-                              pathname: "/",
-                            })}} />
-                        <ThemedButton title='Matandang Balara' width = "auto" height = '100%' paddingHorizontal = '5%' paddingVertical = '0.5%' type = "white-outline" onPress={() =>
-                            {router.replace({
-                              pathname: "/",
-                            })}} />
-                    </SpacerView>
-                
-                <SpacerView justifyContent='flex-start' width = '50%' height='auto' marginBottom = "1%">
-                    <ThemedText style = {{marginBottom: '2.5%'}} lightColor='#FFF' darkColor='#FFF' type="title">Emergency Type</ThemedText>
-                </SpacerView>
+          <SpacerView
+            justifyContent="flex-start"
+            width="50%"
+            height="auto"
+            marginBottom="1%"
+          >
+            <ThemedText
+              style={{ marginBottom: "2.5%" }}
+              lightColor="#FFF"
+              darkColor="#FFF"
+              type="title"
+            >
+              Send to
+            </ThemedText>
+          </SpacerView>
 
-                    <SpacerView
-                    width='50%'
-                    height='auto'
-                    justifyContent='space-between'
-                    marginBottom = "5%" 
-                    >
-                            <ThemedButton title='Violent Crime' width = "auto" height = '100%' paddingHorizontal = '5%' paddingVertical = '0.5%' type = "white-outline" onPress={() =>
-                                {router.replace({
-                                  pathname: "/",
-                                })}} />
-                            <ThemedButton title='Active Fire' width = "auto" height = '100%' paddingHorizontal = '5%' paddingVertical = '0.5%' type = "white-outline" onPress={() =>
-                                {router.replace({
-                                  pathname: "/",
-                                })}} />
-                            <ThemedButton title='Serious Injury' width = "auto" height = '100%' paddingHorizontal = '5%' paddingVertical = '0.5%' type = "white-outline" onPress={() =>
-                                {router.replace({
-                                  pathname: "/",
-                                })}} />
-                    </SpacerView>
+          <SpacerView
+            width="50%"
+            height="auto"
+            justifyContent="space-evenly"
+            marginBottom="5%"
+          >
+            <ThemedButton
+              title="Holy Spirit"
+              width="50%"
+              height="100%"
+              paddingHorizontal="5%"
+              paddingVertical="0.5%"
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
+            />
+            <ThemedButton
+              title="Matandang Balara"
+              width="50%"
+              height="100%"
+              paddingHorizontal="5%"
+              paddingVertical="0.5%"
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
+            />
+          </SpacerView>
 
-                <SpacerView height = "auto" flexDirection='column' width='50%'>
-                    <ThemedText lightColor='#FFF' darkColor='#FFF' type="title" >Additional Information</ThemedText>
-                    <ThemedInput width = "100%" height = {150} borderRadius = {15} placeholder='Additional Information' textAlign = "left" textAlignVertical = "top" placeholderTextColor = '#EDA5A3'/>
-                </SpacerView>
-                
-                <SpacerView width = '25%' height='auto' justifyContent = "center" flexDirection = "column">
-                  <ThemedButton title="Submit" width = "auto" height = "auto" paddingVertical = '2.5%' type = "blue" onPress={() =>
-                    {router.replace({
-                      pathname: "/",
-                    })}} />
-                    <SpacerView height = "5%" />
-                  <ThemedButton title="Submit" width = "auto" height = "auto" paddingVertical = '2.5%' type = "blue" onPress={() =>
-                    {router.replace({
-                      pathname: "/(tabs)",
-                    })}} />
-                </SpacerView>
-            </SpacerView>
-        </ScrollView>
+          <SpacerView
+            justifyContent="flex-start"
+            width="50%"
+            height="auto"
+            marginBottom="1%"
+          >
+            <ThemedText
+              style={{ marginBottom: "2.5%" }}
+              lightColor="#FFF"
+              darkColor="#FFF"
+              type="title"
+            >
+              Emergency Type
+            </ThemedText>
+          </SpacerView>
+
+          <SpacerView
+            width="50%"
+            height="auto"
+            justifyContent="space-evenly"
+            marginBottom="5%"
+          >
+            <ThemedButton
+              title="Violent Crime"
+              width="33%"
+              height="100%"
+              paddingHorizontal="5%"
+              paddingVertical="0.5%"
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
+            />
+            <ThemedButton
+              title="Active Fire"
+              width="33%"
+              height="100%"
+              paddingHorizontal="5%"
+              paddingVertical="0.5%"
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
+            />
+            <ThemedButton
+              title="Serious Injury"
+              width="33%"
+              height="100%"
+              paddingHorizontal="5%"
+              paddingVertical="0.5%"
+              type={isPressed ? "red" : "white-outline"}
+              onPress={handlePress}
+            />
+          </SpacerView>
+
+          <SpacerView height="auto" flexDirection="column" width="50%">
+            <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
+              Location
+            </ThemedText>
+            <ThemedInput
+              width="100%"
+              height="100%"
+              borderRadius={15}
+              placeholder="Location"
+              textAlign="left"
+              textAlignVertical="top"
+              placeholderTextColor="#EDA5A3"
+            />
+          </SpacerView>
+
+          <SpacerView height="auto" flexDirection="column" width="50%">
+            <ThemedText lightColor="#FFF" darkColor="#FFF" type="title">
+              Additional Information
+            </ThemedText>
+            <ThemedInput
+              width="100%"
+              height={150}
+              borderRadius={15}
+              placeholder="Additional Information"
+              textAlign="center"
+              textAlignVertical="top"
+              placeholderTextColor="#EDA5A3"
+            />
+          </SpacerView>
+
+          <SpacerView
+            width="25%"
+            height="auto"
+            justifyContent="center"
+            flexDirection="column"
+          >
+            <ThemedButton
+              title="Submit"
+              width="auto"
+              height="auto"
+              paddingVertical="2.5%"
+              type="blue"
+              onPress={() => {
+                router.replace({
+                  pathname: "/(tabs)",
+                });
+              }}
+            />
+            <SpacerView height="5%" />
+          </SpacerView>
+        </SpacerView>
+        <SpacerView height="10%" />
+      </SpacerView>
     );
   }
-  
 }
 
 const style = StyleSheet.create({
-
   //GENERAL STYLES
   container: {
     flex: 1,
     paddingTop: 200,
   },
+  mainContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   contentContainer: {
     backgroundColor: "white",
+  },
+  shadowBox: {
+    shadowColor: "#333333",
+    shadowOffset: {
+      width: 10,
+      height: 10,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
 
   //DISTRESS MESSAGE STYLES
   scrollViewItem: {
-    width: 'auto',
-    height: '100%',
+    width: "auto",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 25,
@@ -349,12 +605,12 @@ const style = StyleSheet.create({
 
   //BOTTOM SHEET STYLES
   bottomSheet: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
-  }, 
+  },
   bottomSheetItem: {
     width: 100,
-    height: '100%',
+    height: "100%",
     flexDirection: "column",
     justifyContent: "space-between",
     alignItems: "center",
@@ -370,16 +626,4 @@ const style = StyleSheet.create({
     borderRadius: 100,
     borderColor: "#FFF",
   },
-  bottomSheetImage: {
-    width: 50,
-    height: 50,
-    justifyContent: "center",
-  },
-  bottomSheetItemTitle: {
-    width: "100%",
-    height: "25%",
-    textAlign: "center",
-    verticalAlign: "middle",
-  }
-
 });
