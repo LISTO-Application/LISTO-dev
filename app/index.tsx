@@ -186,7 +186,7 @@ export default function Login() {
               title="Login"
               onPress={() => {
                 router.replace({
-                  pathname: "/(tabs)",
+                  pathname: "/summary",
                   params: {
                     id: "John Doe",
                   },

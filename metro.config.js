@@ -15,5 +15,6 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     // Ensure you call the default resolver.
     return context.resolveRequest(context, moduleName, platform);
   };
+
   
 module.exports = config;
