@@ -1,10 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
+
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ViewReports from "./ViewReports";
 import newReports from "./NewReports";
 import EditReport from "./EditReport";
-
+import ReportDetails from "./reportDetails";
+        
 const RootReports = () => {
   const Stack = createNativeStackNavigator();
   return (
@@ -23,6 +25,11 @@ const RootReports = () => {
         name="EditReports"
         component={EditReport}
         options={{ headerShown: false, title: "Edit Reports" }}
+      />
+      <Stack.Screen
+        name="ReportDetails"
+        component={ReportDetails}
+        options={{ headerShown: false, title: "Report Details" }}
       />
     </Stack.Navigator>
   );

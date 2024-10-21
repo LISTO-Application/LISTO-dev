@@ -45,7 +45,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       console.error("Error fetching reports:", error);
     }
   };
-
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       fetchReports();
@@ -102,10 +101,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       <View style={styles.mainContainer}>
         {/* Blue Header */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backIcon}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Submitted Reports</Text>
@@ -115,7 +111,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         {/* Report List */}
         <SpacerView height={90} />
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          {reports.map((report) => (
+          {currentReports.map((report) => (
             <View key={report.id} style={styles.reportContainer}>
               <SpacerView height={20} />
               <View style={styles.reportIcon}>
@@ -146,6 +142,27 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             </View>
           ))}
 
+          {/* Pagination Controls */}
+          <View style={styles.paginationContainer}>
+            <TouchableOpacity
+              disabled={currentPage === 1}
+              onPress={() => setCurrentPage(currentPage - 1)}
+              style={styles.paginationButton}
+            >
+              <Text style={styles.paginationText}>Previous</Text>
+            </TouchableOpacity>
+            <Text style={styles.paginationText}>
+              Page {currentPage} of {totalPages}
+            </Text>
+            <TouchableOpacity
+              disabled={currentPage === totalPages}
+              onPress={() => setCurrentPage(currentPage + 1)}
+              style={styles.paginationButton}
+            >
+              <Text style={styles.paginationText}>Next</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Submit & Cancel Buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.cancelButton}>
@@ -166,19 +183,13 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        {/* Sidebar */}
         {/* Main Content */}
         <View style={webstyles.mainContainer}>
           <Text style={webstyles.headerText}>Reports</Text>
+          
           <ScrollView contentContainerStyle={webstyles.reportList}>
-            {reports.map((report, index) => (
-              <View
-                key={report.id}
-                style={[
-                  webstyles.reportContainer,
-                  index === reports.length - 1 ? { marginBottom: 60 } : {},
-                ]}
-              >
+            {currentReports.map((report) => (
+              <View key={report.id} style={webstyles.reportContainer}>
                 <Image source={report.icon} style={webstyles.reportIcon} />
                 <Text style={webstyles.reportTitle}>{report.title}</Text>
                 <View style={webstyles.reportActions}>
@@ -192,26 +203,50 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     style={webstyles.editIcon}
                     onPress={() => handleDeleteReport(report.id)}
                   >
-                    <Ionicons
-                      name="trash-bin-outline"
-                      size={30}
-                      color="#DA4B46"
-                    />
+                    <Ionicons name="trash-bin-outline" size={30} color="#DA4B46" />
                   </TouchableOpacity>
                   <Text style={webstyles.timeText}>{report.time}</Text>
+                  
                 </View>
+                
               </View>
+              
             ))}
           </ScrollView>
 
+          {/* Pagination Controls */}
+        
+
           {/* Plus Sign Button */}
-          <TouchableOpacity
+         
+          <View style={webstyles.paginationContainer}>
+            <TouchableOpacity
+              disabled={currentPage === 1}
+              onPress={() => setCurrentPage(currentPage - 1)}
+              style={webstyles.paginationButton}
+            >
+              <Text style={webstyles.paginationText}>Previous</Text>
+            </TouchableOpacity>
+            <Text style={webstyles.paginationText}>
+              Page {currentPage} of {totalPages}
+            </Text>
+            <TouchableOpacity
+              disabled={currentPage === totalPages}
+              onPress={() => setCurrentPage(currentPage + 1)}
+              style={webstyles.paginationButton}
+            >
+              <Text style={webstyles.paginationText}>Next</Text>
+            </TouchableOpacity>
+            
+          </View>
+          
+        </View>
+        <TouchableOpacity
             style={webstyles.fab}
-            onPress={() => navigation.navigate("NewReports")} // Change this to the desired action
+            onPress={() => navigation.navigate("NewReports")}
           >
             <Ionicons name="add" size={30} color="white" />
           </TouchableOpacity>
-        </View>
       </View>
     );
   }

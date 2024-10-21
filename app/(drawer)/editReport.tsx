@@ -108,7 +108,6 @@ export default function EditReport({ navigation }: { navigation: any }) {
     return (
       <View style={webstyles.container}>
         {/* Sidebar */}
-
         <View style={webstyles.mainContainer}>
           <Text style={webstyles.headerText}>Edit Report</Text>
 
