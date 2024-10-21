@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   ScrollView,
@@ -13,67 +13,86 @@ import { router } from "expo-router";
 import { SpacerView } from "@/components/SpacerView";
 import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
+import { Report } from "../(tabs)/data/reports";
+import { Route } from "expo-router/build/Route";
+import { useRoute } from "@react-navigation/native";
+import { initializeApp } from "@react-native-firebase/app";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  getFirestore,
+} from "@react-native-firebase/firestore";
+import { db } from "../FirebaseConfig";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
-  // Icons for reports
-  const murder = require("../../assets/images/knife-icon.png");
-  const homicide = require("../../assets/images/homicide-icon.png");
-  const theft = require("../../assets/images/thief-icon.png");
-  const carnapping = require("../../assets/images/car-icon.png");
-  const injury = require("../../assets/images/injury-icon.png");
-  const robbery = require("../../assets/images/robbery-icon.png");
-  const rape = require("../../assets/images/rape-icon.png");
+  const [reports, setReports] = useState<Report[]>([]);
 
-  // Example report data stored in state
-  const [reports, setReports] = useState([...Array(20).keys()].map(i => ({
-      id: i + 1,
-      title: `Report ${i + 1}`,
-      time: "9:41 AM",
-      icon: i % 2 === 0 ? robbery : theft,
-    })));
+  const fetchReports = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "reports"));
+      const reportList: Report[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        icon: doc.data().icon || "", // Add a default value if icon is missing
+        category: doc.data().category || "Unknown", // Default value
+        title: doc.data().title || "Untitled", // Default value
+        name: doc.data().name || "Anonymous", // Default value
+        time: doc.data().time || new Date().toISOString(), // Default to current time
+      }));
+      setReports(reportList);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    }
+  };
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchReports();
+    });
+    return unsubscribe;
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const reportsPerPage = 10;
+    // navigation.addListener("focus", () => {
+    //   console.log("Navigation params:", navigation.params);
+    //   const updatedReport =
+    //     navigation.getState().routes[navigation.getState().index].params
+    //       ?.updatedReport;
+    //   if (updatedReport) {
+    //     setReports((prevReports) => [...prevReports, updatedReport]);
+    //   }
+    // });
+    // console.log(
+    //   "Navigation State:",
+    //   navigation.getState().routes[navigation.getState().index].params
+    //     .updatedReport
+    // );
+    // console.log("Navigation State:", navigation.getState());
+    // return unsubscribe;
+  }, [navigation]);
 
-  // Calculate total pages
-  const totalPages = Math.ceil(reports.length / reportsPerPage);
+  const handleDeleteReport = async (reportId: any) => {
+    try {
+      await deleteDoc(doc(db, "reports", reportId));
+      setReports((prevReports) => prevReports.filter((r) => r.id !== reportId));
+      Alert.alert("Report deleted successfully");
+    } catch (error) {
+      console.error("Error deleting report: ", error);
+    }
 
-  // Get the current reports based on the page
-  const currentReports = reports.slice(
-    (currentPage - 1) * reportsPerPage,
-    currentPage * reportsPerPage
-  );
-
-  // Delete report handler
-  const handleDeleteReport = (reportId: number) => {
-    // Show confirmation alert
-    Alert.alert(
-      "Delete Report",
-      "Are you sure you want to delete this report?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          onPress: () => {
-            // Remove the report from the state
-            setReports(reports.filter((report) => report.id !== reportId));
-          },
-        },
-      ]
-    );
+    // setReports((prevReports) =>
+    //   prevReports.filter((report) => report.id !== reportId)
+    // );
   };
 
   // Edit report handler (redirect to editReport.tsx with report ID)
-  const handleEditReport = (reportId: number) => {
-    navigation.navigate("EditReports", { id: reportId });
+  const handleEditReport = (report: Report) => {
+    // Redirect to the report edit page with the report ID in the query
+    navigation.navigate("EditReports", { report });
   };
 
   // Submit report handler (redirect to new report form)
   const handleSubmitReport = () => {
-    navigation.navigate("/newReportsForm");
+    // Redirect to the page where the user can fill in new report details
+    navigation.navigate("NewReports"); // Adjust this path based on your routing setup
   };
 
   // Render for Android and iOS
@@ -105,7 +124,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 {/* Edit Icon */}
                 <TouchableOpacity
                   style={styles.editIcon}
-                  onPress={() => handleEditReport(report.id)}
+                  onPress={() => handleEditReport(report)}
                 >
                   <Ionicons name="pencil" size={24} color="white" />
                 </TouchableOpacity>
@@ -176,7 +195,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 <View style={webstyles.reportActions}>
                   <TouchableOpacity
                     style={webstyles.editIcon}
-                    onPress={() => handleEditReport(report.id)}
+                    onPress={() => handleEditReport(report)}
                   >
                     <Ionicons name="create-outline" size={30} color="white" />
                   </TouchableOpacity>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   ScrollView,
@@ -16,189 +16,136 @@ import { router } from "expo-router";
 import { SpacerView } from "@/components/SpacerView"; // Adjust the path if necessary
 import { useLocalSearchParams } from "expo-router"; // Ensure you have expo-router installed
 import { webstyles } from "@/styles/webstyles"; // For web styles
+import { RouteProp, useRoute } from "@react-navigation/native";
+import EditReportMobile from "./mobile/EditReport";
+import { doc, updateDoc } from "@react-native-firebase/firestore";
+import { db } from "../FirebaseConfig";
+
+interface CrimeType {
+  label: string;
+  value:
+    | "murder"
+    | "robbery"
+    | "homicide"
+    | "injury"
+    | "rape"
+    | "carnapping"
+    | "theft";
+}
 
 export default function EditReport({ navigation }: { navigation: any }) {
-  const { id } = useLocalSearchParams(); // Get the report ID from the URL
-  const [modalVisible, setModalVisible] = useState(false);
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const route = useRoute();
+  const { report }: { report: any } = route.params as { report: Report };
+
+  const [category, setCategory] = useState<CrimeType["value"] | null>(null);
+  const [title, setTitle] = useState(report.title);
+  const [name, setName] = useState(report.name);
   const [selectedValue, setSelectedValue] = useState("Select Crime Type");
   const [location, setLocation] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
 
-  // Example report data (this should come from your data source, such as an API or state)
-  const reportData = [
-    {
-      id: "1",
-      title: "Violent Activity near 6th street",
-      location: "6th Street",
-      additionalInfo: "Heard shouting and yelling.",
-      crimeType: "Assault",
-    },
-    {
-      id: "2",
-      title: "Theft near 6th street",
-      location: "6th Street",
-      additionalInfo: "Someone stole my bike.",
-      crimeType: "Theft",
-    },
-  ];
-
-  useEffect(() => {
-    // Find the report data based on the ID
-    const report = reportData.find((report) => report.id === id);
-    if (report) {
-      setSelectedValue(report.crimeType);
-      setLocation(report.location);
-      setAdditionalInfo(report.additionalInfo);
-    }
-  }, [id]);
-
-  const crimeTypes = [
+  const crimeTypes: CrimeType[] = [
+    { label: "Murder", value: "murder" },
+    { label: "Robbery", value: "robbery" },
+    { label: "Homicide", value: "homicide" },
+    { label: "Injury", value: "injury" },
+    { label: "Rape", value: "rape" },
+    { label: "Carnapping", value: "carnapping" },
     { label: "Theft", value: "theft" },
-    { label: "Assault", value: "assault" },
-    { label: "Vandalism", value: "vandalism" },
   ];
-
-  const handleSelect = (item: any) => {
-    setModalVisible(true);
-    setSelectedValue(item.label);
+  const handleSelect = (item: CrimeType) => {
+    setSelectedValue(item.label); // Update the selected value
+    setIsDropdownVisible(false); // Close the dropdown
   };
 
-  const handleSubmit = () => {
+  console.log(report);
+
+  const handleSubmit = async () => {
     console.log("Crime Type:", selectedValue);
     console.log("Location:", location);
     console.log("Additional Information:", additionalInfo);
-    navigation.navigate("ViewReports", {
-      selectedValue: selectedValue,
+    const updatedReport = {
+      ...report,
+      name: name,
+      title: title,
+      category: selectedValue,
       location: location,
-      additionalInfo: additionalInfo,
-    });
+    };
+
+    try {
+      // Update the Firestore document with the new report data
+      const reportRef = doc(db, "reports", report.id); // Ensure 'report.id' holds the correct document ID
+      await updateDoc(reportRef, updatedReport);
+
+      console.log("Report updated successfully:", updatedReport);
+      Alert.alert("Success", "Report updated successfully");
+      navigation.navigate("ViewReports");
+    } catch (error) {
+      console.error("Error updating report:", error);
+      Alert.alert("Error", "Error updating report. Please try again.");
+    }
+    // console.log("UpdatedReport: ", updatedReport);
+
+    // navigation.navigate("ViewReports", { updatedReport });
   };
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
-      <View style={styles.mainContainer}>
-        {/* Blue Header */}
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backIcon}
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>Edit a Report</Text>
-          <SpacerView height={120} />
-        </View>
-
-        <View style={styles.formContainer}>
-          <TouchableOpacity style={styles.dropdown} onPress={handleSelect}>
-            <Text style={styles.selectedText}>{selectedValue}</Text>
-            <Ionicons name="chevron-down" size={24} color="gray" />
-          </TouchableOpacity>
-
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setModalVisible(false)}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <FlatList
-                  data={crimeTypes}
-                  keyExtractor={(item) => item.value}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.item}
-                      onPress={() => handleSelect(item)}
-                    >
-                      <Text style={styles.itemText}>{item.label}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            </View>
-          </Modal>
-
-          <TextInput
-            style={styles.textInput}
-            placeholder="Location"
-            value={location}
-            onChangeText={setLocation}
-          />
-
-          <TextInput
-            style={[styles.textInput, styles.textArea]}
-            placeholder="Additional Information"
-            value={additionalInfo}
-            onChangeText={setAdditionalInfo}
-            multiline={true}
-          />
-
-          <TouchableOpacity style={styles.imageUpload}>
-            <Ionicons name="image-outline" size={24} color="gray" />
-            <Text style={styles.uploadText}>Add file</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => console.log("Cancel")}
-          >
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={[styles.buttonText, { color: "#FFF" }]}>
-              Submit Report
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <EditReportMobile
+        isDropdownVisible={isDropdownVisible}
+        setIsDropdownVisible={setIsDropdownVisible}
+        selectedValue={selectedValue}
+        crimeTypes={crimeTypes}
+        location={location}
+        setLocation={setLocation}
+        additionalInfo={additionalInfo}
+        setAdditionalInfo={setAdditionalInfo}
+        handleSelect={handleSelect}
+        handleSubmit={handleSubmit}
+      />
     );
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
         {/* Sidebar */}
-        
         <View style={webstyles.mainContainer}>
           <Text style={webstyles.headerText}>Edit Report</Text>
 
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setModalVisible(false)}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <FlatList
-                  data={crimeTypes}
-                  keyExtractor={(item) => item.value}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.item}
-                      onPress={() => handleSelect(item)}
-                    >
-                      <Text style={styles.itemText}>{item.label}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            </View>
-          </Modal>
           <ScrollView contentContainerStyle={webstyles.reportList}>
             {/* Report Details */}
             <Text>Reporter's Username:</Text>
             <TextInput
               style={webstyles.inputField}
-              value="Mr. False Reporter"
-              editable={false}
+              value={name}
+              onChange={setName}
             />
 
             <Text>Select Crime Type:</Text>
-            <TouchableOpacity style={webstyles.dropdown} onPress={handleSelect}>
-              <Text style={webstyles.selectedText}>{selectedValue}</Text>
+            <TouchableOpacity
+              style={webstyles.dropdown}
+              onPress={() => setIsDropdownVisible(!isDropdownVisible)}
+            >
+              <Text style={webstyles.selectedText}>
+                {selectedValue || "Select Crime Type"}
+              </Text>
               <Ionicons name="chevron-down" size={24} color="gray" />
             </TouchableOpacity>
+
+            {isDropdownVisible && (
+              <FlatList
+                data={crimeTypes}
+                keyExtractor={(item) => item.value}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={webstyles.item}
+                    onPress={() => handleSelect(item)}
+                  >
+                    <Text style={webstyles.itemText}>{item.label}</Text>
+                  </TouchableOpacity>
+                )}
+                style={webstyles.dropdownList} // Optional: Add styles to control dropdown position
+              />
+            )}
 
             <Text>Location:</Text>
             <TextInput
@@ -212,8 +159,8 @@ export default function EditReport({ navigation }: { navigation: any }) {
               style={webstyles.textArea}
               multiline
               numberOfLines={4}
-              value={additionalInfo}
-              onChangeText={setAdditionalInfo}
+              value={title}
+              onChangeText={setTitle}
             />
 
             <Text>Image Upload:</Text>

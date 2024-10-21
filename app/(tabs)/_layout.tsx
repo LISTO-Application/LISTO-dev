@@ -24,7 +24,7 @@ import CrimeMap from "./crimemap";
 import UserAccount from "./[id]";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ViewReports from "../(drawer)/viewReports";
+import ViewReports from "../(drawer)/ViewReports";
 import ValidateReports from "../(drawer)/validateReports";
 import Login from "..";
 import { AuthContext, AuthProvider } from "../AuthContext";
