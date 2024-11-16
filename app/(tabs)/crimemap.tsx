@@ -11,15 +11,21 @@ import {
   TouchableOpacity,
   ImageSourcePropType,
   Modal,
+  useAnimatedValue,
+  Button,
 } from "react-native";
 import MapView from "react-native-maps";
-import { Marker } from "react-native-maps";
-import { PROVIDER_GOOGLE, Heatmap } from "react-native-maps";
+import { Marker, PROVIDER_GOOGLE, Heatmap } from "react-native-maps";
 import {
   Map,
   APIProvider,
   useMapsLibrary,
   useMap,
+  MapMouseEvent,
+  Pin,
+  AdvancedMarker,
+  InfoWindow,
+  useAdvancedMarkerRef,
 } from "@vis.gl/react-google-maps";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useMemo, useCallback, useRef, useState, useEffect } from "react";
@@ -60,8 +66,24 @@ import { addMonths, format, subMonths } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 import FilterHeatMap from "@/components/FilterHeatMap";
 import DateModal from "@/components/modal/DateModal";
+import { MarkerWithInfoWindow } from "@/components/MarkerWithInfoWindow";
 import WebHeatmap from "@/components/WebHeatmap";
 import heatmapData from "./data/heatmap";
+import dayjs, { Dayjs, locale } from "dayjs";
+import {
+  CrimeType,
+  MarkerType,
+  crimeImages,
+  dummyMarkers,
+} from "./data/marker";
+import { GeoPoint } from "@react-native-firebase/firestore";
+import React from "react";
+import { DateType, ModeType } from "react-native-ui-datepicker";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -97,7 +119,6 @@ export default function CrimeMap() {
   const [categoryStates, setCategoryStates] = useState(
     categories.map(() => false)
   );
-
   // FILTER CALLBACKS
 
   const handleFilterSheetChange = useCallback((index: any) => {
@@ -124,7 +145,7 @@ export default function CrimeMap() {
   const calendarSheetRef = useRef<BottomSheet>(null);
   const calendarSnapPoints = useMemo(() => ["40%"], []);
   const [isCalendarSheetOpen, setIsCalendarSheetOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("2024-10-12");
+  // const [selectedDate, setSelectedDate] = useState("2024-10-12");
   const [markedDates, setMarkedDates] = useState<{
     [key: string]: { selected: boolean; selectedColor: string };
   }>({});
@@ -175,312 +196,316 @@ export default function CrimeMap() {
   const position = { lat: 14.685992094228787, lng: 121.07589171824928 };
 
   if (Platform.OS === "android") {
-    return (
-      <GestureHandlerRootView>
-        <SpacerView
-          height="100%"
-          width="100%"
-          justifyContent="center"
-          alignItems="center"
-        >
-          <MapView
-            style={style.map}
-            provider={PROVIDER_GOOGLE}
-            minZoomLevel={14}
-            maxZoomLevel={17}
-            cameraZoomRange={{
-              minCenterCoordinateDistance: 14,
-              maxCenterCoordinateDistance: 17,
-              animated: true,
-            }}
-            region={{
-              latitude: 14.685992094228787,
-              longitude: 121.07589171824928,
-              latitudeDelta: 0.009351,
-              longitudeDelta: 0.005772,
-            }}
-          >
-            {!isHeatMapOn && (
-              <Marker
-                key={0}
-                title="Crime Scene #1"
-                coordinate={{
-                  latitude: 14.685992094228787,
-                  longitude: 121.07589171824928,
-                }}
-              />
-            )}
-
-            {isHeatMapOn && (
-              <Heatmap points={heatmapPoints} radius={40}></Heatmap>
-            )}
-          </MapView>
-
-          <Pressable
-            style={{
-              position: "absolute",
-              top: 30,
-              left: 20,
-            }}
-            onPress={() => {}}
-          >
-            <Image
-              style={{
-                width: 50,
-                height: 50,
-              }}
-              source={toggler}
-            />
-          </Pressable>
-
-          {!isFilterSheetOpen && (
-            <TouchableOpacity
-              style={{
-                position: "absolute",
-                top: 30,
-                right: 20,
-              }}
-              onPress={() => handleFilterSnapPress(1)}
-            >
-              <Image
-                style={{
-                  width: 50,
-                  height: 50,
-                }}
-                source={filter}
-              />
-            </TouchableOpacity>
-          )}
-
-          {isFilterSheetOpen && (
-            <TouchableOpacity
-              style={{
-                position: "absolute",
-                top: 30,
-                right: 20,
-              }}
-              onPress={() => handleFilterClosePress()}
-            >
-              <Image
-                style={{
-                  width: 50,
-                  height: 50,
-                }}
-                source={filter}
-              />
-            </TouchableOpacity>
-          )}
-
-          {!isHeatMapOn && (
-            <TouchableOpacity
-              style={{
-                position: "absolute",
-                top: 110,
-                right: 20,
-              }}
-              onPress={() => {
-                setIsHeatMapOn(true);
-              }}
-            >
-              <Image
-                style={{
-                  width: 50,
-                  height: 50,
-                }}
-                source={marker}
-              />
-            </TouchableOpacity>
-          )}
-
-          {isHeatMapOn && (
-            <TouchableOpacity
-              style={{
-                position: "absolute",
-                top: 110,
-                right: 20,
-              }}
-              onPress={() => {
-                setIsHeatMapOn(false);
-              }}
-            >
-              <Image
-                style={{
-                  width: 50,
-                  height: 50,
-                }}
-                source={heatmap}
-              />
-            </TouchableOpacity>
-          )}
-
-          <View
-            style={{
-              position: "absolute",
-              bottom: 30,
-              width: "75%",
-              height: "auto",
-              justifyContent: "space-evenly",
-              alignItems: "center",
-              flexDirection: "row",
-            }}
-          >
-            <Pressable
-              style={{
-                width: "auto",
-                height: "auto",
-              }}
-              onPress={() => {}}
-            >
-              <Image style={{ width: 36, height: 36 }} source={leftArrow} />
-            </Pressable>
-
-            <TouchableOpacity
-              style={{}}
-              onPress={() => {
-                handleCalendarSnapPress(0);
-              }}
-            >
-              <Text
-                style={{
-                  width: "auto",
-                  height: "auto",
-                  paddingVertical: "1%",
-                  backgroundColor: "#115272",
-                  paddingHorizontal: "5%",
-                  color: "#FFF",
-                  fontWeight: "bold",
-                  fontSize: 18,
-                  borderRadius: 50,
-                }}
-              >
-                {selectedDate}
-              </Text>
-            </TouchableOpacity>
-
-            <Pressable
-              style={{
-                width: "auto",
-                height: "auto",
-              }}
-              onPress={() => {}}
-            >
-              <Image style={{ width: 36, height: 36 }} source={rightArrow} />
-            </Pressable>
-          </View>
-        </SpacerView>
-
-        <Portal>
-          <BottomSheet
-            ref={filterSheetRef}
-            index={-1}
-            snapPoints={filterSnapPoints}
-            onChange={handleFilterSheetChange}
-            backgroundStyle={{ backgroundColor: "#115272" }}
-            handleIndicatorStyle={{ backgroundColor: "#FFF", width: "40%" }}
-            enablePanDownToClose={true}
-          >
-            <View style={{ width: "100%", height: "100%" }}>
-              <BottomSheetScrollView
-                contentContainerStyle={{
-                  alignItems: "center",
-                  padding: "2.5%",
-                }}
-                horizontal={true}
-              >
-                {/* CRIME CATEGORIES */}
-                {categories.map((category, index) => (
-                  <Pressable
-                    key={category.id}
-                    onPress={() => handleCategoryPress(index)}
-                  >
-                    <View style={style.filterSheetItem}>
-                      <View
-                        style={[
-                          style.filterSheetImageContainer,
-                          !categoryStates[index] && { opacity: 0.5 },
-                        ]}
-                      >
-                        <Image
-                          style={style.filterSheetImage}
-                          source={category.icon}
-                        />
-                      </View>
-                      <ThemedText
-                        style={style.filterSheetItemTitle}
-                        lightColor="#FFF"
-                        darkColor="#FFF"
-                        type="subtitle"
-                      >
-                        {category.name}
-                      </ThemedText>
-                    </View>
-                  </Pressable>
-                ))}
-              </BottomSheetScrollView>
-            </View>
-          </BottomSheet>
-
-          <BottomSheet
-            ref={calendarSheetRef}
-            index={-1}
-            snapPoints={calendarSnapPoints}
-            onChange={handleCalendarSheetChange}
-            backgroundStyle={{ backgroundColor: "#115272" }}
-            handleIndicatorStyle={{
-              backgroundColor: "#FFF",
-              width: "40%",
-            }}
-            enablePanDownToClose={true}
-          >
-            <View
-              style={{
-                width: "100%",
-                height: "100%",
-                paddingHorizontal: "5%",
-                paddingVertical: "2.5%",
-              }}
-            >
-              <Calendar
-                theme={{
-                  calendarBackground: "#115272",
-                  textDayFontWeight: "bold",
-                  textDayHeaderFontWeight: "bold",
-                  selectedDayBackgroundColor: "#DA4B46",
-                  dayTextColor: "#FFF",
-                  arrowColor: "#FFF",
-                  selectedDayTextColor: "#FFF",
-                  textSectionTitleColor: "#FFF",
-                  monthTextColor: "#FFF",
-                  textMonthFontWeight: "black",
-                  todayTextColor: "#FECF1A",
-                  arrowWidth: 5,
-                }}
-                headerStyle={{}}
-                hideExtraDays={true}
-                markingType="dot"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                }}
-                markedDates={markedDates}
-                onDayPress={(day) => {
-                  setSelectedDate(day.dateString);
-                  setMarkedDates({
-                    [day.dateString]: {
-                      selected: true,
-                      selectedColor: "#DA4B46",
-                    },
-                  });
-                }}
-              />
-            </View>
-          </BottomSheet>
-        </Portal>
-      </GestureHandlerRootView>
-    );
+    // return (
+    //   <GestureHandlerRootView>
+    //     <SpacerView
+    //       height="100%"
+    //       width="100%"
+    //       justifyContent="center"
+    //       alignItems="center"
+    //     >
+    //       <MapView
+    //         style={style.map}
+    //         provider={PROVIDER_GOOGLE}
+    //         minZoomLevel={14}
+    //         maxZoomLevel={17}
+    //         cameraZoomRange={{
+    //           minCenterCoordinateDistance: 14,
+    //           maxCenterCoordinateDistance: 17,
+    //           animated: true,
+    //         }}
+    //         region={{
+    //           latitude: 14.685992094228787,
+    //           longitude: 121.07589171824928,
+    //           latitudeDelta: 0.009351,
+    //           longitudeDelta: 0.005772,
+    //         }}
+    //       >
+    //         {!isHeatMapOn && (
+    //           <Marker
+    //             key={0}
+    //             title="Crime Scene #1"
+    //             coordinate={{
+    //               latitude: 14.685992094228787,
+    //               longitude: 121.07589171824928,
+    //             }}
+    //           />
+    //         )}
+    //         {isHeatMapOn && (
+    //           <Heatmap points={heatmapPoints} radius={40}></Heatmap>
+    //         )}
+    //       </MapView>
+    //       <Pressable
+    //         style={{
+    //           position: "absolute",
+    //           top: 30,
+    //           left: 20,
+    //         }}
+    //         onPress={() => {}}
+    //       >
+    //         <Image
+    //           style={{
+    //             width: 50,
+    //             height: 50,
+    //           }}
+    //           source={toggler}
+    //         />
+    //       </Pressable>
+    //       {!isFilterSheetOpen && (
+    //         <TouchableOpacity
+    //           style={{
+    //             position: "absolute",
+    //             top: 30,
+    //             right: 20,
+    //           }}
+    //           onPress={() => handleFilterSnapPress(1)}
+    //         >
+    //           <Image
+    //             style={{
+    //               width: 50,
+    //               height: 50,
+    //             }}
+    //             source={filter}
+    //           />
+    //         </TouchableOpacity>
+    //       )}
+    //       {isFilterSheetOpen && (
+    //         <TouchableOpacity
+    //           style={{
+    //             position: "absolute",
+    //             top: 30,
+    //             right: 20,
+    //           }}
+    //           onPress={() => handleFilterClosePress()}
+    //         >
+    //           <Image
+    //             style={{
+    //               width: 50,
+    //               height: 50,
+    //             }}
+    //             source={filter}
+    //           />
+    //         </TouchableOpacity>
+    //       )}
+    //       {!isHeatMapOn && (
+    //         <TouchableOpacity
+    //           style={{
+    //             position: "absolute",
+    //             top: 110,
+    //             right: 20,
+    //           }}
+    //           onPress={() => {
+    //             setIsHeatMapOn(true);
+    //           }}
+    //         >
+    //           <Image
+    //             style={{
+    //               width: 50,
+    //               height: 50,
+    //             }}
+    //             source={marker}
+    //           />
+    //         </TouchableOpacity>
+    //       )}
+    //       {isHeatMapOn && (
+    //         <TouchableOpacity
+    //           style={{
+    //             position: "absolute",
+    //             top: 110,
+    //             right: 20,
+    //           }}
+    //           onPress={() => {
+    //             setIsHeatMapOn(false);
+    //           }}
+    //         >
+    //           <Image
+    //             style={{
+    //               width: 50,
+    //               height: 50,
+    //             }}
+    //             source={heatmap}
+    //           />
+    //         </TouchableOpacity>
+    //       )}
+    //       <View
+    //         style={{
+    //           position: "absolute",
+    //           bottom: 30,
+    //           width: "75%",
+    //           height: "auto",
+    //           justifyContent: "space-evenly",
+    //           alignItems: "center",
+    //           flexDirection: "row",
+    //         }}
+    //       >
+    //         <Pressable
+    //           style={{
+    //             width: "auto",
+    //             height: "auto",
+    //           }}
+    //           onPress={() => {}}
+    //         >
+    //           <Image style={{ width: 36, height: 36 }} source={leftArrow} />
+    //         </Pressable>
+    //         <TouchableOpacity
+    //           style={{}}
+    //           onPress={() => {
+    //             handleCalendarSnapPress(0);
+    //           }}
+    //         >
+    //           <Text
+    //             style={{
+    //               width: "auto",
+    //               height: "auto",
+    //               paddingVertical: "1%",
+    //               backgroundColor: "#115272",
+    //               paddingHorizontal: "5%",
+    //               color: "#FFF",
+    //               fontWeight: "bold",
+    //               fontSize: 18,
+    //               borderRadius: 50,
+    //             }}
+    //           >
+    //             {selectedDate}
+    //           </Text>
+    //         </TouchableOpacity>
+    //         <Pressable
+    //           style={{
+    //             width: "auto",
+    //             height: "auto",
+    //           }}
+    //           onPress={() => {}}
+    //         >
+    //           <Image style={{ width: 36, height: 36 }} source={rightArrow} />
+    //         </Pressable>
+    //       </View>
+    //     </SpacerView>
+    //     <Portal>
+    //       <BottomSheet
+    //         ref={filterSheetRef}
+    //         index={-1}
+    //         snapPoints={filterSnapPoints}
+    //         onChange={handleFilterSheetChange}
+    //         backgroundStyle={{ backgroundColor: "#115272" }}
+    //         handleIndicatorStyle={{ backgroundColor: "#FFF", width: "40%" }}
+    //         enablePanDownToClose={true}
+    //       >
+    //         <View style={{ width: "100%", height: "100%" }}>
+    //           <BottomSheetScrollView
+    //             contentContainerStyle={{
+    //               alignItems: "center",
+    //               padding: "2.5%",
+    //             }}
+    //             horizontal={true}
+    //           >
+    //             {/* CRIME CATEGORIES */}
+    //             {categories.map((category, index) => (
+    //               <Pressable
+    //                 key={category.id}
+    //                 onPress={() => handleCategoryPress(index)}
+    //               >
+    //                 <View style={style.filterSheetItem}>
+    //                   <View
+    //                     style={[
+    //                       style.filterSheetImageContainer,
+    //                       !categoryStates[index] && { opacity: 0.5 },
+    //                     ]}
+    //                   >
+    //                     <Image
+    //                       style={style.filterSheetImage}
+    //                       source={category.icon}
+    //                     />
+    //                   </View>
+    //                   <ThemedText
+    //                     style={style.filterSheetItemTitle}
+    //                     lightColor="#FFF"
+    //                     darkColor="#FFF"
+    //                     type="subtitle"
+    //                   >
+    //                     {category.name}
+    //                   </ThemedText>
+    //                 </View>
+    //               </Pressable>
+    //             ))}
+    //           </BottomSheetScrollView>
+    //         </View>
+    //       </BottomSheet>
+    //       <BottomSheet
+    //         ref={calendarSheetRef}
+    //         index={-1}
+    //         snapPoints={calendarSnapPoints}
+    //         onChange={handleCalendarSheetChange}
+    //         backgroundStyle={{ backgroundColor: "#115272" }}
+    //         handleIndicatorStyle={{
+    //           backgroundColor: "#FFF",
+    //           width: "40%",
+    //         }}
+    //         enablePanDownToClose={true}
+    //       >
+    //         <View
+    //           style={{
+    //             width: "100%",
+    //             height: "100%",
+    //             paddingHorizontal: "5%",
+    //             paddingVertical: "2.5%",
+    //           }}
+    //         >
+    //           <Calendar
+    //             theme={{
+    //               calendarBackground: "#115272",
+    //               textDayFontWeight: "bold",
+    //               textDayHeaderFontWeight: "bold",
+    //               selectedDayBackgroundColor: "#DA4B46",
+    //               dayTextColor: "#FFF",
+    //               arrowColor: "#FFF",
+    //               selectedDayTextColor: "#FFF",
+    //               textSectionTitleColor: "#FFF",
+    //               monthTextColor: "#FFF",
+    //               textMonthFontWeight: "black",
+    //               todayTextColor: "#FECF1A",
+    //               arrowWidth: 5,
+    //             }}
+    //             headerStyle={{}}
+    //             hideExtraDays={true}
+    //             markingType="dot"
+    //             style={{
+    //               width: "100%",
+    //               height: "100%",
+    //             }}
+    //             markedDates={markedDates}
+    //             onDayPress={(day) => {
+    //               setSelectedDate(day.dateString);
+    //               setMarkedDates({
+    //                 [day.dateString]: {
+    //                   selected: true,
+    //                   selectedColor: "#DA4B46",
+    //                 },
+    //               });
+    //             }}
+    //           />
+    //         </View>
+    //       </BottomSheet>
+    //     </Portal>
+    //   </GestureHandlerRootView>
+    // );
   } else if (Platform.OS === "web") {
+    //States
+    //Modal show
     const [toggleModal, setToggleModal] = useState(false);
+    const [showError, setShowError] = useState(false);
+    //Date selection tool
+    const [selectedDate, setSelectedDate] = useState(dayjs(new Date()));
+    const [dateFunction, setDateFunction] = useState(selectedDate);
+    const [mode, setMode] = useState<ModeType>("single");
+    console.log("Date sa crimemap:", dateFunction?.toLocaleString());
+    //All Markers
+    const [allMarkers, setAllMarkers] = useState<MarkerType[]>(dummyMarkers);
+    const [pins, setMarkers] = useState<MarkerType[]>(dummyMarkers);
+    const [isAddingMarker, setIsAddingMarker] = useState(false);
 
+    const closeError = () => {
+      setShowError(false); // Close the popup when dismissed
+    };
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -501,18 +526,55 @@ export default function CrimeMap() {
               streetViewControl={false}
               mapTypeId="roadmap"
               scrollwheel={true}
-              restriction={{
-                latLngBounds: {
-                  north: 14.693963,
-                  south: 14.669975,
-                  west: 121.069508,
-                  east: 121.087376,
-                },
-              }}
-              minZoom={15}
-              maxZoom={18}
+              minZoom={14}
+              maxZoom={20}
             >
+              <MarkerWithInfoWindow
+                markers={pins}
+                selectedDate={selectedDate}
+                allMarkers={allMarkers}
+                setMarkers={setMarkers}
+              />
+
+              <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
               {isHeatmapVisible && <WebHeatmap heatmap={filteredHeatmap} />}
+              {!isFilterSheetOpen && (
+                <Pressable
+                  style={{
+                    position: "absolute",
+                    top: 120,
+                    right: 20,
+                  }}
+                  onPress={() => filterSheetRef.current?.snapToIndex(1)}
+                >
+                  <Image
+                    style={{
+                      width: 50,
+                      height: 50,
+                    }}
+                    source={filter}
+                  />
+                </Pressable>
+              )}
+
+              {isFilterSheetOpen && (
+                <Pressable
+                  style={{
+                    position: "absolute",
+                    top: 120,
+                    right: 20,
+                  }}
+                  onPress={() => filterSheetRef.current?.close()}
+                >
+                  <Image
+                    style={{
+                      width: 50,
+                      height: 50,
+                    }}
+                    source={filter}
+                  />
+                </Pressable>
+              )}
               <PlacesLibrary />
             </Map>
           </APIProvider>
@@ -523,50 +585,49 @@ export default function CrimeMap() {
             visible={toggleModal}
             onRequestClose={() => setToggleModal(false)}
           >
-            <DateModal setToggleModal={setToggleModal} />
+            <DateModal
+              allMarkers={allMarkers}
+              dateFunction={dateFunction}
+              mode={mode}
+              setToggleModal={setToggleModal}
+              setSelectedDate={setSelectedDate}
+              setMarkers={setMarkers}
+              setIsAddingMarker={setIsAddingMarker}
+              setDateFunction={setDateFunction}
+              setMode={setMode}
+            />
           </Modal>
 
-          {!isFilterSheetOpen && (
-            <Pressable
-              style={{
-                position: "absolute",
-                top: 120,
-                right: 20,
-              }}
-              onPress={() => filterSheetRef.current?.snapToIndex(1)}
-            >
-              <Image
-                style={{
-                  width: 50,
-                  height: 50,
-                }}
-                source={filter}
-              />
-            </Pressable>
-          )}
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={showError}
+            onRequestClose={() => setShowError(false)}
+          >
+            <View style={style.modalOverlay}>
+              <View style={style.modalContent}>
+                <Text style={style.modalText}>
+                  Please set the mode to "single" before using the monthly
+                  filter.
+                </Text>
+                <Pressable style={style.button} onPress={closeError}>
+                  <Text style={style.buttonText}>Confirm</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
 
-          {isFilterSheetOpen && (
-            <Pressable
-              style={{
-                position: "absolute",
-                top: 120,
-                right: 20,
-              }}
-              onPress={() => filterSheetRef.current?.close()}
-            >
-              <Image
-                style={{
-                  width: 50,
-                  height: 50,
-                }}
-                source={filter}
-              />
-            </Pressable>
-          )}
-
-          <DateDisplay setToggleModal={setToggleModal} />
-
-          <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
+          <DateDisplay
+            markers={pins}
+            allMarkers={allMarkers}
+            dateFunction={dateFunction}
+            setToggleModal={setToggleModal}
+            setMarkers={setMarkers}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            setDateFunction={setDateFunction}
+            setShowError={setShowError}
+          />
         </SpacerView>
       </GestureHandlerRootView>
     );
@@ -612,7 +673,41 @@ const style = StyleSheet.create({
     textAlign: "center",
     verticalAlign: "top",
   },
+  button: {
+    alignSelf: "center",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "50%",
+    width: "50%",
+    borderRadius: 15,
+    backgroundColor: "#115272",
+  },
+  buttonText: {
+    color: "white",
+  },
   calendarHeader: {
     color: "#FFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "50%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 15,
+    textAlign: "center",
   },
 });

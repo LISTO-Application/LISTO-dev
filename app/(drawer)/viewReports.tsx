@@ -69,6 +69,16 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     // return unsubscribe;
   }, [navigation]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const reportsPerPage = 10;
+  // Calculate total pages
+  const totalPages = Math.ceil(reports.length / reportsPerPage);
+  // Get the current reports based on the page
+  const currentReports = reports.slice(
+    (currentPage - 1) * reportsPerPage,
+    currentPage * reportsPerPage
+  );
+
   const handleDeleteReport = async (reportId: any) => {
     try {
       await deleteDoc(doc(db, "reports", reportId));
@@ -101,7 +111,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       <View style={styles.mainContainer}>
         {/* Blue Header */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backIcon}
+          >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Submitted Reports</Text>
@@ -186,7 +199,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         {/* Main Content */}
         <View style={webstyles.mainContainer}>
           <Text style={webstyles.headerText}>Reports</Text>
-          
+
           <ScrollView contentContainerStyle={webstyles.reportList}>
             {currentReports.map((report) => (
               <View key={report.id} style={webstyles.reportContainer}>
@@ -203,22 +216,22 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     style={webstyles.editIcon}
                     onPress={() => handleDeleteReport(report.id)}
                   >
-                    <Ionicons name="trash-bin-outline" size={30} color="#DA4B46" />
+                    <Ionicons
+                      name="trash-bin-outline"
+                      size={30}
+                      color="#DA4B46"
+                    />
                   </TouchableOpacity>
                   <Text style={webstyles.timeText}>{report.time}</Text>
-                  
                 </View>
-                
               </View>
-              
             ))}
           </ScrollView>
 
           {/* Pagination Controls */}
-        
 
           {/* Plus Sign Button */}
-         
+
           <View style={webstyles.paginationContainer}>
             <TouchableOpacity
               disabled={currentPage === 1}
@@ -237,16 +250,14 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             >
               <Text style={webstyles.paginationText}>Next</Text>
             </TouchableOpacity>
-            
           </View>
-          
         </View>
         <TouchableOpacity
-            style={webstyles.fab}
-            onPress={() => navigation.navigate("NewReports")}
-          >
-            <Ionicons name="add" size={30} color="white" />
-          </TouchableOpacity>
+          style={webstyles.fab}
+          onPress={() => navigation.navigate("NewReports")}
+        >
+          <Ionicons name="add" size={30} color="white" />
+        </TouchableOpacity>
       </View>
     );
   }
