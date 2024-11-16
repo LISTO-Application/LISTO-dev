@@ -115,7 +115,15 @@ export default function CrimeMap() {
     { id: 6, name: "Robbery", icon: theft as ImageSourcePropType },
     { id: 7, name: "Rape", icon: rape as ImageSourcePropType },
   ];
-
+  const images = [
+    { source: require("../../assets/images/knife-icon.png"), label: "Murder" },
+    { source: require("../../assets/images/homicide-icon.png"), label: "Homicide" },
+    { source: require("../../assets/images/thief-icon.png"), label: "Theft" },
+    { source: require("../../assets/images/car-icon.png"), label: "Carnapping" },
+    { source: require("../../assets/images/injury-icon.png"), label: "Injury" },
+    { source: require("../../assets/images/robbery-icon.png"), label: "Robbery" },
+    { source: require("../../assets/images/rape-icon.png"), label: "Rape" }
+  ];
   const [categoryStates, setCategoryStates] = useState(
     categories.map(() => false)
   );
@@ -489,6 +497,7 @@ export default function CrimeMap() {
     //   </GestureHandlerRootView>
     // );
   } else if (Platform.OS === "web") {
+    const [activeButtonIndexes, setActiveButtonIndexes] = useState<number[]>([]);
     //States
     //Modal show
     const [toggleModal, setToggleModal] = useState(false);
@@ -506,6 +515,17 @@ export default function CrimeMap() {
     const closeError = () => {
       setShowError(false); // Close the popup when dismissed
     };
+    const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+
+  const toggleButton = (index: number) => {
+  setActiveButtonIndexes((prevActiveButtons = []) => {
+    if (prevActiveButtons.includes(index)) {
+      return prevActiveButtons.filter((i) => i !== index); // Remove if already active
+    } else {
+      return [...prevActiveButtons, index]; // Add if not active
+    }
+  });
+};
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -538,6 +558,103 @@ export default function CrimeMap() {
 
               <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
               {isHeatmapVisible && <WebHeatmap heatmap={filteredHeatmap} />}
+              <PlacesLibrary />
+            </Map>
+          </APIProvider>
+
+          <Modal
+          animationType="fade"
+          transparent={true}
+          visible={toggleModal}
+          onRequestClose={() => setToggleModal(false)}
+        >
+          <DateModal setToggleModal={setToggleModal} />
+        </Modal>
+
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={isFilterModalVisible}
+          onRequestClose={() => setIsFilterModalVisible(false)}
+        >
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.5)" }}>
+            <View style={{ width: "50%", padding: 20, backgroundColor: "white", borderRadius: 10, height: "30%" }}>
+            <Text style={{ 
+  color: "#115272", 
+  fontSize: 24,   // Increase the font size for better visibility
+  fontWeight: "bold", // Optional: make the text bold for emphasis
+  textAlign: "center", // Center the text horizontally
+  marginBottom: 20,  // Add some space below the text
+}}>
+  Choose your filter
+</Text>
+
+              {/* Render the images as toggleable buttons */}
+              <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-evenly" }}>
+                {images.map((image, index) => (
+                  <Pressable
+                    key={index}
+                    onPress={() => toggleButton(index)} // Toggle this button's active state
+                    style={{ 
+                      alignItems: "center", 
+                      border: "2px solid #115272",
+                      margin: 10, 
+                      backgroundColor: activeButtonIndexes.includes(index) ? "#E63B36" : "#E07875", // Change color based on active status
+                      width: 85, 
+                      height: 85, 
+                      justifyContent: "center", 
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Image
+                      source={image.source}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        resizeMode: "contain",
+                      }}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+
+              {/* Centered close button */}
+              <Pressable
+                onPress={() => setIsFilterModalVisible(false)}
+                style={{
+                  marginTop: 20,
+                  alignSelf: "center",
+                  backgroundColor: "#115272",
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 25,
+                }}
+              >
+                <Text style={{ color: "white", fontSize: 16}}>Close</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+    
+          {!isFilterSheetOpen && (
+            <Pressable
+              style={{
+                position: "absolute",
+                top: 120,
+                right: 20,
+              }}
+              onPress={() => setIsFilterModalVisible(true)} 
+              
+            >
+              <Image
+                style={{
+                  width: 50,
+                  height: 50,
+                }}
+                source={filter}
+              />
+            </Pressable>
+          )}
               {!isFilterSheetOpen && (
                 <Pressable
                   style={{
@@ -631,6 +748,7 @@ export default function CrimeMap() {
         </SpacerView>
       </GestureHandlerRootView>
     );
+    
   }
 }
 
