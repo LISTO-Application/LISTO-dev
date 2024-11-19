@@ -33,7 +33,7 @@ interface CrimeType {
     | "theft";
 }
 
-export default function EditReport({ navigation }: { navigation: any }) {
+function EditReport({ navigation }: { navigation: any }) {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const route = useRoute();
   const { report }: { report: any } = route.params as { report: Report };
@@ -195,3 +195,5 @@ export default function EditReport({ navigation }: { navigation: any }) {
     );
   }
 }
+
+export default EditReport;

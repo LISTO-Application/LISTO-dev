@@ -10,25 +10,17 @@ import {
   router,
 } from "expo-router";
 //Component Imports
-import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { TabBar } from "@/components/navigation/TabBar";
-import { ThemedText } from "@/components/ThemedText";
-
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { NavigationContainer } from "@react-navigation/native";
-
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
 import Emergency from "./emergency";
 import CrimeMap from "./crimemap";
 import UserAccount from "./[id]";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
-import ViewReports from "../(drawer)/ViewReports";
 import ValidateReports from "../(drawer)/validateReports";
-import Login from "..";
 import { AuthContext, AuthProvider } from "../AuthContext";
-import MyHeader from "../(drawer)/MyHeader";
+
 import UserBanner from "../(drawer)/UserBanner";
 import DrawerScreenOptions from "../(drawer)/DrawerScreenOptions";
 import RootReports from "../(drawer)/RootReports";

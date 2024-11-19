@@ -4,9 +4,9 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ViewReports from "./viewReports";
 import newReports from "./newReports";
-import EditReport from "./editReport";
+import EditReport from "./EditReport";
 import ReportDetails from "./reportDetails";
-        
+
 const RootReports = () => {
   const Stack = createNativeStackNavigator();
   return (
