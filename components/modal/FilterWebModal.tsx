@@ -1,84 +1,56 @@
-import { View, Pressable, Image, Text } from "react-native";
+import { CrimeFilter } from "@/app/(tabs)/crimemap";
+import { View, Pressable, Image, Text, StyleSheet } from "react-native";
+import { useState } from "react";
+import { dummyMarkers } from "@/app/(tabs)/data/marker";
 
 const FilterWebModal = ({
-  isFilterModalVisible,
-  setIsFilterModalVisible,
-  toggleButton,
-  activeButtonIndexes,
+  confirmFilter,
+  handleFilterCrimeButtonClick,
+  selectedCrimeFilters,
 }: {
-  isFilterModalVisible: boolean;
-  setIsFilterModalVisible: (visible: boolean) => void;
-  toggleButton: any;
-  activeButtonIndexes: any;
+  confirmFilter: any;
+  handleFilterCrimeButtonClick: any;
+  selectedCrimeFilters: CrimeFilter[];
 }) => {
-  const images = [
-    { source: require("../../assets/images/knife-icon.png"), label: "Murder" },
+  let images = [
+    { source: require("../../assets/images/knife-icon.png"), label: "murder" },
     {
       source: require("../../assets/images/homicide-icon.png"),
-      label: "Homicide",
+      label: "homicide",
     },
-    { source: require("../../assets/images/thief-icon.png"), label: "Theft" },
+    { source: require("../../assets/images/thief-icon.png"), label: "theft" },
     {
       source: require("../../assets/images/car-icon.png"),
-      label: "Carnapping",
+      label: "carnapping",
     },
-    { source: require("../../assets/images/injury-icon.png"), label: "Injury" },
+    { source: require("../../assets/images/injury-icon.png"), label: "injury" },
     {
       source: require("../../assets/images/robbery-icon.png"),
-      label: "Robbery",
+      label: "robbery",
     },
-    { source: require("../../assets/images/rape-icon.png"), label: "Rape" },
+    { source: require("../../assets/images/rape-icon.png"), label: "rape" },
   ];
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-      }}
-    >
-      <View
-        style={{
-          width: "50%",
-          padding: 20,
-          backgroundColor: "white",
-          borderRadius: 10,
-          height: "30%",
-        }}
-      >
-        <Text
-          style={{
-            color: "#115272",
-            fontSize: 24, // Increase the font size for better visibility
-            fontWeight: "bold", // Optional: make the text bold for emphasis
-            textAlign: "center", // Center the text horizontally
-            marginBottom: 20, // Add some space below the text
-          }}
-        >
-          Choose your filter
-        </Text>
+    <View style={filterStyle.crimeFilterModalContainer}>
+      <View style={filterStyle.crimeFilterModal}>
+        <Text style={filterStyle.crimeFilterTitle}>Choose your filter</Text>
 
         {/* Render the images as toggleable buttons */}
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            justifyContent: "space-evenly",
-          }}
-        >
+        <View style={filterStyle.crimeFilters}>
           {images.map((image, index) => (
             <Pressable
               key={index}
-              onPress={() => toggleButton(index)} // Toggle this button's active state
+              onPress={() => handleFilterCrimeButtonClick(image)} // Toggle this button's active state
               style={{
                 alignItems: "center",
                 borderStyle: "solid",
                 borderColor: "#115272",
                 borderWidth: 2,
                 margin: 10,
-                backgroundColor: activeButtonIndexes.includes(index)
+                backgroundColor: selectedCrimeFilters.some(
+                  (filter) => filter.label === image.label
+                )
                   ? "#E63B36"
                   : "#E07875", // Change color based on active status
                 width: 85,
@@ -92,7 +64,6 @@ const FilterWebModal = ({
                 style={{
                   width: 50,
                   height: 50,
-                  resizeMode: "contain",
                 }}
               />
             </Pressable>
@@ -101,7 +72,7 @@ const FilterWebModal = ({
 
         {/* Centered close button */}
         <Pressable
-          onPress={() => setIsFilterModalVisible(false)}
+          onPress={confirmFilter}
           style={{
             marginTop: 20,
             alignSelf: "center",
@@ -111,11 +82,39 @@ const FilterWebModal = ({
             borderRadius: 25,
           }}
         >
-          <Text style={{ color: "white", fontSize: 16 }}>Close</Text>
+          <Text style={{ color: "white", fontSize: 16 }}>Confirm</Text>
         </Pressable>
       </View>
     </View>
   );
 };
+
+const filterStyle = StyleSheet.create({
+  crimeFilterModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  crimeFilterModal: {
+    width: "50%",
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    height: "30%",
+  },
+  crimeFilterTitle: {
+    color: "#115272",
+    fontSize: 24, // Increase the font size for better visibility
+    fontWeight: "bold", // Optional: make the text bold for emphasis
+    textAlign: "center", // Center the text horizontally
+    marginBottom: 20, // Add some space below the text
+  },
+  crimeFilters: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-evenly",
+  },
+});
 
 export default FilterWebModal;

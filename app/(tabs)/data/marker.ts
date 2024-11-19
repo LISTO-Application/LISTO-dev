@@ -3,42 +3,30 @@ import { Double } from "react-native/Libraries/Types/CodegenTypes";
 
 export type CrimeType =
   | "murder"
-  | "robbery"
   | "homicide"
-  | "injury"
-  | "rape"
+  | "robbery"
   | "carnapping"
-  | "theft";
+  | "injury"
+  | "theft"
+  | "rape";
 
 export interface MarkerType {
   id: string;
   location: GeoPoint;
+  address?: string;
   date: string;
   details: string | undefined;
   crime: CrimeType;
   image: any;
 }
 
-
-crime type
-date (string)
-address (string)
-coordinates (geopoint)
-additional details
-img_url
-
-(dapat auto mga to so not included sa form)
-id
-reported_by (string)
-time reported
-
 export const crimeImages: { [key in CrimeType]: any } = {
   murder: require("../../../assets/images/knife-icon.png"),
   homicide: require("../../../assets/images/homicide-icon.png"),
-  theft: require("../../../assets/images/thief-icon.png"),
+  robbery: require("../../../assets/images/robbery-icon.png"),
   carnapping: require("../../../assets/images/car-icon.png"),
   injury: require("../../../assets/images/injury-icon.png"),
-  robbery: require("../../../assets/images/robbery-icon.png"),
+  theft: require("../../../assets/images/thief-icon.png"),
   rape: require("../../../assets/images/rape-icon.png"),
 };
 

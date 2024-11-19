@@ -49,7 +49,6 @@ export default function NewReports({
   navigation: any;
   route: any;
 }) {
-  const { report = [] } = route.params || {};
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [selectedValue, setSelectedValue] = useState("");
   const [location, setLocation] = useState("");

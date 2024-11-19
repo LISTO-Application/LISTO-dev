@@ -5,7 +5,13 @@
 //basically using the active marker id
 //Cannot be separated into a different component, Image props is not functioning well
 
-import { crimeImages, CrimeType, MarkerType } from "@/app/(tabs)/data/marker";
+import { CrimeFilter } from "@/app/(tabs)/crimemap";
+import {
+  crimeImages,
+  CrimeType,
+  dummyMarkers,
+  MarkerType,
+} from "@/app/(tabs)/data/marker";
 import { AdvancedMarker, Pin, InfoWindow } from "@vis.gl/react-google-maps";
 import dayjs from "dayjs";
 import React from "react";
@@ -19,23 +25,26 @@ export const MarkerWithInfoWindow = ({
   selectedDate,
   allMarkers,
   setMarkers,
+  selectedCrimeFilters,
 }: {
   markers: MarkerType[];
   selectedDate: any;
   allMarkers: any;
   setMarkers: any;
+  selectedCrimeFilters: CrimeFilter[];
 }) => {
   //Marker Details
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [markerDetails, setMarkerDetails] = useState<string>();
   const [markerDate, setMarkerDate] = useState<string>();
+  const [markerCrime, setMarkerCrime] = useState<CrimeType | undefined>();
   const markerRefs = useRef<{ [key: string]: any }>({});
-
+  const [filteredCrimeItems, setFilteredCrimeItems] = useState<MarkerType[]>(
+    []
+  );
   try {
-    // Initialize markers and trigger drop animation
     useEffect(() => {
       markers.forEach((marker) => {
-        // Add CSS class to trigger the drop animation
         const markerElement = markerRefs.current[marker.id]?.current;
         if (markerElement) {
           markerElement.classList.add("dropAnimation");
@@ -45,45 +54,95 @@ export const MarkerWithInfoWindow = ({
   } catch (error) {
     console.warn(error);
   }
-  try {
-    console.log(selectedDate);
-    markers.filter((marker: any) => {
-      const markerDate = dayjs(marker.Date).format("MM-DD-YYYY");
-      return markerDate === selectedDate.format("MM-DD-YYYY");
-    });
-  } catch (error) {
-    console.error(error);
-  }
+
+  // try {
+  //   useEffect(() => {
+  //     const today = dayjs(new Date()).month() + 1;
+  //     let filteredMarkers = allMarkers.filter((marker: any) => {
+  //       const markerMonth = dayjs(marker.date).month() + 1;
+  //       return markerMonth === today;
+  //     });
+
+  //     setMarkers(filteredMarkers);
+  //   }, [allMarkers, selectedDate]);
+  // } catch (error) {
+  //   console.error(error);
+  // }
+
+  // try {
+  //   useEffect(() => {
+  //     markers.forEach((marker) => {
+  //       console.log("Filtered markers: ", markers);
+  //       // console.log("Selected Date: ", selectedDate.format("MM-DD-YYYY"));
+  //       console.log("Marker Date:", dayjs(marker.date).format("MM-DD-YYYY"));
+
+  //       console.log("Crime type:", marker.crime);
+  //     });
+  //   }, [markers, selectedDate]);
+  // } catch (error) {
+  //   console.error(error);
+  // }
 
   try {
     useEffect(() => {
-      const today = dayjs(new Date()).month() + 1;
-      const filteredMarkers = allMarkers.filter((marker: any) => {
-        const markerMonth = dayjs(marker.date).month() + 1;
-        return markerMonth === today;
-      });
-      setMarkers(filteredMarkers);
-    }, [allMarkers, selectedDate]);
-  } catch (error) {
-    console.error(error);
-  }
-  try {
-    useEffect(() => {
-      markers.forEach((marker) => {
-        console.log("Filtered markers: ", markers);
-        // console.log("Selected Date: ", selectedDate.format("MM-DD-YYYY"));
-        console.log("Marker Date:", dayjs(marker.date).format("MM-DD-YYYY"));
-      });
-    }, [markers, selectedDate]);
-  } catch (error) {
-    console.error(error);
-  }
+      filterMarkers();
+    }, [selectedCrimeFilters, selectedDate, allMarkers]);
+
+    const filterMarkers = () => {
+      let filteredMarkers = allMarkers;
+
+      if (selectedDate) {
+        const selectedMonth = dayjs(selectedDate).month() + 1;
+        filteredMarkers = filteredMarkers.filter((marker: any) => {
+          const markerMonth = dayjs(marker.date).month() + 1;
+          return markerMonth === selectedMonth;
+        });
+      }
+      console.log("All Markers:", allMarkers);
+      console.log(
+        "Selected Month:",
+        selectedDate ? dayjs(selectedDate).month() + 1 : "None"
+      );
+      console.log(
+        "Selected Crimes:",
+        selectedCrimeFilters.map((filter) => filter.label)
+      );
+      console.log("Filtered Markers:", filteredMarkers);
+      if (selectedCrimeFilters.length > 0) {
+        const filteredMarkers = markers.filter((marker: any) =>
+          selectedCrimeFilters.some((filter) => filter.label === marker.crime)
+        );
+        // console.log("TempItems", tempItems);
+        setFilteredCrimeItems(filteredMarkers);
+        // setMarkers(tempItems.flat());
+      } else {
+        setFilteredCrimeItems([]);
+      }
+    };
+    // Example: Initialize allMarkers and markers
+    // useEffect(() => {
+    //   // Assuming fetchMarkers() fetches the original marker data
+    //   const fetchMarkers = async () => {
+    //     const data = await getMarkerData(); // Replace with your actual data fetching logic
+    //     setAllMarkers(data);
+    //     setMarkers(data); // Initially, markers are the same as allMarkers
+    //   };
+
+    //   fetchMarkers();
+    // }, []);
+  } catch (error) {}
 
   const handleMarkerClick = (marker: MarkerType) => {
     setActiveMarkerId(marker.id);
     setMarkerDetails(marker.details);
     setMarkerDate(marker.date);
+    setMarkerCrime(marker.crime);
   };
+
+  //To display them
+  const displayMarkers =
+    filteredCrimeItems.length > 0 ? filteredCrimeItems : markers;
+
   return (
     <>
       <style>
@@ -122,7 +181,7 @@ export const MarkerWithInfoWindow = ({
           }
         `}
       </style>
-      {markers.map((marker: any) => {
+      {displayMarkers.map((marker: any) => {
         const latitude = marker.location._latitude;
         const longitude = marker.location._longitude;
 
@@ -166,6 +225,7 @@ export const MarkerWithInfoWindow = ({
           <h2>{activeMarkerId}</h2>
           <p>{markerDetails}</p>
           <p>{markerDate}</p>
+          <p>{markerCrime}</p>
         </InfoWindow>
       )}
     </>

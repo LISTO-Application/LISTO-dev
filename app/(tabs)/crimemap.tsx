@@ -85,6 +85,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import FilterWebModal from "@/components/modal/FilterWebModal";
+import FilterCrime from "@/components/FilterCrime";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -98,6 +99,12 @@ const PlacesLibrary = () => {
   }, [placesLib, map]);
 
   return null;
+};
+
+//Interface
+export type CrimeFilter = {
+  source: any;
+  label: string;
 };
 
 export default function CrimeMap() {
@@ -490,10 +497,7 @@ export default function CrimeMap() {
     //   </GestureHandlerRootView>
     // );
   } else if (Platform.OS === "web") {
-    const [activeButtonIndexes, setActiveButtonIndexes] = useState<number[]>(
-      []
-    );
-    //States
+    //Buttons
     //Modal show
     const [toggleModal, setToggleModal] = useState(false);
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
@@ -502,25 +506,56 @@ export default function CrimeMap() {
     const [selectedDate, setSelectedDate] = useState(dayjs(new Date()));
     const [dateFunction, setDateFunction] = useState(selectedDate);
     const [mode, setMode] = useState<ModeType>("single");
-    console.log("Date sa crimemap:", dateFunction?.toLocaleString());
     //All Markers
     const [allMarkers, setAllMarkers] = useState<MarkerType[]>(dummyMarkers);
     const [pins, setMarkers] = useState<MarkerType[]>(dummyMarkers);
     const [isAddingMarker, setIsAddingMarker] = useState(false);
-
+    console.log(allMarkers);
+    //Handlers
     const closeError = () => {
-      setShowError(false); // Close the popup when dismissed
+      setShowError(false);
+    };
+    //handle filter button click
+    const [selectedCrimeFilters, setSelectedCrimeFilters] = useState<
+      CrimeFilter[]
+    >([]);
+
+    const handleFilterCrimeButtonClick = (selectedCrime: CrimeFilter) => {
+      setSelectedCrimeFilters((prevFilters) => {
+        const isActive = prevFilters.some(
+          (filter) => filter.label === selectedCrime.label
+        );
+        return isActive
+          ? prevFilters.filter((filter) => filter.label !== selectedCrime.label)
+          : [...prevFilters, selectedCrime];
+      });
+
+      // console.log(
+      //   "Filters",
+      //   selectedCrimeFilters.some(
+      //     (filter) => filter.label === selectedCrime.label
+      //   )
+      // );
+      // console.log(
+      //   "If true, active, if false, inactive",
+      //   selectedCrimeFilters.some(
+      //     (filter) => filter.label === selectedCrime.label
+      //   )
+      // );
+      // if (selectedCrimeFilters.includes(selectedCrime)) {
+      //   let filters = selectedCrimeFilters.filter((el) => el === selectedCrime);
+
+      //   setSelectedCrimeFilters(filters);
+      // } else {
+      //   setSelectedCrimeFilters([...selectedCrimeFilters, selectedCrime]);
+      // }
     };
 
-    const toggleButton = (index: number) => {
-      setActiveButtonIndexes((prevActiveButtons = []) => {
-        if (prevActiveButtons.includes(index)) {
-          return prevActiveButtons.filter((i) => i !== index); // Remove if already active
-        } else {
-          return [...prevActiveButtons, index]; // Add if not active
-        }
-      });
+    const confirmFilter = () => {
+      // filterByCrime();
+      setIsFilterModalVisible(false);
     };
+
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -549,6 +584,7 @@ export default function CrimeMap() {
                 selectedDate={selectedDate}
                 allMarkers={allMarkers}
                 setMarkers={setMarkers}
+                selectedCrimeFilters={selectedCrimeFilters}
               />
 
               <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
@@ -564,10 +600,9 @@ export default function CrimeMap() {
             onRequestClose={() => setIsFilterModalVisible(false)}
           >
             <FilterWebModal
-              isFilterModalVisible={isFilterModalVisible}
-              setIsFilterModalVisible={setIsFilterModalVisible}
-              toggleButton={toggleButton}
-              activeButtonIndexes={activeButtonIndexes}
+              confirmFilter={confirmFilter}
+              handleFilterCrimeButtonClick={handleFilterCrimeButtonClick}
+              selectedCrimeFilters={selectedCrimeFilters}
             />
           </Modal>
 
