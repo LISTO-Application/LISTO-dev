@@ -19,6 +19,19 @@ export interface MarkerType {
   image: any;
 }
 
+
+crime type
+date (string)
+address (string)
+coordinates (geopoint)
+additional details
+img_url
+
+(dapat auto mga to so not included sa form)
+id
+reported_by (string)
+time reported
+
 export const crimeImages: { [key in CrimeType]: any } = {
   murder: require("../../../assets/images/knife-icon.png"),
   homicide: require("../../../assets/images/homicide-icon.png"),

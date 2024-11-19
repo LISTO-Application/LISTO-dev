@@ -86,24 +86,8 @@ export const MarkerWithInfoWindow = ({
   };
   return (
     <>
-      {markers.map((marker: any) => {
-        const latitude = marker.location._latitude;
-        const longitude = marker.location._longitude;
-
-        markerRefs.current[marker.id] =
-          markerRefs.current[marker.id] || React.createRef();
-
-        const crimeTypeImage = crimeImages[marker.crime as CrimeType];
-        const randomDelay = `${Math.random() * 2}s`;
-
-        const markerStyle = {
-          animation: `drop 600ms ease-in-out ${randomDelay} forwards`,
-          opacity: 0,
-        };
-        return (
-          <>
-            <style>
-              {`
+      <style>
+        {`
           @keyframes drop {
             0% {
               transform: translateY(-200px) scaleY(0.9);
@@ -137,30 +121,40 @@ export const MarkerWithInfoWindow = ({
             }
           }
         `}
-            </style>
-            <AdvancedMarker
-              ref={markerRefs.current[marker.id]}
-              key={marker.id}
-              position={{ lat: latitude, lng: longitude }}
-              onClick={() => handleMarkerClick(marker)}
-              style={markerStyle}
-            >
-              <Pin
-                background={"red"}
-                borderColor={"#115272"}
-                glyphColor={"blue"}
-              >
-                {crimeTypeImage ? (
-                  <Image
-                    source={crimeTypeImage}
-                    style={{ width: 24, height: 24 }}
-                  />
-                ) : (
-                  <Text>No image available</Text>
-                )}
-              </Pin>
-            </AdvancedMarker>
-          </>
+      </style>
+      {markers.map((marker: any) => {
+        const latitude = marker.location._latitude;
+        const longitude = marker.location._longitude;
+
+        markerRefs.current[marker.id] =
+          markerRefs.current[marker.id] || React.createRef();
+
+        const crimeTypeImage = crimeImages[marker.crime as CrimeType];
+        const randomDelay = `${Math.random() * 2}s`;
+
+        const markerStyle = {
+          animation: `drop 600ms ease-in-out ${randomDelay} forwards`,
+          opacity: 0,
+        };
+        return (
+          <AdvancedMarker
+            ref={markerRefs.current[marker.id]}
+            key={marker.id}
+            position={{ lat: latitude, lng: longitude }}
+            onClick={() => handleMarkerClick(marker)}
+            style={markerStyle}
+          >
+            <Pin background={"red"} borderColor={"#115272"} glyphColor={"blue"}>
+              {crimeTypeImage ? (
+                <Image
+                  source={crimeTypeImage}
+                  style={{ width: 24, height: 24 }}
+                />
+              ) : (
+                <Text>No image available</Text>
+              )}
+            </Pin>
+          </AdvancedMarker>
         );
       })}
 
