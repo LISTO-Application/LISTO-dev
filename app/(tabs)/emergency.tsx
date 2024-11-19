@@ -36,6 +36,9 @@ const holyspiritLogo = require("../../assets/images/holyspirit-logo.png");
 const balaraLogo = require("../../assets/images/balara-logo.png");
 
 export default function Emergency() {
+  //PLACEHOLDER DATA
+ 
+//
   const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["3%", "25%"], []);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
@@ -383,6 +386,10 @@ export default function Emergency() {
         </Portal>
       </GestureHandlerRootView>
     );
+    //PLACEHOLDER DATA FOR EMERGENCY TO REFLECT IN VIEW ADMIN EMEGENCY LIST
+
+
+    
   } else if (Platform.OS === "web") {
     return (
       <SpacerView

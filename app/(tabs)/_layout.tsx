@@ -26,6 +26,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ViewReports from "../(drawer)/ViewReports";
 import ValidateReports from "../(drawer)/validateReports";
+import viewAdminEmergencyList from "../(drawer)/viewAdminEmergencyList";
 import Login from "..";
 import { AuthContext, AuthProvider } from "../AuthContext";
 import MyHeader from "../(drawer)/MyHeader";
@@ -57,10 +58,11 @@ export default function TabLayout() {
             <Drawer.Screen name="Emergency" component={Emergency} />
             <Drawer.Screen name="Report Incident" component={CrimeMap} />
             <Drawer.Screen name="Account" component={UserAccount} />
-            <Drawer.Screen name="ChangeAccount" component={ChangeUserAccount} />
+            <Drawer.Screen name="Change Account" component={ChangeUserAccount} /> 
+            <Drawer.Screen name="ADMIN View Emergency Messeges" component={viewAdminEmergencyList} /> 
             <Drawer.Screen
               name="Reports"
-              component={RootReports}
+              component={RootReports} 
               options={{
                 title: "View Reports",
               }}

@@ -1,17 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { styles } from "@/styles/styles"; // For mobile styles
+import { db } from '../FirebaseConfig'; 
 
+
+import 'firebase/database';
+import { collection, getDocs } from '@react-native-firebase/firestore';
 export default function ValidateReports({ navigation }: { navigation: any }) {
-  const [reports, setReports] = useState([
-    { id: 1, title: 'HOMICIDE', details: 'Batasan resident stabbed by family member', time: '5:47 pm', status: 'PENDING' },
-    { id: 2, title: 'THEFT', details: 'Alfamart Holy Spirit caught a teenager stealing', time: '5:47 pm', status: 'VALID' },
-    { id: 3, title: 'HOMICIDE', details: 'Batasan resident stabbed by family member', time: '5:47 pm', status: 'PENDING' },
-    { id: 4, title: 'HOMICIDE', details: 'Batasan resident stabbed by family member', time: '5:47 pm', status: 'PENALIZED' },
-  ]);
+  
+  
+  
+
+  interface Report {
+    id: string;
+    category: string;
+    icon: number;
+      location: string | null;
+    name: string;
+    time: string;
+    title: string;
+    status: 'PENDING' | 'VALID' | 'PENALIZED';
+  }
+  const handleTitlePress = (report: Report) => {
+    console.log('Navigating to details page for report:', report); // Debugging log
+    router.push({
+      pathname: '/reportDetails', // Ensure this path is correct
+      params: { id: report.id, title: report.title, category: report.category },
+    });
+  };
+  const handleStatusChange = (reportId: string, newStatus: 'PENDING' | 'VALID' | 'PENALIZED') => {
+    setReports((prevReports) =>
+      prevReports.map((report) =>
+        report.id === reportId ? { ...report, status: newStatus } : report
+      )
+    );
+  };
+  
+
+  useEffect(() => {
+  const fetchReports = async () => {
+    try {
+      const reportsSnapshot = await getDocs(collection(db, 'reports'));
+
+      if (reportsSnapshot.empty) {
+        console.log('No reports found in Firestore.');
+        return;
+      }
+
+      const reportsArray = reportsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        category: doc.data().category || 'No category',
+        icon: doc.data().icon || 0,
+        location: doc.data().location || null,
+        name: doc.data().name || 'Anonymous',
+        time: doc.data().time || 'No time',
+        title: doc.data().title || 'No title',
+        status: doc.data().status || 'PENDING', // Ensure status is fetched or defaulted
+      }));
+
+      setReports(reportsArray);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+    }
+  };
+
+  fetchReports();
+}, []);
+
+
+  const [reports, setReports] = useState<Report[]>([]);
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -26,28 +86,9 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     }
   };
 
-  const handleApprove = (reportId: number) => {
-    setReports((prevReports) =>
-      prevReports.map((report) =>
-        report.id === reportId ? { ...report, status: 'VALID' } : report
-      )
-    );
-  };
+  
 
-  const handleReject = (reportId: number) => {
-    setReports((prevReports) =>
-      prevReports.map((report) =>
-        report.id === reportId ? { ...report, status: 'PENALIZED' } : report
-      )
-    );
-  };
-
-  const handleTitlePress = (reportId: number) => {
-    console.log(`Navigating to Report Details for ID: ${reportId}`); // Log the report ID
-    navigation.navigate('ReportDetails', { id: String(reportId) });
-    // Navigate to ReportDetails screen
-  };
-
+  
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
       <View style={styles.mainContainer}>
@@ -70,9 +111,17 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
                 <View style={styles.reportTextContainer}>
                   {/* Title wrapped in TouchableOpacity for navigation */}
-                  <TouchableOpacity onPress={() => handleTitlePress(report.id)}>
-                    <Text style={styles.reportTitle}>{report.title}</Text>
-                  </TouchableOpacity>
+                  <TouchableOpacity
+  onPress={() =>
+    navigation.navigate('reportDetails', {
+      id: report.id,
+      title: report.title,
+      category: report.category,
+    })
+  }
+>
+  <Text style={styles.reportTitle}>{report.title}</Text>
+</TouchableOpacity>
                   <Text style={styles.reportDetails}>{report.details}</Text>
                 </View>
 
@@ -120,66 +169,123 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
         </ScrollView>
       </View>
     );
+  
+    
+
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        <View style={webstyles.mainContainer}>
-          <Text style={webstyles.headerText}>Listed Reports</Text>
-          <ScrollView contentContainerStyle={webstyles.reportList}>
-            {reports.map((report) => (
-              <View key={report.id} style={webstyles.reportContainerValidate}>
-                <View style={webstyles.reportIconContainer}>
-                  <Ionicons
-                    name={report.title === 'HOMICIDE' ? 'alert-circle' : 'alert'}
-                    size={24}
-                    color="white"
-                    style={webstyles.reportIcon}
-                  />
+      <View style={webstyles.mainContainer}>
+        <Text style={webstyles.headerText}>Listed Reports</Text>
+
+        <ScrollView contentContainerStyle={webstyles.reportList}>
+          {reports.length > 0 ? (
+            reports.map((report) => (
+              <View
+                key={report.id}
+                style={{
+                  marginBottom: 20,
+                  padding: 15,
+                  borderRadius: 8,
+                  backgroundColor: '#f9f9f9',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                }}
+              >
+                {/* Title and Time Row */}
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TouchableOpacity onPress={() => handleTitlePress(report)}>
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#115272' }}>
+                      {report.title}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={{ color: '#115272', fontSize: 14, marginLeft: 10 }}>
+                    {report.time}
+                  </Text>
                 </View>
 
-                <View style={webstyles.reportTextContainer}>
-                  <TouchableOpacity onPress={() => handleTitlePress(report.id)}>
-                    <Text style={webstyles.reportTitleValidate}>{report.title}</Text>
-                  </TouchableOpacity>
-                  <Text style={webstyles.reportDetails}>{report.details}</Text>
-                </View>
+                {/* Report Category */}
+                <Text style={{ color: '#115272', marginTop: 5 }}>
+                  {`Category: ${report.category}`}
+                </Text>
 
-                {/* Approve and Reject buttons */}
-                {report.status === 'PENDING' ? (
-                  <View style={webstyles.actionContainer}>
-                    <TouchableOpacity
-                      style={webstyles.approveButton}
-                      onPress={() => handleApprove(report.id)}
+                {/* Report Location */}
+                <Text style={{ color: '#115272', marginTop: 5 }}>
+                  {`Location: ${report.location || 'Not provided'}`}
+                </Text>
+
+                {/* Action Buttons */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    marginTop: 10,
+                  }}
+                >
+                  {report.status === 'PENDING' ? (
+                    <>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: '#28a745',
+                          paddingVertical: 5,
+                          paddingHorizontal: 10,
+                          borderRadius: 5,
+                          marginLeft: 5,
+                        }}
+                        onPress={() => handleStatusChange(report.id, 'VALID')}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 20, textAlign: 'center' }}>
+                          Validate
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: '#dc3545',
+                          paddingVertical: 5,
+                          paddingHorizontal: 10,
+                          borderRadius: 5,
+                          marginLeft: 5,
+                        }}
+                        onPress={() => handleStatusChange(report.id, 'PENALIZED')}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 20, textAlign: 'center' }}>
+                          Penalize
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <Text
+                      style={{
+                        color:
+                          report.status === 'VALID'
+                            ? '#28a745'
+                            : report.status === 'PENALIZED'
+                            ? '#dc3545'
+                            : '#6c757d',
+                        fontWeight: 'bold',
+                        fontSize: 20,
+                        textAlign: 'right',
+                      }}
                     >
-                      <Text style={webstyles.buttonText}>Validate</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={webstyles.rejectedButton}
-                      onPress={() => handleReject(report.id)}
-                    >
-                      <Text style={webstyles.buttonText}>Penalize</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : report.status === 'VALID' ? (
-                  <TouchableOpacity
-                    style={webstyles.approvedButton}
-                    onPress={() => { /* Optional: Add any action for approved state */ }}
-                  >
-                    <Text style={webstyles.approvedButtonText}>Validated</Text>
-                  </TouchableOpacity>
-                ) : report.status === 'PENALIZED' ? (
-                  <TouchableOpacity
-                    style={webstyles.rejectedButton}
-                    onPress={() => { /* Optional: Add any action for rejected state */ }}
-                  >
-                    <Text style={webstyles.rejectedButtonText}>Penalized</Text>
-                  </TouchableOpacity>
-                ) : null}
+                      {report.status === 'VALID' ? 'Validated' : 'Penalized'}
+                    </Text>
+                  )}
+                </View>
               </View>
-            ))}
-          </ScrollView>
-        </View>
+            ))
+          ) : (
+            <Text style={{ textAlign: 'center', marginTop: 20 }}>
+              No reports available.
+            </Text>
+          )}
+        </ScrollView>
       </View>
+    </View>
+ 
+
     );
   }
 }

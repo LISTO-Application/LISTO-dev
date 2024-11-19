@@ -28,7 +28,16 @@ import { db } from "../FirebaseConfig";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
-
+  interface Report {
+    id: string;
+    category: string;
+    icon: number;
+      location: string | null;
+    name: string;
+    time: string;
+    title: string;
+  }
+  
   const fetchReports = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "reports"));
