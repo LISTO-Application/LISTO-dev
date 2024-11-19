@@ -85,7 +85,6 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import FilterWebModal from "@/components/modal/FilterWebModal";
-import FilterCrime from "@/components/FilterCrime";
 
 const PlacesLibrary = () => {
   const map = useMap();
