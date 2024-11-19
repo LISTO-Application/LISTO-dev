@@ -1,35 +1,71 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import React, { useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+  ImageBackground,
+  Image,
+  Animated,
+  Dimensions,
+} from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { styles } from "@/styles/styles"; // For mobile styles
+import { getIconName } from "@/assets/utils/getIconName";
+import SideBar from "@/components/SideBar";
 
 export default function ValidateReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState([
-    { id: 1, title: 'HOMICIDE', details: 'Batasan resident stabbed by family member', time: '5:47 pm', status: 'PENDING' },
-    { id: 2, title: 'THEFT', details: 'Alfamart Holy Spirit caught a teenager stealing', time: '5:47 pm', status: 'VALID' },
-    { id: 3, title: 'HOMICIDE', details: 'Batasan resident stabbed by family member', time: '5:47 pm', status: 'PENDING' },
-    { id: 4, title: 'HOMICIDE', details: 'Batasan resident stabbed by family member', time: '5:47 pm', status: 'PENALIZED' },
+    {
+      id: 1,
+      title: "HOMICIDE",
+      details: "Batasan resident stabbed by family member",
+      time: "5:47 pm",
+      status: "PENDING",
+    },
+    {
+      id: 2,
+      title: "THEFT",
+      details: "Alfamart Holy Spirit caught a teenager stealing",
+      time: "5:47 pm",
+      status: "VALID",
+    },
+    {
+      id: 3,
+      title: "HOMICIDE",
+      details: "Batasan resident stabbed by family member",
+      time: "5:47 pm",
+      status: "PENDING",
+    },
+    {
+      id: 4,
+      title: "HOMICIDE",
+      details: "Batasan resident stabbed by family member",
+      time: "5:47 pm",
+      status: "PENALIZED",
+    },
   ]);
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'VALID':
-        return { backgroundColor: '#115272', color: 'red' };
-      case 'PENDING':
-        return { backgroundColor: 'grey', color: 'blue' };
-      case 'PENALIZED':
-        return { backgroundColor: '#dc3545', color: 'green' };
+      case "VALID":
+        return { backgroundColor: "#115272", color: "red" };
+      case "PENDING":
+        return { backgroundColor: "grey", color: "blue" };
+      case "PENALIZED":
+        return { backgroundColor: "#dc3545", color: "green" };
       default:
-        return { backgroundColor: '#6c757d', color: '' };
+        return { backgroundColor: "#6c757d", color: "" };
     }
   };
 
   const handleApprove = (reportId: number) => {
     setReports((prevReports) =>
       prevReports.map((report) =>
-        report.id === reportId ? { ...report, status: 'VALID' } : report
+        report.id === reportId ? { ...report, status: "VALID" } : report
       )
     );
   };
@@ -37,15 +73,37 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   const handleReject = (reportId: number) => {
     setReports((prevReports) =>
       prevReports.map((report) =>
-        report.id === reportId ? { ...report, status: 'PENALIZED' } : report
+        report.id === reportId ? { ...report, status: "PENALIZED" } : report
       )
     );
   };
 
   const handleTitlePress = (reportId: number) => {
     console.log(`Navigating to Report Details for ID: ${reportId}`); // Log the report ID
-    navigation.navigate('ReportDetails', { id: String(reportId) });
+    navigation.navigate("ReportDetails", { id: String(reportId) });
     // Navigate to ReportDetails screen
+  };
+
+  //Animation to Hide side bar
+  const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
+  const sidebarWidth = screenWidth * 0.25; // 25% of screen width
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
+  const contentPosition = useRef(new Animated.Value(0)).current;
+
+  const toggleSideBar = () => {
+    Animated.timing(sideBarPosition, {
+      toValue: isSidebarVisible ? -sidebarWidth : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(contentPosition, {
+      toValue: isSidebarVisible ? 0 : sidebarWidth, // Shift main content
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+    setSidebarVisible(!isSidebarVisible);
   };
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
@@ -53,7 +111,10 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backIcon}
+          >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Listed Reports (ADMINS)</Text>
@@ -65,7 +126,13 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
               {/* Report content */}
               <View style={styles.reportContainer}>
                 <View style={styles.reportIcon}>
-                  <Ionicons name={report.title === 'HOMICIDE' ? 'alert-circle' : 'alert'} size={24} color="white" />
+                  <Ionicons
+                    name={
+                      report.title === "HOMICIDE" ? "alert-circle" : "alert"
+                    }
+                    size={24}
+                    color="white"
+                  />
                 </View>
 
                 <View style={styles.reportTextContainer}>
@@ -78,13 +145,15 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
                 {/* Status badge */}
                 <View style={styles.statusContainer}>
-                  <Text style={[styles.statusBadge, getStatusStyle(report.status)]}>
+                  <Text
+                    style={[styles.statusBadge, getStatusStyle(report.status)]}
+                  >
                     {report.status}
                   </Text>
                 </View>
 
                 {/* Approve and Reject buttons */}
-                {report.status === 'PENDING' ? (
+                {report.status === "PENDING" ? (
                   <View style={styles.actionContainer}>
                     <TouchableOpacity
                       style={webstyles.approveButton}
@@ -99,17 +168,21 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                       <Text style={webstyles.buttonText}>Penalize</Text>
                     </TouchableOpacity>
                   </View>
-                ) : report.status === 'VALID' ? (
+                ) : report.status === "VALID" ? (
                   <TouchableOpacity
                     style={webstyles.approvedButton}
-                    onPress={() => { /* Optional: Add any action for approved state */ }}
+                    onPress={() => {
+                      /* Optional: Add any action for approved state */
+                    }}
                   >
                     <Text style={webstyles.approvedButtonText}>Validated</Text>
                   </TouchableOpacity>
-                ) : report.status === 'PENALIZED' ? (
+                ) : report.status === "PENALIZED" ? (
                   <TouchableOpacity
                     style={webstyles.rejectedButton}
-                    onPress={() => { /* Optional: Add any action for rejected state */ }}
+                    onPress={() => {
+                      /* Optional: Add any action for rejected state */
+                    }}
                   >
                     <Text style={webstyles.rejectedButtonText}>Penalized</Text>
                   </TouchableOpacity>
@@ -123,14 +196,36 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        <View style={webstyles.mainContainer}>
+        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+        {/* Toggle Button */}
+        <TouchableOpacity
+          onPress={toggleSideBar}
+          style={[
+            webstyles.toggleButton,
+            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+          ]}
+        >
+          <Ionicons
+            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
+            size={24}
+            color={"#333"}
+          />
+        </TouchableOpacity>
+        <Animated.View
+          style={[
+            webstyles.mainContainer,
+            { transform: [{ translateX: contentPosition }] },
+          ]}
+        >
           <Text style={webstyles.headerText}>Listed Reports</Text>
           <ScrollView contentContainerStyle={webstyles.reportList}>
             {reports.map((report) => (
               <View key={report.id} style={webstyles.reportContainerValidate}>
                 <View style={webstyles.reportIconContainer}>
                   <Ionicons
-                    name={report.title === 'HOMICIDE' ? 'alert-circle' : 'alert'}
+                    name={
+                      report.title === "HOMICIDE" ? "alert-circle" : "alert"
+                    }
                     size={24}
                     color="white"
                     style={webstyles.reportIcon}
@@ -139,13 +234,15 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
                 <View style={webstyles.reportTextContainer}>
                   <TouchableOpacity onPress={() => handleTitlePress(report.id)}>
-                    <Text style={webstyles.reportTitleValidate}>{report.title}</Text>
+                    <Text style={webstyles.reportTitleValidate}>
+                      {report.title}
+                    </Text>
                   </TouchableOpacity>
                   <Text style={webstyles.reportDetails}>{report.details}</Text>
                 </View>
 
                 {/* Approve and Reject buttons */}
-                {report.status === 'PENDING' ? (
+                {report.status === "PENDING" ? (
                   <View style={webstyles.actionContainer}>
                     <TouchableOpacity
                       style={webstyles.approveButton}
@@ -160,17 +257,21 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                       <Text style={webstyles.buttonText}>Penalize</Text>
                     </TouchableOpacity>
                   </View>
-                ) : report.status === 'VALID' ? (
+                ) : report.status === "VALID" ? (
                   <TouchableOpacity
                     style={webstyles.approvedButton}
-                    onPress={() => { /* Optional: Add any action for approved state */ }}
+                    onPress={() => {
+                      /* Optional: Add any action for approved state */
+                    }}
                   >
                     <Text style={webstyles.approvedButtonText}>Validated</Text>
                   </TouchableOpacity>
-                ) : report.status === 'PENALIZED' ? (
+                ) : report.status === "PENALIZED" ? (
                   <TouchableOpacity
                     style={webstyles.rejectedButton}
-                    onPress={() => { /* Optional: Add any action for rejected state */ }}
+                    onPress={() => {
+                      /* Optional: Add any action for rejected state */
+                    }}
                   >
                     <Text style={webstyles.rejectedButtonText}>Penalized</Text>
                   </TouchableOpacity>
@@ -178,7 +279,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
               </View>
             ))}
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
     );
   }

@@ -60,7 +60,10 @@ export default function ReportDetails({ navigation }: { navigation: any }) {
       <View style={styles.mainContainer}>
         {/* Blue Header */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backIcon}
+          >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Report Details</Text>
@@ -69,7 +72,7 @@ export default function ReportDetails({ navigation }: { navigation: any }) {
 
         <ScrollView style={styles.formContainer}>
           <Text style={styles.reportTitle}>{title}</Text>
-          
+
           <View style={webstyles.detailItem}>
             <Text style={webstyles.detailLabel}>Crime Type:</Text>
             <Text style={webstyles.detailValue}>{crimeType}</Text>
@@ -87,7 +90,10 @@ export default function ReportDetails({ navigation }: { navigation: any }) {
         </ScrollView>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => router.back()}
+          >
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -116,7 +122,10 @@ export default function ReportDetails({ navigation }: { navigation: any }) {
             </View>
           </ScrollView>
 
-          <TouchableOpacity style={webstyles.button} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={webstyles.button}
+            onPress={() => router.back()}
+          >
             <Text style={webstyles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>

@@ -25,6 +25,7 @@ import UserBanner from "../(drawer)/UserBanner";
 import DrawerScreenOptions from "../(drawer)/DrawerScreenOptions";
 import RootReports from "../(drawer)/RootReports";
 import ChangeUserAccount from "../changeUserInformation";
+import ReportDetails from "../(drawer)/reportDetails";
 
 const report = require("../../assets/images/report-icon.png");
 
@@ -49,7 +50,8 @@ export default function TabLayout() {
             <Drawer.Screen name="Emergency" component={Emergency} />
             <Drawer.Screen name="Report Incident" component={CrimeMap} />
             <Drawer.Screen name="Account" component={UserAccount} />
-            <Drawer.Screen name="ChangeAccount" component={ChangeUserAccount} />
+            <Drawer.Screen name="Generate" component={UserAccount} />
+            <Drawer.Screen name="Details" component={ReportDetails} />
             <Drawer.Screen
               name="Reports"
               component={RootReports}

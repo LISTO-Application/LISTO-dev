@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   ScrollView,
@@ -7,6 +7,10 @@ import {
   Platform,
   TextInput,
   FlatList,
+  ImageBackground,
+  Image,
+  Animated,
+  Dimensions,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -18,6 +22,8 @@ import { useRoute } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
 import { collection, addDoc } from "@react-native-firebase/firestore";
+import { getIconName } from "../../assets/utils/getIconName";
+import { SideBar } from "@/components/SideBar";
 
 const database = db;
 
@@ -106,21 +112,53 @@ export default function NewReports({
     }
   };
 
-  // setReports((prevReports: any) => [...prevReports, newReport]);
-  //   console.log("Newly Created Report:", newReport);
+  //Animation to Hide side bar
+  const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
+  const sidebarWidth = screenWidth * 0.25; // 25% of screen width
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
+  const contentPosition = useRef(new Animated.Value(0)).current;
 
-  //   navigation.navigate("ViewReports", { updatedReport: newReport });
-  // };
+  const toggleSideBar = () => {
+    Animated.timing(sideBarPosition, {
+      toValue: isSidebarVisible ? -sidebarWidth : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(contentPosition, {
+      toValue: isSidebarVisible ? 0 : sidebarWidth, // Shift main content
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+    setSidebarVisible(!isSidebarVisible);
+  };
 
   if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
         {/* Sidebar */}
-
-        <View style={webstyles.mainContainer}>
-          <View style={webstyles.sidebar}>
-            <Ionicons name="backspace" size={30} color="white" />
-          </View>
+        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+        {/* Toggle Button */}
+        <TouchableOpacity
+          onPress={toggleSideBar}
+          style={[
+            webstyles.toggleButton,
+            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+          ]}
+        >
+          <Ionicons
+            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
+            size={24}
+            color={"#333"}
+          />
+        </TouchableOpacity>
+        <Animated.View
+          style={[
+            webstyles.mainContainer,
+            { transform: [{ translateX: contentPosition }] },
+          ]}
+        >
           <Text style={webstyles.headerText}>New Report</Text>
           <ScrollView contentContainerStyle={webstyles.reportList}>
             {/* Report Details */}
@@ -201,7 +239,7 @@ export default function NewReports({
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
     );
   }

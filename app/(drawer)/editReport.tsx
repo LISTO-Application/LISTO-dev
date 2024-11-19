@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import {
   View,
   ScrollView,
@@ -9,6 +9,10 @@ import {
   FlatList,
   TextInput,
   Platform,
+  ImageBackground,
+  Image,
+  Animated,
+  Dimensions,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { styles } from "@/styles/styles"; // Adjust the path if necessary
@@ -20,6 +24,8 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 import EditReportMobile from "./mobile/EditReport";
 import { doc, updateDoc } from "@react-native-firebase/firestore";
 import { db } from "../FirebaseConfig";
+import { getIconName } from "@/assets/utils/getIconName";
+import SideBar from "@/components/SideBar";
 
 interface CrimeType {
   label: string;
@@ -89,6 +95,29 @@ function EditReport({ navigation }: { navigation: any }) {
 
     // navigation.navigate("ViewReports", { updatedReport });
   };
+
+  //Animation to Hide side bar
+  const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
+  const sidebarWidth = screenWidth * 0.25; // 25% of screen width
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
+  const contentPosition = useRef(new Animated.Value(0)).current;
+
+  const toggleSideBar = () => {
+    Animated.timing(sideBarPosition, {
+      toValue: isSidebarVisible ? -sidebarWidth : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(contentPosition, {
+      toValue: isSidebarVisible ? 0 : sidebarWidth, // Shift main content
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+    setSidebarVisible(!isSidebarVisible);
+  };
+
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
       <EditReportMobile
@@ -108,7 +137,27 @@ function EditReport({ navigation }: { navigation: any }) {
     return (
       <View style={webstyles.container}>
         {/* Sidebar */}
-        <View style={webstyles.mainContainer}>
+        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+        {/* Toggle Button */}
+        <TouchableOpacity
+          onPress={toggleSideBar}
+          style={[
+            webstyles.toggleButton,
+            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+          ]}
+        >
+          <Ionicons
+            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
+            size={24}
+            color={"#333"}
+          />
+        </TouchableOpacity>
+        <Animated.View
+          style={[
+            webstyles.mainContainer,
+            { transform: [{ translateX: contentPosition }] },
+          ]}
+        >
           <Text style={webstyles.headerText}>Edit Report</Text>
 
           <ScrollView contentContainerStyle={webstyles.reportList}>
@@ -190,7 +239,7 @@ function EditReport({ navigation }: { navigation: any }) {
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
     );
   }

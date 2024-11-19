@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Dimensions,
   View,
   ScrollView,
   Text,
@@ -7,6 +9,7 @@ import {
   Alert,
   Platform,
   Image,
+  ImageBackground,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -16,6 +19,7 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 import { Report } from "../(tabs)/data/reports";
 import { Route } from "expo-router/build/Route";
 import { useRoute } from "@react-navigation/native";
+import { getIconName } from "../../assets/utils/getIconName";
 import { initializeApp } from "@react-native-firebase/app";
 import {
   collection,
@@ -25,6 +29,8 @@ import {
   getFirestore,
 } from "@react-native-firebase/firestore";
 import { db } from "../FirebaseConfig";
+import { AuthContext } from "../AuthContext";
+import SideBar from "@/components/SideBar";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -50,23 +56,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       fetchReports();
     });
     return unsubscribe;
-
-    // navigation.addListener("focus", () => {
-    //   console.log("Navigation params:", navigation.params);
-    //   const updatedReport =
-    //     navigation.getState().routes[navigation.getState().index].params
-    //       ?.updatedReport;
-    //   if (updatedReport) {
-    //     setReports((prevReports) => [...prevReports, updatedReport]);
-    //   }
-    // });
-    // console.log(
-    //   "Navigation State:",
-    //   navigation.getState().routes[navigation.getState().index].params
-    //     .updatedReport
-    // );
-    // console.log("Navigation State:", navigation.getState());
-    // return unsubscribe;
   }, [navigation]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -87,10 +76,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     } catch (error) {
       console.error("Error deleting report: ", error);
     }
-
-    // setReports((prevReports) =>
-    //   prevReports.filter((report) => report.id !== reportId)
-    // );
   };
 
   // Edit report handler (redirect to editReport.tsx with report ID)
@@ -103,6 +88,28 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const handleSubmitReport = () => {
     // Redirect to the page where the user can fill in new report details
     navigation.navigate("NewReports"); // Adjust this path based on your routing setup
+  };
+
+  //Animation to Hide side bar
+  const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
+  const sidebarWidth = screenWidth * 0.25; // 25% of screen width
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
+  const contentPosition = useRef(new Animated.Value(0)).current;
+
+  const toggleSideBar = () => {
+    Animated.timing(sideBarPosition, {
+      toValue: isSidebarVisible ? -sidebarWidth : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(contentPosition, {
+      toValue: isSidebarVisible ? 0 : sidebarWidth, // Shift main content
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+    setSidebarVisible(!isSidebarVisible);
   };
 
   // Render for Android and iOS
@@ -196,8 +203,28 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
+        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+        {/* Toggle Button */}
+        <TouchableOpacity
+          onPress={toggleSideBar}
+          style={[
+            webstyles.toggleButton,
+            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+          ]}
+        >
+          <Ionicons
+            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
+            size={24}
+            color={"#333"}
+          />
+        </TouchableOpacity>
         {/* Main Content */}
-        <View style={webstyles.mainContainer}>
+        <Animated.View
+          style={[
+            webstyles.mainContainer,
+            { transform: [{ translateX: contentPosition }] },
+          ]}
+        >
           <Text style={webstyles.headerText}>Reports</Text>
 
           <ScrollView contentContainerStyle={webstyles.reportList}>
@@ -251,7 +278,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               <Text style={webstyles.paginationText}>Next</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
         <TouchableOpacity
           style={webstyles.fab}
           onPress={() => navigation.navigate("NewReports")}
