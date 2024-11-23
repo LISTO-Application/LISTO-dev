@@ -363,15 +363,15 @@ const webstyles = StyleSheet.create({
     color: "white",
     fontSize: 18,
     fontWeight: "600",
-    flex: 1 / 4,
+    flex: 1,
     marginLeft: 20,
   },
 
   reportInfo: {
     color: "white",
     fontSize: 14,
-    fontWeight: "300",
-    flex: 1,
+    fontWeight: "200",
+    flex: 2 / 5,
     marginLeft: 20,
   },
 

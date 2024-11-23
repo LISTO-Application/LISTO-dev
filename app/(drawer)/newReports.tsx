@@ -32,6 +32,20 @@ import { ForceTouchGestureHandler } from "react-native-gesture-handler";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
 import { Image, type ImageSource } from "expo-image";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+const uploadImage = async (imageUri: string, imageName: string) => {
+  const storage = getStorage();
+  const storageRef = ref(storage, `images/${imageName}`);
+
+  const response = await fetch(imageUri); // Fetch the image from the URI
+  const blob = await response.blob(); // Convert to Blob
+
+  await uploadBytes(storageRef, blob); // Upload to Cloud Storage
+  const downloadURL = await getDownloadURL(storageRef); // Get the image URL
+
+  return downloadURL;
+};
 
 const database = db;
 
@@ -112,6 +126,11 @@ export default function NewReports({
     setIsDropdownVisible(false); // Close the dropdown
   };
   const handleSubmit = async () => {
+    let imageUrl = undefined;
+
+    if (selectedImage && imageFilename) {
+      imageUrl = await uploadImage(selectedImage, imageFilename);
+    }
     const newReport = {
       id: uuidv4(),
       icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
@@ -123,10 +142,10 @@ export default function NewReports({
       additionalInfo: additionalInfo || "Undescribed Report",
       date: date || ["Unknown Date: ", new Date().toDateString()],
       time: time || ["Unknown Time: ", new Date().toTimeString()],
-      image:
-        selectedImage && imageFilename
-          ? { filename: imageFilename, uri: selectedImage }
-          : undefined,
+      image: imageUrl,
+      // selectedImage && imageFilename
+      //   ? { filename: imageFilename, uri: selectedImage }
+      //   : undefined,
       timeStamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -134,6 +153,7 @@ export default function NewReports({
     };
 
     try {
+      console.log(newReport);
       const reportRef = collection(database, "reports"); // Ensure 'database' is the Firestore instance
       await addDoc(reportRef, newReport);
       navigation.navigate("ViewReports", { updatedReport: newReport });

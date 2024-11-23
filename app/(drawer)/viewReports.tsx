@@ -7,10 +7,8 @@ import {
   Text,
   TouchableOpacity,
   Alert,
-  Platform,
   Image,
-  ImageBackground,
-  Modal,
+  Platform,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -32,13 +30,7 @@ import {
 import { db } from "../FirebaseConfig";
 import { AuthContext } from "../AuthContext";
 import SideBar from "@/components/SideBar";
-import DeleteReportModal from "@/components/modal/DeleteReportModal";
-import {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
-import * as ImagePicker from "expo-image-picker";
+import ImageViewer from "./ImageViewer";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -117,6 +109,11 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     // Redirect to the page where the user can fill in new report details
     navigation.navigate("NewReports"); // Adjust this path based on your routing setup
   };
+
+  reports.forEach((report) => {
+    const image = report.image;
+    console.log(image.uri);
+  });
 
   //Animation to Hide side bar
   const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
@@ -267,12 +264,39 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             {currentReports.map((report) => (
               <View key={report.id} style={webstyles.reportContainer}>
                 <Image source={report.icon} style={webstyles.reportIcon} />
-                <Text style={webstyles.reportTitle}>{report.title}</Text>
-                <Text style={webstyles.reportInfo}>
-                  Remarks: {report.additionalInfo}
-                </Text>
-                <Text style={webstyles.reportInfo}>Date: {report.date}</Text>
-                <Text style={webstyles.reportInfo}>Time: {report.time}</Text>
+                <View style={{ flex: 1, flexDirection: "column" }}>
+                  <View style={{ flexDirection: "row" }}>
+                    <Text style={webstyles.reportTitle}>
+                      {report.category.charAt(0).toUpperCase() +
+                        report.category.slice(1)}
+                    </Text>
+                    <Text
+                      style={{
+                        flex: 1,
+                        color: "white",
+                        alignSelf: "center",
+                        fontWeight: "300",
+                      }}
+                    >
+                      {report.date} | {report.time}
+                    </Text>
+                    <Text
+                      style={{ flex: 1, color: "white", fontWeight: "300" }}
+                    >
+                      {report.location.toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row" }}>
+                    <Text style={webstyles.reportInfo}>
+                      {report.title.charAt(0).toUpperCase() +
+                        report.title.slice(1)}
+                    </Text>
+                    <Text style={webstyles.reportInfo}>
+                      <b>Remarks:</b> {report.additionalInfo}
+                    </Text>
+                    <Text style={webstyles.reportInfo}></Text>
+                  </View>
+                </View>
                 <View style={webstyles.reportActions}>
                   <TouchableOpacity
                     style={webstyles.editIcon}
