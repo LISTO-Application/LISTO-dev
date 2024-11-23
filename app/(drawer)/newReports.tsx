@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   ScrollView,
@@ -6,13 +6,12 @@ import {
   TouchableOpacity,
   Platform,
   TextInput,
-  FlatList,
-  ImageBackground,
-  Image,
   Animated,
   Dimensions,
+  Pressable,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import DropDownPicker from "react-native-dropdown-picker";
 import { router } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
 import { SpacerView } from "@/components/SpacerView";
@@ -24,29 +23,64 @@ import { db } from "../FirebaseConfig"; // Adjust the import path to your Fireba
 import { collection, addDoc } from "@react-native-firebase/firestore";
 import { getIconName } from "../../assets/utils/getIconName";
 import { SideBar } from "@/components/SideBar";
+import { crimeImages, CrimeType } from "../(tabs)/data/marker";
+import dayjs, { Dayjs } from "dayjs";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "react-datepicker/dist/react-datepicker-cssmodules.css";
+import { ForceTouchGestureHandler } from "react-native-gesture-handler";
+import * as ImagePicker from "expo-image-picker";
+import { FontAwesome } from "@expo/vector-icons";
+import { Image, type ImageSource } from "expo-image";
 
 const database = db;
 
-interface CrimeType {
+export interface DropdownCrimeTypes {
   label: string;
-  value:
-    | "murder"
-    | "robbery"
-    | "homicide"
-    | "injury"
-    | "rape"
-    | "carnapping"
-    | "theft";
+  value: string;
 }
 
-type CrimeCategory =
-  | "murder"
-  | "theft"
-  | "robbery"
-  | "homicide"
-  | "injury"
-  | "rape"
-  | "carnapping";
+export let crimeType: DropdownCrimeTypes[] = [
+  {
+    label: "Murder",
+    value: "murder",
+  },
+  {
+    label: "Homicide",
+    value: "homicide",
+  },
+  {
+    label: "Theft",
+    value: "theft",
+  },
+  {
+    label: "Carnapping",
+    value: "carnapping",
+  },
+  {
+    label: "Injury",
+    value: "injury",
+  },
+  {
+    label: "Robbery",
+    value: "robbery",
+  },
+  {
+    label: "Rape",
+    value: "rape",
+  },
+];
+
+type ImageProps = {
+  label: string;
+  theme?: "primary";
+  onPress?: () => void;
+};
+
+type IMGViewerProps = {
+  imgSource: ImageSource;
+  selectedImage?: string;
+};
 
 export default function NewReports({
   navigation,
@@ -56,50 +90,47 @@ export default function NewReports({
   route: any;
 }) {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [selectedValue, setSelectedValue] = useState("");
+
   const [location, setLocation] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
-  const [name, setName] = useState("");
-  // const [reportList, setReports] = useState(report);
+  const [dateTime, setDateTime] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [title, setTitle] = useState("");
+  const [name, setName] = useState(""); //TO set the reporter's name
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(
+    undefined
+  );
+  const [imageFilename, setImageFileName] = useState<string | null | undefined>(
+    undefined
+  );
 
-  const iconMapping: { [key in CrimeCategory]: any } = {
-    murder: require("../../assets/images/knife-icon.png"),
-    robbery: require("../../assets/images/robbery-icon.png"),
-    homicide: require("../../assets/images/homicide-icon.png"),
-    injury: require("../../assets/images/injury-icon.png"),
-    rape: require("../../assets/images/rape-icon.png"),
-    carnapping: require("../../assets/images/car-icon.png"),
-    theft: require("../../assets/images/thief-icon.png"),
-  };
+  const [selectedValue, setSelectedValue] = useState("");
 
-  const crimeTypes: CrimeType[] = [
-    { label: "Murder", value: "murder" },
-    { label: "Robbery", value: "robbery" },
-    { label: "Homicide", value: "homicide" },
-    { label: "Injury", value: "injury" },
-    { label: "Rape", value: "rape" },
-    { label: "Carnapping", value: "carnapping" },
-    { label: "Theft", value: "theft" },
-  ];
-
-  const handleSelect = (item: { label: any; value?: string }) => {
-    setSelectedValue(item.label); // Update the selected value
+  const handleSelect = (item: { label?: any; value?: any } | undefined) => {
+    setSelectedValue(item?.value); // Update the selected value
     setIsDropdownVisible(false); // Close the dropdown
   };
-
   const handleSubmit = async () => {
     const newReport = {
       id: uuidv4(),
-      icon:
-        iconMapping[selectedValue.toLowerCase() as CrimeCategory] || undefined,
+      icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
+      // icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
       name: name,
       category: selectedValue.toLowerCase(),
-      title: additionalInfo || "Untitled Report",
-      time: new Date().toLocaleTimeString([], {
+      title: title || "Untitled Report",
+      location: location,
+      additionalInfo: additionalInfo || "Undescribed Report",
+      date: date || ["Unknown Date: ", new Date().toDateString()],
+      time: time || ["Unknown Time: ", new Date().toTimeString()],
+      image:
+        selectedImage && imageFilename
+          ? { filename: imageFilename, uri: selectedImage }
+          : undefined,
+      timeStamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      location: location,
     };
 
     try {
@@ -112,12 +143,28 @@ export default function NewReports({
     }
   };
 
+  //Dropdown Values
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(null);
+  const [items, setItems] = useState(crimeType);
+
+  //Date
+  const [startDate, setStartDate] = useState<Date | null>(new Date());
+
+  useEffect(() => {
+    const dateInput = dayjs(startDate).format("MM-DD-YYYY");
+    const timeInput = dayjs(startDate).format("hh:mm A");
+    setDate(dateInput);
+    setTime(timeInput);
+  }, [startDate]);
+
   //Animation to Hide side bar
   const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
   const sidebarWidth = screenWidth * 0.25; // 25% of screen width
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
   const contentPosition = useRef(new Animated.Value(0)).current;
+  const [isAlignedRight, setIsAlignedRight] = useState(false);
 
   const toggleSideBar = () => {
     Animated.timing(sideBarPosition, {
@@ -131,7 +178,65 @@ export default function NewReports({
       duration: 300,
       useNativeDriver: true,
     }).start();
+    setIsAlignedRight(!isAlignedRight);
     setSidebarVisible(!isSidebarVisible);
+  };
+  const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+      setImageFileName(result.assets[0].fileName);
+    } else {
+      alert("You did not select any image.");
+    }
+  };
+  const PlaceholderImage = require("../../assets/images/background-image.jpg");
+
+  const Button = ({ label, theme, onPress }: ImageProps) => {
+    if (theme === "primary") {
+      return (
+        <View
+          style={[
+            webstyles.buttonContainer,
+            { borderWidth: 4, borderColor: "#ffd33d", borderRadius: 18 },
+          ]}
+        >
+          <Pressable
+            style={[webstyles.button, { backgroundColor: "#fff" }]}
+            onPress={onPress}
+          >
+            <FontAwesome
+              name={"picture-o"}
+              size={18}
+              color="#25292e"
+              style={webstyles.buttonIcon}
+            />
+            <Text style={[webstyles.buttonLabel, { color: "#25292e" }]}>
+              {label}
+            </Text>
+          </Pressable>
+        </View>
+      );
+    }
+    <View style={webstyles.buttonContainer}>
+      <Pressable
+        style={webstyles.button}
+        onPress={() => alert("You pressed a button.")}
+      >
+        <Text style={webstyles.buttonLabel}>{label}</Text>
+      </Pressable>
+    </View>;
+  };
+
+  const ImageViewer = ({ imgSource, selectedImage }: IMGViewerProps) => {
+    const imageSource = selectedImage ? { uri: selectedImage } : imgSource;
+
+    return <Image source={imageSource} style={webstyles.image} />;
   };
 
   if (Platform.OS === "web") {
@@ -156,45 +261,50 @@ export default function NewReports({
         <Animated.View
           style={[
             webstyles.mainContainer,
-            { transform: [{ translateX: contentPosition }] },
+            {
+              transform: [{ translateX: contentPosition }],
+            },
           ]}
         >
           <Text style={webstyles.headerText}>New Report</Text>
-          <ScrollView contentContainerStyle={webstyles.reportList}>
+          <ScrollView
+            contentContainerStyle={[
+              webstyles.reportList,
+              isAlignedRight && { width: "75%" },
+            ]}
+          >
             {/* Report Details */}
             <Text>Reporter's Username:</Text>
             <TextInput
               style={webstyles.inputField}
               value={name}
               editable={true}
+              aria-disabled
+            />
+
+            <Text>Subject:</Text>
+            <TextInput
+              style={webstyles.inputField}
+              value={title}
+              onChangeText={setTitle}
             />
 
             <Text>Select Crime Type:</Text>
-            <TouchableOpacity
-              style={webstyles.dropdown}
-              onPress={() => setIsDropdownVisible(!isDropdownVisible)}
-            >
-              <Text style={webstyles.selectedText}>
-                {selectedValue || "Select Crime Type"}
-              </Text>
-              <Ionicons name="chevron-down" size={24} color="gray" />
-            </TouchableOpacity>
-
-            {isDropdownVisible && (
-              <FlatList
-                data={crimeTypes}
-                keyExtractor={(item) => item.value}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={webstyles.item}
-                    onPress={() => handleSelect(item)}
-                  >
-                    <Text style={webstyles.itemText}>{item.label}</Text>
-                  </TouchableOpacity>
-                )}
-                style={webstyles.dropdownList} // Optional: Add styles to control dropdown position
-              />
-            )}
+            <DropDownPicker
+              open={open}
+              value={value}
+              items={items}
+              setOpen={setOpen}
+              setValue={setValue}
+              setItems={setItems}
+              placeholder="Select Crime Type:"
+              onChangeValue={(selectedValue) => {
+                const selectedItem = items.find(
+                  (item) => item.value === selectedValue
+                );
+                handleSelect(selectedItem);
+              }}
+            />
 
             <Text>Location:</Text>
             <TextInput
@@ -202,6 +312,37 @@ export default function NewReports({
               value={location}
               onChangeText={setLocation}
             />
+
+            <Text>Date and Time Happened:</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                width: "100%",
+                justifyContent: "center",
+              }}
+            >
+              <TextInput
+                style={webstyles.inputField}
+                value={date}
+                onChangeText={setDate}
+                aria-disabled
+              />
+              <TextInput
+                style={webstyles.inputField}
+                value={time}
+                onChangeText={setTime}
+                aria-disabled
+              />
+            </View>
+            <View style={{ width: 250 }}>
+              <DatePicker
+                selected={startDate}
+                onChange={(date) => setStartDate(date)}
+                value={dateTime}
+                showTimeInput
+                inline
+              />
+            </View>
 
             <Text>Additional Information:</Text>
             <TextInput
@@ -213,11 +354,24 @@ export default function NewReports({
             />
 
             <Text>Image Upload:</Text>
-            <TextInput
-              style={webstyles.inputField}
-              value="https://cloud.com/BarangayBatasan/Virus.img"
-              editable={false}
-            />
+            <Text>{imageFilename}</Text>
+            <View style={webstyles.footerContainer}>
+              {" "}
+              <Button
+                theme="primary"
+                label="Choose a photo"
+                onPress={pickImageAsync}
+              />
+              <Button label="Use this photo" />
+            </View>
+            <View style={webstyles.imageInputContainer}>
+              <View style={webstyles.imageContainer}>
+                <ImageViewer
+                  imgSource={PlaceholderImage}
+                  selectedImage={selectedImage}
+                />
+              </View>
+            </View>
 
             {/* Buttons */}
             <View style={webstyles.buttonContainereditReport}>

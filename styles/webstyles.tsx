@@ -1,3 +1,4 @@
+import { transform } from "@babel/core";
 import { StyleSheet } from "react-native";
 
 const webstyles = StyleSheet.create({
@@ -42,8 +43,6 @@ const webstyles = StyleSheet.create({
     alignItems: "center",
     height: 200,
     width: "100%",
-    borderTopEndRadius: 20,
-    borderTopLeftRadius: 20,
     overflow: "hidden",
   },
   userImage: {
@@ -290,6 +289,15 @@ const webstyles = StyleSheet.create({
     alignItems: "center",
   },
 
+  buttonIcon: {
+    paddingRight: 8,
+  },
+
+  buttonLabel: {
+    color: "#fff",
+    fontSize: 16,
+  },
+
   approvedButtonText: {
     color: "white",
     fontWeight: "bold",
@@ -355,7 +363,15 @@ const webstyles = StyleSheet.create({
     color: "white",
     fontSize: 18,
     fontWeight: "600",
-    flex: 1, // Allows the title to take up space
+    flex: 1 / 4,
+    marginLeft: 20,
+  },
+
+  reportInfo: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "300",
+    flex: 1,
     marginLeft: 20,
   },
 
@@ -398,6 +414,7 @@ const webstyles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
+    width: "100%",
   },
   textArea: {
     height: 100,
@@ -444,6 +461,31 @@ const webstyles = StyleSheet.create({
     textAlign: "center",
     color: "black",
     fontWeight: "bold",
+  },
+
+  imageInputContainer: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+
+  imageContainer: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  image: {
+    width: "100%",
+    height: 250,
+    aspectRatio: 5 / 4,
+    borderRadius: 18,
+  },
+
+  footerContainer: {
+    alignItems: "center",
+    paddingVertical: 20,
   },
 });
 

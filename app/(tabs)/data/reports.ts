@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { Image } from "react-native-reanimated/lib/typescript/Animated";
 
 export interface Report {
@@ -12,6 +13,14 @@ export interface Report {
     | "carnapping"
     | "theft";
   title: string;
+  date: string;
+  additionalInfo: string;
+  location: string;
   name: string;
-  time: string; // Store time in a string format for simplicity
+  time: string;
+  image: {
+    filename: string;
+    uri: string;
+  };
+  timeStamp: string; // Store time in a string format for simplicity
 }

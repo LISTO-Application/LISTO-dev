@@ -26,41 +26,37 @@ import { doc, updateDoc } from "@react-native-firebase/firestore";
 import { db } from "../FirebaseConfig";
 import { getIconName } from "@/assets/utils/getIconName";
 import SideBar from "@/components/SideBar";
-
-interface CrimeType {
-  label: string;
-  value:
-    | "murder"
-    | "robbery"
-    | "homicide"
-    | "injury"
-    | "rape"
-    | "carnapping"
-    | "theft";
-}
+import { crimeImages, CrimeType } from "../(tabs)/data/marker";
+import { crimeType, DropdownCrimeTypes } from "./newReports";
+import DropDownPicker from "react-native-dropdown-picker";
+import { add } from "date-fns";
+import DatePicker from "react-datepicker";
+import dayjs from "dayjs";
 
 function EditReport({ navigation }: { navigation: any }) {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const route = useRoute();
   const { report }: { report: any } = route.params as { report: Report };
 
-  const [category, setCategory] = useState<CrimeType["value"] | null>(null);
+  //Parsing the date
+  const editDate = report.date; //11-20-2024
+  const editTime = report.time; //04:02 PM
+  const editedDateTime = `${editDate} ${editTime}`;
+  const parsedEditedDateTime = new Date(editedDateTime);
+  console.log(parsedEditedDateTime);
+  console.log(editDate, editTime);
+
+  const [category, setCategory] = useState<DropdownCrimeTypes | null>(null);
   const [title, setTitle] = useState(report.title);
   const [name, setName] = useState(report.name);
-  const [selectedValue, setSelectedValue] = useState("Select Crime Type");
-  const [location, setLocation] = useState("");
-  const [additionalInfo, setAdditionalInfo] = useState("");
+  const [date, setDate] = useState(report.date);
+  const [dateTime, setDateTime] = useState();
+  const [time, setTime] = useState(report.time);
+  const [selectedValue, setSelectedValue] = useState(report.category);
+  const [location, setLocation] = useState(report.location);
+  const [additionalInfo, setAdditionalInfo] = useState(report.additionalInfo);
 
-  const crimeTypes: CrimeType[] = [
-    { label: "Murder", value: "murder" },
-    { label: "Robbery", value: "robbery" },
-    { label: "Homicide", value: "homicide" },
-    { label: "Injury", value: "injury" },
-    { label: "Rape", value: "rape" },
-    { label: "Carnapping", value: "carnapping" },
-    { label: "Theft", value: "theft" },
-  ];
-  const handleSelect = (item: CrimeType) => {
+  const handleSelect = (item: DropdownCrimeTypes) => {
     setSelectedValue(item.label); // Update the selected value
     setIsDropdownVisible(false); // Close the dropdown
   };
@@ -75,7 +71,11 @@ function EditReport({ navigation }: { navigation: any }) {
       ...report,
       name: name,
       title: title,
-      category: selectedValue,
+      additionalInfo: additionalInfo,
+      date: date,
+      time: time,
+      icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
+      category: selectedValue.toLowerCase(),
       location: location,
     };
 
@@ -96,12 +96,31 @@ function EditReport({ navigation }: { navigation: any }) {
     // navigation.navigate("ViewReports", { updatedReport });
   };
 
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(report.category);
+  const [items, setItems] = useState(crimeType);
+
+  //Date
+  const [startDate, setStartDate] = useState<Date | null>(parsedEditedDateTime);
+
+  useEffect(() => {
+    const dateInput = dayjs(startDate).format("MM-DD-YYYY");
+    const timeInput = dayjs(startDate).format("hh:mm A");
+    setDate(dateInput);
+    setTime(timeInput);
+    console.log(startDate);
+
+    console.log(dateInput, timeInput);
+    console.log(date);
+  }, [startDate]);
+
   //Animation to Hide side bar
   const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
   const sidebarWidth = screenWidth * 0.25; // 25% of screen width
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
   const contentPosition = useRef(new Animated.Value(0)).current;
+  const [isAlignedRight, setIsAlignedRight] = useState(false);
 
   const toggleSideBar = () => {
     Animated.timing(sideBarPosition, {
@@ -115,6 +134,7 @@ function EditReport({ navigation }: { navigation: any }) {
       duration: 300,
       useNativeDriver: true,
     }).start();
+    setIsAlignedRight(!isAlignedRight);
     setSidebarVisible(!isSidebarVisible);
   };
 
@@ -124,7 +144,7 @@ function EditReport({ navigation }: { navigation: any }) {
         isDropdownVisible={isDropdownVisible}
         setIsDropdownVisible={setIsDropdownVisible}
         selectedValue={selectedValue}
-        crimeTypes={crimeTypes}
+        crimeTypes={crimeType}
         location={location}
         setLocation={setLocation}
         additionalInfo={additionalInfo}
@@ -160,7 +180,12 @@ function EditReport({ navigation }: { navigation: any }) {
         >
           <Text style={webstyles.headerText}>Edit Report</Text>
 
-          <ScrollView contentContainerStyle={webstyles.reportList}>
+          <ScrollView
+            contentContainerStyle={[
+              webstyles.reportList,
+              isAlignedRight && { width: "75%" },
+            ]}
+          >
             {/* Report Details */}
             <Text>Reporter's Username:</Text>
             <TextInput
@@ -169,32 +194,29 @@ function EditReport({ navigation }: { navigation: any }) {
               onChange={setName}
             />
 
-            <Text>Select Crime Type:</Text>
-            <TouchableOpacity
-              style={webstyles.dropdown}
-              onPress={() => setIsDropdownVisible(!isDropdownVisible)}
-            >
-              <Text style={webstyles.selectedText}>
-                {selectedValue || "Select Crime Type"}
-              </Text>
-              <Ionicons name="chevron-down" size={24} color="gray" />
-            </TouchableOpacity>
+            <Text>Subject:</Text>
+            <TextInput
+              style={webstyles.inputField}
+              value={title}
+              onChangeText={setTitle}
+            />
 
-            {isDropdownVisible && (
-              <FlatList
-                data={crimeTypes}
-                keyExtractor={(item) => item.value}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={webstyles.item}
-                    onPress={() => handleSelect(item)}
-                  >
-                    <Text style={webstyles.itemText}>{item.label}</Text>
-                  </TouchableOpacity>
-                )}
-                style={webstyles.dropdownList} // Optional: Add styles to control dropdown position
-              />
-            )}
+            <Text>Select Crime Type:</Text>
+            <DropDownPicker
+              open={open}
+              value={value}
+              items={items}
+              setOpen={setOpen}
+              setValue={setValue}
+              setItems={setItems}
+              placeholder="Select Crime Type:"
+              onChangeValue={(selectedValue) => {
+                const selectedItem = items.find(
+                  (item) => item.value === selectedValue
+                );
+                handleSelect(selectedItem);
+              }}
+            />
 
             <Text>Location:</Text>
             <TextInput
@@ -203,13 +225,38 @@ function EditReport({ navigation }: { navigation: any }) {
               onChangeText={setLocation}
             />
 
+            <Text>Date and Time Happened:</Text>
+            <View style={{ flex: 1, flexDirection: "row" }}>
+              <TextInput
+                style={webstyles.inputField}
+                value={date}
+                onChangeText={setDate}
+                aria-disabled
+              />
+              <TextInput
+                style={webstyles.inputField}
+                value={time}
+                onChangeText={setTime}
+                aria-disabled
+              />
+            </View>
+            <View style={{ width: 250 }}>
+              <DatePicker
+                selected={startDate}
+                onChange={(date) => setStartDate(date)}
+                value={dateTime}
+                showTimeInput
+                inline
+              />
+            </View>
+
             <Text>Additional Information:</Text>
             <TextInput
               style={webstyles.textArea}
               multiline
               numberOfLines={4}
-              value={title}
-              onChangeText={setTitle}
+              value={additionalInfo}
+              onChangeText={setAdditionalInfo}
             />
 
             <Text>Image Upload:</Text>

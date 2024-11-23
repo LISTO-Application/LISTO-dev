@@ -10,6 +10,7 @@ import {
   Platform,
   Image,
   ImageBackground,
+  Modal,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -31,6 +32,13 @@ import {
 import { db } from "../FirebaseConfig";
 import { AuthContext } from "../AuthContext";
 import SideBar from "@/components/SideBar";
+import DeleteReportModal from "@/components/modal/DeleteReportModal";
+import {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import * as ImagePicker from "expo-image-picker";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -38,14 +46,32 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const fetchReports = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "reports"));
-      const reportList: Report[] = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        icon: doc.data().icon || "", // Add a default value if icon is missing
-        category: doc.data().category || "Unknown", // Default value
-        title: doc.data().title || "Untitled", // Default value
-        name: doc.data().name || "Anonymous", // Default value
-        time: doc.data().time || new Date().toISOString(), // Default to current time
-      }));
+      const reportList: Report[] = querySnapshot.docs.map((doc) => {
+        const imageData = doc.data().image || {};
+
+        return {
+          id: doc.id,
+          icon: doc.data().icon || "",
+          category: doc.data().category || "Unknown",
+          title: doc.data().title || "Untitled",
+          additionalInfo: doc.data().additionalInfo || "Unknown Report",
+          location: doc.data().location || "Unknown Location",
+          name: doc.data().name || "Anonymous",
+          date: doc.data().date || [
+            "Unknown Date: ",
+            new Date().toDateString(),
+          ],
+          time: doc.data().time || [
+            "Unknown Time: ",
+            new Date().toTimeString(),
+          ],
+          image: {
+            filename: imageData.filename || "Unknown Filename",
+            uri: imageData.uri || "Unknown Uri",
+          },
+          timeStamp: doc.data().timeStamp || new Date().toISOString(),
+        };
+      });
       setReports(reportList);
     } catch (error) {
       console.error("Error fetching reports:", error);
@@ -59,6 +85,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   }, [navigation]);
 
   const [currentPage, setCurrentPage] = useState(1);
+
+  console.log("Known Reports: ", reports);
+
   const reportsPerPage = 10;
   // Calculate total pages
   const totalPages = Math.ceil(reports.length / reportsPerPage);
@@ -77,7 +106,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       console.error("Error deleting report: ", error);
     }
   };
-
   // Edit report handler (redirect to editReport.tsx with report ID)
   const handleEditReport = (report: Report) => {
     // Redirect to the report edit page with the report ID in the query
@@ -96,6 +124,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
   const contentPosition = useRef(new Animated.Value(0)).current;
+  const [isAlignedRight, setIsAlignedRight] = useState(false);
 
   const toggleSideBar = () => {
     Animated.timing(sideBarPosition, {
@@ -109,6 +138,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       duration: 300,
       useNativeDriver: true,
     }).start();
+    setIsAlignedRight(!isAlignedRight);
     setSidebarVisible(!isSidebarVisible);
   };
 
@@ -222,16 +252,27 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         <Animated.View
           style={[
             webstyles.mainContainer,
-            { transform: [{ translateX: contentPosition }] },
+            {
+              transform: [{ translateX: contentPosition }],
+            },
           ]}
         >
           <Text style={webstyles.headerText}>Reports</Text>
-
-          <ScrollView contentContainerStyle={webstyles.reportList}>
+          <ScrollView
+            contentContainerStyle={[
+              webstyles.reportList,
+              isAlignedRight && { width: "75%" },
+            ]}
+          >
             {currentReports.map((report) => (
               <View key={report.id} style={webstyles.reportContainer}>
                 <Image source={report.icon} style={webstyles.reportIcon} />
                 <Text style={webstyles.reportTitle}>{report.title}</Text>
+                <Text style={webstyles.reportInfo}>
+                  Remarks: {report.additionalInfo}
+                </Text>
+                <Text style={webstyles.reportInfo}>Date: {report.date}</Text>
+                <Text style={webstyles.reportInfo}>Time: {report.time}</Text>
                 <View style={webstyles.reportActions}>
                   <TouchableOpacity
                     style={webstyles.editIcon}
@@ -249,17 +290,15 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                       color="#DA4B46"
                     />
                   </TouchableOpacity>
-                  <Text style={webstyles.timeText}>{report.time}</Text>
+                  <Text style={webstyles.timeText}>{report.timeStamp}</Text>
                 </View>
               </View>
             ))}
           </ScrollView>
 
           {/* Pagination Controls */}
-
           {/* Plus Sign Button */}
-
-          <View style={webstyles.paginationContainer}>
+          <View style={[webstyles.paginationContainer]}>
             <TouchableOpacity
               disabled={currentPage === 1}
               onPress={() => setCurrentPage(currentPage - 1)}
