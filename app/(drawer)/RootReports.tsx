@@ -44,7 +44,7 @@ const RootReports = () => {
       <Stack.Screen
         name="ViewAdminEmergencyList"
         component={ViewAdminEmergencyList}
-        options={{ headerShown: false, title: "ADMIN VIEW EMERGENCY REPORT" }}
+        options={{ headerShown: false, title: "Admin View Emergency Report" }}
       />
     </Stack.Navigator>
   );

@@ -18,17 +18,20 @@ interface ReportDetailsType {
   location: string | null;
   time: string;
   status: "PENDING" | "VALID" | "PENALIZED";
-  details: string | null;
-  reporterName?: string; // If available
+  additionalInfo: string | null;
 }
 
 const ReportDetails = ({ navigation }: { navigation: any }) => {
-  const route = useRoute();
-  const { id } = route.params as { id: string };
+  const route = useRoute(); // Using useRoute to access params
+  const { id } = route.params as {
+    id: string;
+  };
+  // Example report data (this should come from your data source, such as an API or state)
 
   const [reportDetails, setReportDetails] = useState<ReportDetailsType | null>(
     null
   );
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,6 +91,7 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Ionicons name="arrow-back" size={32} color="#fff" />
       </TouchableOpacity>
+
 
       {/* Header */}
       
@@ -160,6 +164,7 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
         </View>
       </View>
     </ScrollView>
+
   );
 };
 
