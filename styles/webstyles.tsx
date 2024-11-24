@@ -1,3 +1,4 @@
+import { transform } from "@babel/core";
 import { StyleSheet } from "react-native";
 
 const webstyles = StyleSheet.create({
@@ -6,19 +7,27 @@ const webstyles = StyleSheet.create({
     flexDirection: "row",
     height: "100%",
     backgroundColor: "white",
-    padding: "3%",
+    padding: 0,
   },
   sidebar: {
-    backgroundColor: "#115272", // Blue sidebar
-    width: "25%",
-    padding: 20,
-    color: "white",
+    width: "25%", // Adjust to the sidebar's width
+    backgroundColor: "#fff",
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 2, height: 0 },
+    shadowRadius: 5,
+    zIndex: 10,
   },
   sidebarTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "white",
+    color: "#333",
     marginBottom: 20,
+    textAlign: "center",
   },
   sidebarItem: {
     padding: 10,
@@ -26,8 +35,56 @@ const webstyles = StyleSheet.create({
     marginBottom: 10,
   },
   sidebarText: {
-    color: "white",
+    color: "#333",
     fontSize: 18,
+  },
+  userSection: {
+    justifyContent: "center",
+    alignItems: "center",
+    height: 200,
+    width: "100%",
+    overflow: "hidden",
+  },
+  userImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
+  },
+  logoutContainer: {
+    marginTop: 20,
+    paddingHorizontal: 10,
+  },
+  logoutButton: {
+    padding: 15,
+    backgroundColor: "red",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  logoutText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  toggleButton: {
+    width: 30,
+    height: 30,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    top: 20,
+    left: 260, // Adjust to position the toggle button
+    zIndex: 20,
+    borderRadius: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 2, height: 2 },
+    shadowRadius: 5,
   },
   mainContainer: {
     backgroundColor: "white", // White background for the main part
@@ -57,7 +114,7 @@ const webstyles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    padding: 15
+    padding: 15,
   },
   reportContainer: {
     display: "flex",
@@ -75,8 +132,8 @@ const webstyles = StyleSheet.create({
     padding: 15,
     backgroundColor: "white",
     marginBottom: 10,
-     // Rounded corners
-    borderBottomWidth: .5, // Add a border at the bottom
+    // Rounded corners
+    borderBottomWidth: 0.5, // Add a border at the bottom
     borderBottomColor: "grey", // Set the bottom border color to grey
   },
   dropdownList: {
@@ -129,22 +186,22 @@ const webstyles = StyleSheet.create({
     fontWeight: 600,
   },
   statusButtonsContainer: {
-    color:"black",
-    flexDirection: 'row',
+    color: "black",
+    flexDirection: "row",
   },
   pendingButton: {
     marginLeft: 10,
     padding: 10,
-    backgroundColor: 'grey',
+    backgroundColor: "grey",
     borderRadius: 5,
   },
   pendingButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
   actionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   statusButton: {
     paddingVertical: 5,
@@ -152,10 +209,10 @@ const webstyles = StyleSheet.create({
     borderRadius: 5,
     marginLeft: 5,
   },
- 
+
   statusButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   statusContainer: {
     marginRight: 10,
@@ -181,7 +238,7 @@ const webstyles = StyleSheet.create({
   horizontalLine: {
     color: "black",
     height: 10,
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
     marginVertical: 10,
   },
 
@@ -193,52 +250,61 @@ const webstyles = StyleSheet.create({
     fontSize: 16,
   },
   approveButton: {
-    backgroundColor: '#4caf50',
+    backgroundColor: "#4caf50",
     padding: 10,
     borderRadius: 5,
     marginRight: 10,
   },
   rejectedButton: {
-    backgroundColor: '#f44336',
+    backgroundColor: "#f44336",
     padding: 10,
     borderRadius: 5,
   },
   approvedButton: {
-    backgroundColor: '#115272',
+    backgroundColor: "#115272",
     padding: 10,
     borderRadius: 5,
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   detailItem: {
     marginBottom: 15,
   },
   detailLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   detailValue: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   button: {
     marginTop: 20,
     padding: 10,
-    backgroundColor: '#007bff',
+    backgroundColor: "#007bff",
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
- 
+
+  buttonIcon: {
+    paddingRight: 8,
+  },
+
+  buttonLabel: {
+    color: "#fff",
+    fontSize: 16,
+  },
+
   approvedButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   rejectedButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   // Add this inside your webstyles object
   paginationContainer: {
@@ -250,7 +316,7 @@ const webstyles = StyleSheet.create({
     paddingHorizontal: 0,
     marginTop: 20,
   },
-  
+
   paginationButton: {
     backgroundColor: "#115272",
     paddingVertical: 15,
@@ -276,7 +342,6 @@ const webstyles = StyleSheet.create({
     textAlign: "center", // Center-align the text
   },
 
-
   fab: {
     position: "absolute",
     bottom: 20, // Adjust based on your layout needs
@@ -298,7 +363,15 @@ const webstyles = StyleSheet.create({
     color: "white",
     fontSize: 18,
     fontWeight: "600",
-    flex: 1, // Allows the title to take up space
+    flex: 1,
+    marginLeft: 20,
+  },
+
+  reportInfo: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "200",
+    flex: 2 / 5,
     marginLeft: 20,
   },
 
@@ -334,7 +407,6 @@ const webstyles = StyleSheet.create({
     border: "none",
     cursor: "pointer",
   },
- 
 
   inputField: {
     borderWidth: 1,
@@ -342,6 +414,7 @@ const webstyles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
+    width: "100%",
   },
   textArea: {
     height: 100,
@@ -388,6 +461,31 @@ const webstyles = StyleSheet.create({
     textAlign: "center",
     color: "black",
     fontWeight: "bold",
+  },
+
+  imageInputContainer: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+
+  imageContainer: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  image: {
+    width: "100%",
+    height: 250,
+    aspectRatio: 5 / 4,
+    borderRadius: 18,
+  },
+
+  footerContainer: {
+    alignItems: "center",
+    paddingVertical: 20,
   },
 });
 

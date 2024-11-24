@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Dimensions,
   View,
   ScrollView,
   Text,
   TouchableOpacity,
   Alert,
-  Platform,
   Image,
+  Platform,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -16,6 +18,7 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 import { Report } from "../(tabs)/data/reports";
 import { Route } from "expo-router/build/Route";
 import { useRoute } from "@react-navigation/native";
+import { getIconName } from "../../assets/utils/getIconName";
 import { initializeApp } from "@react-native-firebase/app";
 import {
   collection,
@@ -25,6 +28,9 @@ import {
   getFirestore,
 } from "@react-native-firebase/firestore";
 import { db } from "../FirebaseConfig";
+import { AuthContext } from "../AuthContext";
+import SideBar from "@/components/SideBar";
+import ImageViewer from "./ImageViewer";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -32,14 +38,33 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const fetchReports = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "reports"));
-      const reportList: Report[] = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        icon: doc.data().icon || "", // Add a default value if icon is missing
-        category: doc.data().category || "Unknown", // Default value
-        title: doc.data().title || "Untitled", // Default value
-        name: doc.data().name || "Anonymous", // Default value
-        time: doc.data().time || new Date().toISOString(), // Default to current time
-      }));
+      const reportList: Report[] = querySnapshot.docs.map((doc) => {
+        const imageData = doc.data().image || {};
+
+        return {
+          id: doc.id,
+          icon: doc.data().icon || "",
+          category: doc.data().category || "Unknown",
+          title: doc.data().title || "Untitled",
+          additionalInfo: doc.data().additionalInfo || "Unknown Report",
+          location: doc.data().location || "Unknown Location",
+          name: doc.data().name || "Anonymous",
+          date: doc.data().date || [
+            "Unknown Date: ",
+            new Date().toDateString(),
+          ],
+          time: doc.data().time || [
+            "Unknown Time: ",
+            new Date().toTimeString(),
+          ],
+          image: {
+            filename: imageData.filename || "Unknown Filename",
+            uri: imageData.uri || "Unknown Uri",
+          },
+          status: doc.data().status,
+          timeStamp: doc.data().timeStamp || new Date().toISOString(),
+        };
+      });
       setReports(reportList);
     } catch (error) {
       console.error("Error fetching reports:", error);
@@ -50,26 +75,12 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       fetchReports();
     });
     return unsubscribe;
-
-    // navigation.addListener("focus", () => {
-    //   console.log("Navigation params:", navigation.params);
-    //   const updatedReport =
-    //     navigation.getState().routes[navigation.getState().index].params
-    //       ?.updatedReport;
-    //   if (updatedReport) {
-    //     setReports((prevReports) => [...prevReports, updatedReport]);
-    //   }
-    // });
-    // console.log(
-    //   "Navigation State:",
-    //   navigation.getState().routes[navigation.getState().index].params
-    //     .updatedReport
-    // );
-    // console.log("Navigation State:", navigation.getState());
-    // return unsubscribe;
   }, [navigation]);
 
   const [currentPage, setCurrentPage] = useState(1);
+
+  console.log("Known Reports: ", reports);
+
   const reportsPerPage = 10;
   // Calculate total pages
   const totalPages = Math.ceil(reports.length / reportsPerPage);
@@ -87,12 +98,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     } catch (error) {
       console.error("Error deleting report: ", error);
     }
-
-    // setReports((prevReports) =>
-    //   prevReports.filter((report) => report.id !== reportId)
-    // );
   };
-
   // Edit report handler (redirect to editReport.tsx with report ID)
   const handleEditReport = (report: Report) => {
     // Redirect to the report edit page with the report ID in the query
@@ -103,6 +109,35 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const handleSubmitReport = () => {
     // Redirect to the page where the user can fill in new report details
     navigation.navigate("NewReports"); // Adjust this path based on your routing setup
+  };
+
+  reports.forEach((report) => {
+    const image = report.image;
+    console.log(image.uri);
+  });
+
+  //Animation to Hide side bar
+  const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
+  const sidebarWidth = screenWidth * 0.25; // 25% of screen width
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
+  const contentPosition = useRef(new Animated.Value(0)).current;
+  const [isAlignedRight, setIsAlignedRight] = useState(false);
+
+  const toggleSideBar = () => {
+    Animated.timing(sideBarPosition, {
+      toValue: isSidebarVisible ? -sidebarWidth : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(contentPosition, {
+      toValue: isSidebarVisible ? 0 : sidebarWidth, // Shift main content
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+    setIsAlignedRight(!isAlignedRight);
+    setSidebarVisible(!isSidebarVisible);
   };
 
   // Render for Android and iOS
@@ -196,15 +231,73 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
+        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+        {/* Toggle Button */}
+        <TouchableOpacity
+          onPress={toggleSideBar}
+          style={[
+            webstyles.toggleButton,
+            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+          ]}
+        >
+          <Ionicons
+            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
+            size={24}
+            color={"#333"}
+          />
+        </TouchableOpacity>
         {/* Main Content */}
-        <View style={webstyles.mainContainer}>
+        <Animated.View
+          style={[
+            webstyles.mainContainer,
+            {
+              transform: [{ translateX: contentPosition }],
+            },
+          ]}
+        >
           <Text style={webstyles.headerText}>Reports</Text>
-
-          <ScrollView contentContainerStyle={webstyles.reportList}>
+          <ScrollView
+            contentContainerStyle={[
+              webstyles.reportList,
+              isAlignedRight && { width: "75%" },
+            ]}
+          >
             {currentReports.map((report) => (
               <View key={report.id} style={webstyles.reportContainer}>
                 <Image source={report.icon} style={webstyles.reportIcon} />
-                <Text style={webstyles.reportTitle}>{report.title}</Text>
+                <View style={{ flex: 1, flexDirection: "column" }}>
+                  <View style={{ flexDirection: "row" }}>
+                    <Text style={webstyles.reportTitle}>
+                      {report.category.charAt(0).toUpperCase() +
+                        report.category.slice(1)}
+                    </Text>
+                    <Text
+                      style={{
+                        flex: 1,
+                        color: "white",
+                        alignSelf: "center",
+                        fontWeight: "300",
+                      }}
+                    >
+                      {report.date} | {report.time}
+                    </Text>
+                    <Text
+                      style={{ flex: 1, color: "white", fontWeight: "300" }}
+                    >
+                      {report.location.toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row" }}>
+                    <Text style={webstyles.reportInfo}>
+                      {report.title.charAt(0).toUpperCase() +
+                        report.title.slice(1)}
+                    </Text>
+                    <Text style={webstyles.reportInfo}>
+                      <b>Remarks:</b> {report.additionalInfo}
+                    </Text>
+                    <Text style={webstyles.reportInfo}></Text>
+                  </View>
+                </View>
                 <View style={webstyles.reportActions}>
                   <TouchableOpacity
                     style={webstyles.editIcon}
@@ -222,17 +315,15 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                       color="#DA4B46"
                     />
                   </TouchableOpacity>
-                  <Text style={webstyles.timeText}>{report.time}</Text>
+                  <Text style={webstyles.timeText}>{report.timeStamp}</Text>
                 </View>
               </View>
             ))}
           </ScrollView>
 
           {/* Pagination Controls */}
-
           {/* Plus Sign Button */}
-
-          <View style={webstyles.paginationContainer}>
+          <View style={[webstyles.paginationContainer]}>
             <TouchableOpacity
               disabled={currentPage === 1}
               onPress={() => setCurrentPage(currentPage - 1)}
@@ -251,7 +342,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               <Text style={webstyles.paginationText}>Next</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
         <TouchableOpacity
           style={webstyles.fab}
           onPress={() => navigation.navigate("NewReports")}
