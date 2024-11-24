@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
-import { useRoute } from "@react-navigation/native"; // Use the correct hook for route params
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
+import { useRoute } from "@react-navigation/native";
 import firestore from "@react-native-firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -13,15 +19,12 @@ interface ReportDetailsType {
   time: string;
   status: "PENDING" | "VALID" | "PENALIZED";
   details: string | null;
+  reporterName?: string; // If available
 }
 
 const ReportDetails = ({ navigation }: { navigation: any }) => {
-  const route = useRoute(); // Using useRoute to access params
-  const { id } = route.params as {
-    id: string;
-  };
-
-  // Example report data (this should come from your data source, such as an API or state)
+  const route = useRoute();
+  const { id } = route.params as { id: string };
 
   const [reportDetails, setReportDetails] = useState<ReportDetailsType | null>(
     null
@@ -29,7 +32,6 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch the report details from Firestore based on the id
   useEffect(() => {
     if (id) {
       const fetchReportDetails = async () => {
@@ -38,7 +40,17 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
           const reportDoc = await reportRef.get();
 
           if (reportDoc.exists) {
-            setReportDetails(reportDoc.data() as ReportDetailsType);
+            const reportData = reportDoc.data();
+            setReportDetails({
+              id: reportDoc.id,
+              title: reportData?.title || "Untitled",
+              category: reportData?.category || "Unknown Category",
+              location: reportData?.location || "Unknown Location",
+              time: reportData?.time || "Unknown Time",
+              status: reportData?.status || "PENDING",
+              details: reportData?.additionalInfo || "No additional information",
+              reporterName: reportData?.name || "Anonymous",
+            });
           } else {
             setError("No such document found.");
           }
@@ -54,109 +66,173 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
     }
   }, [id]);
 
-  // Render loading state
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-  // Render error state if data is not found
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+        <ActivityIndicator size="large" color="#115272" />
       </View>
     );
   }
 
-  // Render report details
-  if (!reportDetails) {
+  if (error || !reportDetails) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>
-          Report details could not be loaded.
-        </Text>
+        <Text style={styles.errorText}>{error || "No report details found."}</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate("Validate")}>
-        {" "}
-        <Ionicons
-          name={"arrow-undo-circle-outline"}
-          size={30}
-          color={"black"}
-        />
+    <ScrollView style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={32} color="#fff" />
       </TouchableOpacity>
 
-      <Text style={styles.title}>{reportDetails.title}</Text>
-      <Text style={styles.category}>Category: {reportDetails.category}</Text>
-      <Text style={styles.location}>
-        Location: {reportDetails.location || "Not provided"}
-      </Text>
-      <Text style={styles.time}>Time: {reportDetails.time}</Text>
-      <Text style={styles.status}>Status: {reportDetails.status}</Text>
-      <Text style={styles.details}>
-        Details: {reportDetails.details || "No details available"}
-      </Text>
-    </View>
+      {/* Header */}
+      
+
+      {/* Report Information */}
+      
+      <View style={styles.content}>
+      <Text style={styles.header}>Report Details</Text>
+        {/* Reporter's Name */}
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Reportee's Username:</Text>
+          <Text style={styles.value}>{reportDetails.reporterName}</Text>
+        </View>
+
+        {/* Report Title */}
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Report Title:</Text>
+          <Text style={styles.value}>{reportDetails.title}</Text>
+        </View>
+
+        {/* Selected Crime Type */}
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Category:</Text>
+          <Text style={styles.value}>{reportDetails.category}</Text>
+        </View>
+
+        {/* Location */}
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Location:</Text>
+          <Text style={styles.value}>
+            {reportDetails.location || "Location not provided"}
+          </Text>
+        </View>
+
+        {/* Time */}
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Time:</Text>
+          <Text style={styles.value}>{reportDetails.time}</Text>
+        </View>
+
+        {/* Status */}
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Status:</Text>
+          <Text
+            style={[
+              styles.value,
+              {
+                color:
+                  reportDetails.status === "VALID"
+                    ? "green"
+                    : reportDetails.status === "PENALIZED"
+                    ? "red"
+                    : "#FFA500",
+              },
+              styles.statusText,
+            ]}
+          >
+            {reportDetails.status}
+          </Text>
+        </View>
+
+        {/* Additional Information */}
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Additional Information:</Text>
+          <View style={styles.textArea}>
+            <Text style={styles.value}>
+              {reportDetails.details || "No additional information provided"}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: "#115272", // Set the background color to #115272
     padding: 20,
-    backgroundColor: "#fff",
   },
-  title: {
-    fontSize: 24,
+  backButton: {
+    marginBottom: 10,
+  },
+  header: {
+    fontSize: 45, 
     fontWeight: "bold",
-    color: "#115272",
+    color: "#115272", // Changed text color to white for better contrast against dark background
+    marginBottom: 20,
   },
-  category: {
-    fontSize: 18,
-    marginTop: 10,
-    color: "#115272",
+  content: {
+    backgroundColor: "#fff", // Keep the card background white for contrast
+    borderRadius: 8,
+    padding: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
   },
-  location: {
-    fontSize: 18,
-    marginTop: 10,
-    color: "#115272",
+  detailRow: {
+    marginBottom: 20,
   },
-  time: {
-    fontSize: 16,
-    marginTop: 20,
-    color: "#115272",
+  label: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#115272", // Change label color to match header
+    marginBottom: 5,
   },
-  status: {
-    fontSize: 16,
-    marginTop: 20,
-    color: "#115272",
+  value: {
+    fontSize: 20,
+    color: "#333",
+    lineHeight: 26,
   },
-  details: {
-    fontSize: 16,
-    marginTop: 20,
-    color: "#115272",
+  statusText: {
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    fontSize: 20,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    minHeight: 100,
+    marginTop: 5,
+    backgroundColor: "#f9f9f9",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#fff", // White background for loading state
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#fff", // White background for error state
+    paddingHorizontal: 20,
   },
   errorText: {
-    fontSize: 18,
     color: "red",
+    fontSize: 22,
+    textAlign: "center",
   },
 });
 

@@ -4,9 +4,9 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ViewReports from "./viewReports";
 import newReports from "./newReports";
-import EditReport from "./EditReport";
+import editReport from "./editReport";
 import ReportDetails from "./reportDetails";
-import ViewAdminEmergencyList from "./viewAdminEmergencyList";
+import ViewAdminEmergencyList from "./ViewAdminEmergencyList";
 import ValidateReports from "./validateReports";
 
 const RootReports = () => {
@@ -24,8 +24,8 @@ const RootReports = () => {
         options={{ headerShown: false, title: "Create Reports" }}
       />
       <Stack.Screen
-        name="EditReports"
-        component={EditReport}
+        name="editReports"
+        component={editReport}
         options={{ headerShown: false, title: "Edit Reports" }}
       />
       <Stack.Screen

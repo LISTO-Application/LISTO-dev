@@ -102,13 +102,13 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   // Edit report handler (redirect to editReport.tsx with report ID)
   const handleEditReport = (report: Report) => {
     // Redirect to the report edit page with the report ID in the query
-    navigation.navigate("EditReports", { report });
+    navigation.navigate("editReports", { report });
   };
 
   // Submit report handler (redirect to new report form)
   const handleSubmitReport = () => {
     // Redirect to the page where the user can fill in new report details
-    navigation.navigate("NewReports"); // Adjust this path based on your routing setup
+    navigation.navigate("newReports"); // Adjust this path based on your routing setup
   };
 
   reports.forEach((report) => {
@@ -231,40 +231,62 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
-        {/* Toggle Button */}
-        <TouchableOpacity
-          onPress={toggleSideBar}
-          style={[
-            webstyles.toggleButton,
-            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+      <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+      {/* Toggle Button */}
+      <TouchableOpacity
+        onPress={toggleSideBar}
+        style={[
+          webstyles.toggleButton,
+          { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+        ]}
+      >
+        <Ionicons
+          name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
+          size={24}
+          color={"#333"}
+        />
+      </TouchableOpacity>
+      
+      {/* Main Content */}
+      <Animated.View
+        style={[
+          webstyles.mainContainer,
+          {
+            transform: [{ translateX: contentPosition }],
+          },
+        ]}
+      >
+        <Text style={webstyles.headerText}>Reports</Text>
+        <ScrollView
+          contentContainerStyle={[
+            webstyles.reportList,
+            isAlignedRight && { width: "75%" },
           ]}
         >
-          <Ionicons
-            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
-            size={24}
-            color={"#333"}
-          />
-        </TouchableOpacity>
-        {/* Main Content */}
-        <Animated.View
-          style={[
-            webstyles.mainContainer,
-            {
-              transform: [{ translateX: contentPosition }],
-            },
-          ]}
-        >
-          <Text style={webstyles.headerText}>Reports</Text>
-          <ScrollView
-            contentContainerStyle={[
-              webstyles.reportList,
-              isAlignedRight && { width: "75%" },
-            ]}
-          >
-            {currentReports.map((report) => (
+          {currentReports.map((report) => {
+            // Determine the icon based on the report category
+            let iconSource;
+            if (report.category === "carnapping") {
+              iconSource = require("../../assets/images/car-icon.png"); // Correct path
+            } else if (report.category === "rape") {
+              iconSource = require("../../assets/images/rape-icon.png"); // Correct path
+            } else if (report.category === "homicide") {
+              iconSource = require("../../assets/images/homicide-icon.png"); // Correct path
+            }else if (report.category === "murder") {
+              iconSource = require("../../assets/images/knife-icon.png"); // Correct path
+            }else if (report.category === "injury") {
+              iconSource = require("../../assets/images/injury-icon.png"); // Correct path
+            }else if (report.category === "theft") {
+              iconSource = require("../../assets/images/thief-icon.png"); // Correct path
+            }else if (report.category === "robbery") {
+              iconSource = require("../../assets/images/robbery-icon.png"); // Correct path
+            }else {
+              iconSource = require("../../assets/images/question-mark.png"); // Correct path
+            }
+  
+            return (
               <View key={report.id} style={webstyles.reportContainer}>
-                <Image source={report.icon} style={webstyles.reportIcon} />
+                <Image source={iconSource} style={webstyles.reportIcon} />
                 <View style={{ flex: 1, flexDirection: "column" }}>
                   <View style={{ flexDirection: "row" }}>
                     <Text style={webstyles.reportTitle}>
@@ -279,7 +301,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                         fontWeight: "300",
                       }}
                     >
-                      {report.date} | {report.time}
+                      {report.date} 
                     </Text>
                     <Text
                       style={{ flex: 1, color: "white", fontWeight: "300" }}
@@ -289,8 +311,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                   </View>
                   <View style={{ flexDirection: "row" }}>
                     <Text style={webstyles.reportInfo}>
-                      {report.title.charAt(0).toUpperCase() +
-                        report.title.slice(1)}
+                      {report.title.charAt(0).toUpperCase() + report.title.slice(1)}
                     </Text>
                     <Text style={webstyles.reportInfo}>
                       <b>Remarks:</b> {report.additionalInfo}
@@ -309,47 +330,44 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     style={webstyles.editIcon}
                     onPress={() => handleDeleteReport(report.id)}
                   >
-                    <Ionicons
-                      name="trash-bin-outline"
-                      size={30}
-                      color="#DA4B46"
-                    />
+                    <Ionicons name="trash-bin-outline" size={30} color="#DA4B46" />
                   </TouchableOpacity>
                   <Text style={webstyles.timeText}>{report.timeStamp}</Text>
                 </View>
               </View>
-            ))}
-          </ScrollView>
-
-          {/* Pagination Controls */}
-          {/* Plus Sign Button */}
-          <View style={[webstyles.paginationContainer]}>
-            <TouchableOpacity
-              disabled={currentPage === 1}
-              onPress={() => setCurrentPage(currentPage - 1)}
-              style={webstyles.paginationButton}
-            >
-              <Text style={webstyles.paginationText}>Previous</Text>
-            </TouchableOpacity>
-            <Text style={webstyles.paginationText}>
-              Page {currentPage} of {totalPages}
-            </Text>
-            <TouchableOpacity
-              disabled={currentPage === totalPages}
-              onPress={() => setCurrentPage(currentPage + 1)}
-              style={webstyles.paginationButton}
-            >
-              <Text style={webstyles.paginationText}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-        <TouchableOpacity
-          style={webstyles.fab}
-          onPress={() => navigation.navigate("NewReports")}
-        >
-          <Ionicons name="add" size={30} color="white" />
-        </TouchableOpacity>
-      </View>
-    );
+            );
+          })}
+        </ScrollView>
+  
+        {/* Pagination Controls */}
+        <View style={[webstyles.paginationContainer]}>
+          <TouchableOpacity
+            disabled={currentPage === 1}
+            onPress={() => setCurrentPage(currentPage - 1)}
+            style={webstyles.paginationButton}
+          >
+            <Text style={webstyles.paginationText}>Previous</Text>
+          </TouchableOpacity>
+          <Text style={webstyles.paginationText}>
+            Page {currentPage} of {totalPages}
+          </Text>
+          <TouchableOpacity
+            disabled={currentPage === totalPages}
+            onPress={() => setCurrentPage(currentPage + 1)}
+            style={webstyles.paginationButton}
+          >
+            <Text style={webstyles.paginationText}>Next</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+      
+      <TouchableOpacity
+        style={webstyles.fab}
+        onPress={() => navigation.navigate("NewReports")}
+      >
+        <Ionicons name="add" size={30} color="white" />
+      </TouchableOpacity>
+    </View>
+  );
   }
 }

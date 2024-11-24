@@ -22,6 +22,7 @@ const webstyles = StyleSheet.create({
     shadowRadius: 5,
     zIndex: 10,
   },
+
   sidebarTitle: {
     fontSize: 24,
     fontWeight: "bold",
