@@ -179,29 +179,7 @@ export default function NewReports({
     setTime(timeInput);
   }, [startDate]);
 
-  //Animation to Hide side bar
-  const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
-  const sidebarWidth = screenWidth * 0.25; // 25% of screen width
-  const [isSidebarVisible, setSidebarVisible] = useState(false);
-  const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
-  const contentPosition = useRef(new Animated.Value(0)).current;
-  const [isAlignedRight, setIsAlignedRight] = useState(false);
-
-  const toggleSideBar = () => {
-    Animated.timing(sideBarPosition, {
-      toValue: isSidebarVisible ? -sidebarWidth : 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-
-    Animated.timing(contentPosition, {
-      toValue: isSidebarVisible ? 0 : sidebarWidth, // Shift main content
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-    setIsAlignedRight(!isAlignedRight);
-    setSidebarVisible(!isSidebarVisible);
-  };
+  //Image
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -258,6 +236,30 @@ export default function NewReports({
     const imageSource = selectedImage ? { uri: selectedImage } : imgSource;
 
     return <Image source={imageSource} style={webstyles.image} />;
+  };
+
+  //Animation to Hide side bar
+  const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
+  const sidebarWidth = screenWidth * 0.25; // 25% of screen width
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
+  const contentPosition = useRef(new Animated.Value(0)).current;
+  const [isAlignedRight, setIsAlignedRight] = useState(false);
+
+  const toggleSideBar = () => {
+    Animated.timing(sideBarPosition, {
+      toValue: isSidebarVisible ? -sidebarWidth : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(contentPosition, {
+      toValue: isSidebarVisible ? 0 : sidebarWidth, // Shift main content
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+    setIsAlignedRight(!isAlignedRight);
+    setSidebarVisible(!isSidebarVisible);
   };
 
   if (Platform.OS === "web") {

@@ -32,9 +32,9 @@ export const SideBar = ({
     { name: "Emergency Dial", route: "Emergency" },
     { name: "Report Incident", route: "Report Incident" },
     { name: "Account", route: "Account" },
-    { name: "Report Tickets", route: "Reports" },
+    { name: "Report Tickets", route: "ViewReports" },
     { name: "Validate Tickets", route: "Validate" },
-    { name: "View Admin Emergency List", route: "View Admin Emergency List" },
+    { name: "View Admin Emergency List", route: "ViewAdminEmergencyList" },
   ];
 
   return (

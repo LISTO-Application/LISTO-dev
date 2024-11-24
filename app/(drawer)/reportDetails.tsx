@@ -12,7 +12,7 @@ interface ReportDetailsType {
   location: string | null;
   time: string;
   status: "PENDING" | "VALID" | "PENALIZED";
-  details: string | null;
+  additionalInfo: string | null;
 }
 
 const ReportDetails = ({ navigation }: { navigation: any }) => {
@@ -20,12 +20,12 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
   const { id } = route.params as {
     id: string;
   };
-
   // Example report data (this should come from your data source, such as an API or state)
 
   const [reportDetails, setReportDetails] = useState<ReportDetailsType | null>(
     null
   );
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,7 +101,7 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
       <Text style={styles.time}>Time: {reportDetails.time}</Text>
       <Text style={styles.status}>Status: {reportDetails.status}</Text>
       <Text style={styles.details}>
-        Details: {reportDetails.details || "No details available"}
+        Details: {reportDetails.additionalInfo || "No details available"}
       </Text>
     </View>
   );

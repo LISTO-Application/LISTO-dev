@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   Platform,
+  Animated,
+  Dimensions,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -13,6 +15,8 @@ import { db } from "../FirebaseConfig";
 import { Timestamp } from "firebase/firestore";
 import "firebase/database";
 import { collection, getDocs } from "@react-native-firebase/firestore";
+import SideBar from "@/components/SideBar";
+import { styles } from "@/styles/styles";
 interface Incident {
   coordinates: { _latitude: number; _longitude: number };
   date: Timestamp | string;
@@ -85,6 +89,30 @@ export default function ViewAdminEmergencyList({
       default:
         return { backgroundColor: "#6c757d", color: "" };
     }
+  };
+
+  //Animation to Hide side bar
+  const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
+  const sidebarWidth = screenWidth * 0.25; // 25% of screen width
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
+  const contentPosition = useRef(new Animated.Value(0)).current;
+  const [isAlignedRight, setIsAlignedRight] = useState(false);
+
+  const toggleSideBar = () => {
+    Animated.timing(sideBarPosition, {
+      toValue: isSidebarVisible ? -sidebarWidth : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(contentPosition, {
+      toValue: isSidebarVisible ? 0 : sidebarWidth, // Shift main content
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+    setIsAlignedRight(!isAlignedRight);
+    setSidebarVisible(!isSidebarVisible);
   };
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
@@ -180,10 +208,35 @@ export default function ViewAdminEmergencyList({
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        <View style={webstyles.mainContainer}>
+        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+        {/* Toggle Button */}
+        <TouchableOpacity
+          onPress={toggleSideBar}
+          style={[
+            webstyles.toggleButton,
+            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+          ]}
+        >
+          <Ionicons
+            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
+            size={24}
+            color={"#333"}
+          />
+        </TouchableOpacity>
+        <Animated.View
+          style={[
+            webstyles.mainContainer,
+            { transform: [{ translateX: contentPosition }] },
+          ]}
+        >
           <Text style={webstyles.headerText}>Listed Distress Messeges</Text>
 
-          <ScrollView contentContainerStyle={webstyles.reportList}>
+          <ScrollView
+            contentContainerStyle={[
+              webstyles.reportList,
+              isAlignedRight && { width: "75%" },
+            ]}
+          >
             {incidents.length > 0 ? (
               incidents.map((incident, index) => (
                 <View
@@ -229,7 +282,7 @@ export default function ViewAdminEmergencyList({
               </Text>
             )}
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
     );
   }
