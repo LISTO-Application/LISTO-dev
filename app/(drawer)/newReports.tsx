@@ -146,6 +146,7 @@ export default function NewReports({
       // selectedImage && imageFilename
       //   ? { filename: imageFilename, uri: selectedImage }
       //   : undefined,
+      status: "PENDING",
       timeStamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",

@@ -61,6 +61,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             filename: imageData.filename || "Unknown Filename",
             uri: imageData.uri || "Unknown Uri",
           },
+          status: doc.data().status,
           timeStamp: doc.data().timeStamp || new Date().toISOString(),
         };
       });

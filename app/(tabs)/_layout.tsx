@@ -59,13 +59,6 @@ export default function TabLayout() {
                 title: "View Reports",
               }}
             />
-            <Drawer.Screen
-              name="Validate"
-              component={ValidateReports}
-              options={{
-                title: "Validate Reports",
-              }}
-            />
           </Drawer.Navigator>
         </NavigationContainer>
       </AuthProvider>

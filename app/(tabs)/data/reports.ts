@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { Image } from "react-native-reanimated/lib/typescript/Animated";
 
 export interface Report {
-  id: number;
+  id: string;
   icon: Image;
   category:
     | "murder"
@@ -22,5 +22,6 @@ export interface Report {
     filename: string;
     uri: string;
   };
+  status: "PENDING" | "VALID" | "PENALIZED";
   timeStamp: string; // Store time in a string format for simplicity
 }

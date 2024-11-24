@@ -1,135 +1,163 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  Platform,
-} from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { styles } from "@/styles/styles"; // Adjust the path if necessary
-import { router } from "expo-router";
-import { SpacerView } from "@/components/SpacerView"; // Adjust the path if necessary
-import { useLocalSearchParams } from "expo-router"; // Ensure you have expo-router installed
-import { webstyles } from "@/styles/webstyles"; // For web styles
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { useRoute } from "@react-navigation/native"; // Use the correct hook for route params
+import firestore from "@react-native-firebase/firestore";
+import { Ionicons } from "@expo/vector-icons";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
-export default function ReportDetails({ navigation }: { navigation: any }) {
-  const { id } = useLocalSearchParams(); // Get the report ID from the URL
-  const [report, setReport] = useState<any>(null);
+interface ReportDetailsType {
+  id: string;
+  title: string;
+  category: string;
+  location: string | null;
+  time: string;
+  status: "PENDING" | "VALID" | "PENALIZED";
+  details: string | null;
+}
+
+const ReportDetails = ({ navigation }: { navigation: any }) => {
+  const route = useRoute(); // Using useRoute to access params
+  const { id } = route.params as {
+    id: string;
+  };
 
   // Example report data (this should come from your data source, such as an API or state)
-  const reportData = [
-    {
-      id: "1",
-      title: "Violent Activity near 6th street",
-      location: "6th Street",
-      additionalInfo: "Heard shouting and yelling.",
-      crimeType: "Assault",
-    },
-    {
-      id: "2",
-      title: "Theft near 6th street",
-      location: "6th Street",
-      additionalInfo: "Someone stole my bike.",
-      crimeType: "Theft",
-    },
-  ];
 
+  const [reportDetails, setReportDetails] = useState<ReportDetailsType | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch the report details from Firestore based on the id
   useEffect(() => {
-    // Find the report data based on the ID
-    const foundReport = reportData.find((r) => r.id === id);
-    if (foundReport) {
-      setReport(foundReport);
+    if (id) {
+      const fetchReportDetails = async () => {
+        try {
+          const reportRef = firestore().collection("reports").doc(id);
+          const reportDoc = await reportRef.get();
+
+          if (reportDoc.exists) {
+            setReportDetails(reportDoc.data() as ReportDetailsType);
+          } else {
+            setError("No such document found.");
+          }
+        } catch (err) {
+          console.error("Error fetching report details:", err);
+          setError("Failed to fetch report details.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchReportDetails();
     }
   }, [id]);
 
-  if (!report) {
+  // Render loading state
+  if (loading) {
     return (
-      <View style={styles.mainContainer}>
-        <Text style={styles.headerText}>Report Not Found</Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+  // Render error state if data is not found
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
       </View>
     );
   }
 
-  const { title, crimeType, location, additionalInfo } = report;
-
-  if (Platform.OS === "android" || Platform.OS === "ios") {
+  // Render report details
+  if (!reportDetails) {
     return (
-      <View style={styles.mainContainer}>
-        {/* Blue Header */}
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backIcon}
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>Report Details</Text>
-          <SpacerView height={120} />
-        </View>
-
-        <ScrollView style={styles.formContainer}>
-          <Text style={styles.reportTitle}>{title}</Text>
-
-          <View style={webstyles.detailItem}>
-            <Text style={webstyles.detailLabel}>Crime Type:</Text>
-            <Text style={webstyles.detailValue}>{crimeType}</Text>
-          </View>
-
-          <View style={webstyles.detailItem}>
-            <Text style={webstyles.detailLabel}>Location:</Text>
-            <Text style={webstyles.detailValue}>{location}</Text>
-          </View>
-
-          <View style={webstyles.detailItem}>
-            <Text style={webstyles.detailLabel}>Additional Information:</Text>
-            <Text style={webstyles.detailValue}>{additionalInfo}</Text>
-          </View>
-        </ScrollView>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  } else if (Platform.OS === "web") {
-    return (
-      <View style={webstyles.container}>
-        <View style={webstyles.mainContainer}>
-          <Text style={webstyles.headerText}>Report Details</Text>
-
-          <ScrollView contentContainerStyle={webstyles.reportList}>
-            <View style={webstyles.detailItem}>
-              <Text style={webstyles.detailLabel}>Crime Type:</Text>
-              <Text style={webstyles.detailValue}>{crimeType}</Text>
-            </View>
-
-            <View style={webstyles.detailItem}>
-              <Text style={webstyles.detailLabel}>Location:</Text>
-              <Text style={webstyles.detailValue}>{location}</Text>
-            </View>
-
-            <View style={webstyles.detailItem}>
-              <Text style={webstyles.detailLabel}>Additional Information:</Text>
-              <Text style={webstyles.detailValue}>{additionalInfo}</Text>
-            </View>
-          </ScrollView>
-
-          <TouchableOpacity
-            style={webstyles.button}
-            onPress={() => router.back()}
-          >
-            <Text style={webstyles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>
+          Report details could not be loaded.
+        </Text>
       </View>
     );
   }
-}
+
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity onPress={() => navigation.navigate("Validate")}>
+        {" "}
+        <Ionicons
+          name={"arrow-undo-circle-outline"}
+          size={30}
+          color={"black"}
+        />
+      </TouchableOpacity>
+
+      <Text style={styles.title}>{reportDetails.title}</Text>
+      <Text style={styles.category}>Category: {reportDetails.category}</Text>
+      <Text style={styles.location}>
+        Location: {reportDetails.location || "Not provided"}
+      </Text>
+      <Text style={styles.time}>Time: {reportDetails.time}</Text>
+      <Text style={styles.status}>Status: {reportDetails.status}</Text>
+      <Text style={styles.details}>
+        Details: {reportDetails.details || "No details available"}
+      </Text>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 20,
+    backgroundColor: "#fff",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#115272",
+  },
+  category: {
+    fontSize: 18,
+    marginTop: 10,
+    color: "#115272",
+  },
+  location: {
+    fontSize: 18,
+    marginTop: 10,
+    color: "#115272",
+  },
+  time: {
+    fontSize: 16,
+    marginTop: 20,
+    color: "#115272",
+  },
+  status: {
+    fontSize: 16,
+    marginTop: 20,
+    color: "#115272",
+  },
+  details: {
+    fontSize: 16,
+    marginTop: 20,
+    color: "#115272",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  errorText: {
+    fontSize: 18,
+    color: "red",
+  },
+});
+
+export default ReportDetails;

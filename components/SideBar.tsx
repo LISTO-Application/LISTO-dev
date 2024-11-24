@@ -33,7 +33,8 @@ export const SideBar = ({
     { name: "Report Incident", route: "Report Incident" },
     { name: "Account", route: "Account" },
     { name: "Report Tickets", route: "Reports" },
-    { name: "Generate", route: "Validate" },
+    { name: "Validate Tickets", route: "Validate" },
+    { name: "View Admin Emergency List", route: "View Admin Emergency List" },
   ];
 
   return (
