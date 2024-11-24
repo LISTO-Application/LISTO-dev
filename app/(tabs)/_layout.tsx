@@ -50,8 +50,6 @@ export default function TabLayout() {
             <Drawer.Screen name="Emergency" component={Emergency} />
             <Drawer.Screen name="Report Incident" component={CrimeMap} />
             <Drawer.Screen name="Account" component={UserAccount} />
-            <Drawer.Screen name="Generate" component={UserAccount} />
-            <Drawer.Screen name="Details" component={ReportDetails} />
             <Drawer.Screen
               name="Reports"
               component={RootReports}

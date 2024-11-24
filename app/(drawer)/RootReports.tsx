@@ -6,7 +6,7 @@ import ViewReports from "./viewReports";
 import newReports from "./newReports";
 import EditReport from "./EditReport";
 import ReportDetails from "./reportDetails";
-import ViewAdminEmergencyList from "./viewAdminEmergencyList";
+import ViewAdminEmergencyList from "./ViewAdminEmergencyList";
 import ValidateReports from "./validateReports";
 
 const RootReports = () => {
@@ -44,7 +44,7 @@ const RootReports = () => {
       <Stack.Screen
         name="ViewAdminEmergencyList"
         component={ViewAdminEmergencyList}
-        options={{ headerShown: false, title: "ADMIN VIEW EMERGENCY REPORT" }}
+        options={{ headerShown: false, title: "Admin View Emergency Report" }}
       />
     </Stack.Navigator>
   );
