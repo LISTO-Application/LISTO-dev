@@ -22,6 +22,40 @@ const webstyles = StyleSheet.create({
     shadowRadius: 5,
     zIndex: 10,
   },
+  reportContainer: {
+    marginVertical: 10,
+    padding: 15,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  reportHeader: {
+    flexDirection: "row",  // Arrange items horizontally
+    justifyContent: "space-between",  // Space between the date and button
+    alignItems: "center",  // Vertically center the items
+    marginBottom: 10,
+  },
+  reportDate: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "bold",
+  },
+
+  // Custom CSS for the "Sort by Date" Button
+  sortButton: {
+    backgroundColor: "#007BFF",  // Blue background for sort button
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sortButtonText: {
+    color: "#115272",  // White text for sort button
+    fontSize: 20,
+    fontWeight: "bold",
+  },
   sidebarTitle: {
     fontSize: 24,
     fontWeight: "bold",

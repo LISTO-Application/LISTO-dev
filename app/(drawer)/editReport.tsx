@@ -189,9 +189,9 @@ function EditReport({ navigation }: { navigation: any }) {
             {/* Report Details */}
             <Text>Reporter's Username:</Text>
             <TextInput
-              style={webstyles.inputField}
+              
               value={name}
-              onChange={setName}
+              
             />
 
             <Text>Subject:</Text>

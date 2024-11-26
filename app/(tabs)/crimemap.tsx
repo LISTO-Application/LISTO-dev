@@ -31,6 +31,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useMemo, useCallback, useRef, useState, useEffect } from "react";
 import { Calendar, CalendarUtils } from "react-native-calendars";
 
+
 //Expo Imports
 import { useFocusEffect } from "expo-router";
 
@@ -108,7 +109,7 @@ export type CrimeFilter = {
   label: string;
 };
 
-export default function CrimeMap() {
+export default function CrimeMap({ navigation }: { navigation: any }) {
   //FILTER SETTINGS
   const filterSheetRef = useRef<BottomSheet>(null);
   const filterSnapPoints = useMemo(() => ["3%", "23%"], []);
@@ -670,6 +671,7 @@ export default function CrimeMap() {
             visible={toggleModal}
             onRequestClose={() => setToggleModal(false)}
           >
+            
             <DateModal
               allMarkers={allMarkers}
               dateFunction={dateFunction}
@@ -717,6 +719,29 @@ export default function CrimeMap() {
               source={filter}
             />
           </Pressable>
+           {/* Megaphone Button */}
+           <Pressable
+        style={{
+          position: "absolute",
+          top: 225,  // Adjust the top position to be below the filter button
+          right: 20,
+          width: 50,                 // Circle size (adjust as needed)
+          height: 50,                // Circle size (adjust as needed)
+          borderRadius: 30,          // Make it circular
+          borderWidth: 3,            // Border width
+          borderColor: "#115272",       // Border color
+          justifyContent: "center",  // Center icon within circle
+          alignItems: "center", 
+          backgroundColor:"#fff"     // Center icon within circle
+        }}
+        onPress={() => navigation.navigate('NewReports')}  // Navigate to NewReports screen
+      >
+        <Ionicons
+          name="megaphone"  // Ionicons megaphone icon
+          size={30}         // Icon size (adjust to fit within the circle)
+          color="#115272"      // Set color of the icon
+        />
+      </Pressable>
           <DateDisplay
             markers={pins}
             allMarkers={allMarkers}
