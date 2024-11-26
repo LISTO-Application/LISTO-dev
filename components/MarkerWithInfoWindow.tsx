@@ -38,6 +38,7 @@ export const MarkerWithInfoWindow = ({
   const [markerDetails, setMarkerDetails] = useState<string>();
   const [markerDate, setMarkerDate] = useState<string>();
   const [markerCrime, setMarkerCrime] = useState<CrimeType | undefined>();
+  const [markerName, setMarkerName] = useState<string>();
   const markerRefs = useRef<{ [key: string]: any }>({});
   const [filteredCrimeItems, setFilteredCrimeItems] = useState<MarkerType[]>(
     []
@@ -137,6 +138,7 @@ export const MarkerWithInfoWindow = ({
     setMarkerDetails(marker.details);
     setMarkerDate(marker.date);
     setMarkerCrime(marker.crime);
+    setMarkerName(marker.title);
   };
 
   //To display them
@@ -222,7 +224,7 @@ export const MarkerWithInfoWindow = ({
           anchor={markerRefs.current[activeMarkerId].current}
           onClose={() => setActiveMarkerId(null)}
         >
-          <h2>{activeMarkerId}</h2>
+          <h2>{markerName}</h2>
           <p>{markerDetails}</p>
           <p>{markerDate}</p>
           <p>{markerCrime}</p>

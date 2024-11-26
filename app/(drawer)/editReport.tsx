@@ -188,11 +188,7 @@ function EditReport({ navigation }: { navigation: any }) {
           >
             {/* Report Details */}
             <Text>Reporter's Username:</Text>
-            <TextInput
-              
-              value={name}
-              
-            />
+            <TextInput value={name} />
 
             <Text>Subject:</Text>
             <TextInput

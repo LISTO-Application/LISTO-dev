@@ -19,6 +19,7 @@ interface ReportDetailsType {
   time: string;
   status: "PENDING" | "VALID" | "PENALIZED";
   additionalInfo: string | null;
+  reporterName?: string | null;
 }
 
 const ReportDetails = ({ navigation }: { navigation: any }) => {
@@ -51,7 +52,8 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
               location: reportData?.location || "Unknown Location",
               time: reportData?.time || "Unknown Time",
               status: reportData?.status || "PENDING",
-              details: reportData?.additionalInfo || "No additional information",
+              additionalInfo:
+                reportData?.additionalInfo || "No additional information",
               reporterName: reportData?.name || "Anonymous",
             });
           } else {
@@ -80,7 +82,9 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
   if (error || !reportDetails) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error || "No report details found."}</Text>
+        <Text style={styles.errorText}>
+          {error || "No report details found."}
+        </Text>
       </View>
     );
   }
@@ -88,18 +92,19 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
   return (
     <ScrollView style={styles.container}>
       {/* Back Button */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={styles.backButton}
+      >
         <Ionicons name="arrow-back" size={32} color="#fff" />
       </TouchableOpacity>
 
-
       {/* Header */}
-      
 
       {/* Report Information */}
-      
+
       <View style={styles.content}>
-      <Text style={styles.header}>Report Details</Text>
+        <Text style={styles.header}>Report Details</Text>
         {/* Reporter's Name */}
         <View style={styles.detailRow}>
           <Text style={styles.label}>Reportee's Username:</Text>
@@ -143,8 +148,8 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
                   reportDetails.status === "VALID"
                     ? "green"
                     : reportDetails.status === "PENALIZED"
-                    ? "red"
-                    : "#FFA500",
+                      ? "red"
+                      : "#FFA500",
               },
               styles.statusText,
             ]}
@@ -158,13 +163,13 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
           <Text style={styles.label}>Additional Information:</Text>
           <View style={styles.textArea}>
             <Text style={styles.value}>
-              {reportDetails.details || "No additional information provided"}
+              {reportDetails.additionalInfo ||
+                "No additional information provided"}
             </Text>
           </View>
         </View>
       </View>
     </ScrollView>
-
   );
 };
 
@@ -178,7 +183,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   header: {
-    fontSize: 45, 
+    fontSize: 45,
     fontWeight: "bold",
     color: "#115272", // Changed text color to white for better contrast against dark background
     marginBottom: 20,

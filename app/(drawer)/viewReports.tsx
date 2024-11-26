@@ -9,7 +9,7 @@ import {
   Alert,
   Image,
   Platform,
-  TextInput
+  TextInput,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -36,13 +36,13 @@ import ImageViewer from "./ImageViewer";
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
   const [sortCriteria, setSortCriteria] = useState("date");
-  const [isSortedAsc, setIsSortedAsc] = useState(true); 
+  const [isSortedAsc, setIsSortedAsc] = useState(true);
   const fetchReports = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "reports"));
       const reportList: Report[] = querySnapshot.docs.map((doc) => {
         const imageData = doc.data().image || {};
-  
+
         return {
           id: doc.id,
           icon: doc.data().icon || "",
@@ -67,35 +67,37 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           timeStamp: doc.data().timeStamp || new Date().toISOString(),
         };
       });
-  
+
       // Sort the reports by date after fetching
       const sortedReports = reportList.sort((a, b) => {
         const dateA = new Date(a.date[1]);
         const dateB = new Date(b.date[1]);
         return dateA.getTime() - dateB.getTime(); // Sort in ascending order
       });
-  
+
       setReports(sortedReports); // Update the state with sorted reports
     } catch (error) {
       console.error("Error fetching reports:", error);
     }
   };
-  
+
   const sortReportsByDate = () => {
     setReports((prevReports) => {
       const sortedReports = [...prevReports];
       sortedReports.sort((a, b) => {
         const dateA = new Date(a.date[1]);
         const dateB = new Date(b.date[1]);
-        return isSortedAsc ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+        return isSortedAsc
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
       });
       return sortedReports;
     });
-  
+
     // Toggle the sorting order for next time
     setIsSortedAsc((prev) => !prev);
   };
-  
+
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       fetchReports();
@@ -103,7 +105,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     return unsubscribe;
   }, [navigation]);
 
-  
   const [currentPage, setCurrentPage] = useState(1);
 
   console.log("Known Reports: ", reports);
@@ -116,8 +117,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     (currentPage - 1) * reportsPerPage,
     currentPage * reportsPerPage
   );
- 
-   
 
   const handleDeleteReport = async (reportId: any) => {
     try {
@@ -259,193 +258,209 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     );
   } else if (Platform.OS === "web") {
     const [searchQuery, setSearchQuery] = useState<string>("");
-  
-      const handleSearch = (query: string) => {
-        setSearchQuery(query);
-        console.log("Search query:", query); // Add search logic here
+
+    const handleSearch = (query: string) => {
+      setSearchQuery(query);
+      console.log("Search query:", query); // Add search logic here
     };
 
     const filteredReports = currentReports.filter((report) => {
       const lowercasedQuery = searchQuery.toLowerCase();
       return (
-          report.title.toLowerCase().includes(lowercasedQuery) || // Search by title
-          report.location.toLowerCase().includes(lowercasedQuery) || // Search by location
-          report.category.toLowerCase().includes(lowercasedQuery) || // Search by category
-          report.date.toLowerCase().includes(lowercasedQuery) // Search by date
+        report.title.toLowerCase().includes(lowercasedQuery) || // Search by title
+        report.location.toLowerCase().includes(lowercasedQuery) || // Search by location
+        report.category.toLowerCase().includes(lowercasedQuery) || // Search by category
+        report.date.toLowerCase().includes(lowercasedQuery) // Search by date
       );
-  });
+    });
 
+    return (
+      <View style={webstyles.container}>
+        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+        {/* Toggle Button */}
+        <TouchableOpacity
+          onPress={toggleSideBar}
+          style={[
+            webstyles.toggleButton,
+            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+          ]}
+        >
+          <Ionicons
+            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
+            size={24}
+            color={"#333"}
+          />
+        </TouchableOpacity>
 
-      return (
-          <View style={webstyles.container}>
-              <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
-              {/* Toggle Button */}
-              <TouchableOpacity
-                  onPress={toggleSideBar}
-                  style={[
-                      webstyles.toggleButton,
-                      { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
-                  ]}
-              >
-                  <Ionicons
-                      name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
-                      size={24}
-                      color={"#333"}
-                  />
+        {/* Main Content */}
+        <Animated.View
+          style={[
+            webstyles.mainContainer,
+            {
+              transform: [{ translateX: contentPosition }],
+            },
+          ]}
+        >
+          <View
+            style={[{ paddingRight: 20 }, isAlignedRight && { width: "75%" }]}
+          >
+            {/* Header and Search Bar */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between", // Makes sure the header and search bar are spaced
+                marginBottom: 10, // Space between this row and the rest of the content
+              }}
+            >
+              <Text style={[webstyles.headerText, { marginRight: 10 }]}>
+                Reports
+              </Text>
+              <TextInput
+                style={[
+                  {
+                    width: 200, // Set a fixed width for the search bar
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 8,
+                    padding: 8,
+                  },
+                ]}
+                placeholder="Search reports..."
+                value={searchQuery}
+                onChangeText={handleSearch}
+              />
+            </View>
+
+            {/* Sort Buttons */}
+            <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+              <TouchableOpacity onPress={sortReportsByDate}>
+                <Text style={webstyles.sortButtonText}>
+                  {isSortedAsc
+                    ? "Sort by Date (Latest)"
+                    : "Sort by Date (Earliest)"}
+                </Text>
               </TouchableOpacity>
-  
-              {/* Main Content */}
-              <Animated.View
-    style={[
-        webstyles.mainContainer,
-        {
-            transform: [{ translateX: contentPosition }],
-        },
-    ]}
->
-    {/* Header and Search Bar */}
-    <View
-        style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between", // Makes sure the header and search bar are spaced
-            marginBottom: 10, // Space between this row and the rest of the content
-        }}
-    >
-        <Text style={[webstyles.headerText, { marginRight: 10 }]}>Reports</Text>
-        <TextInput
-    style={{
-        width: 200, // Set a fixed width for the search bar
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 8,
-        padding: 8,
-    }}
-    placeholder="Search reports..."
-    value={searchQuery}
-    onChangeText={handleSearch}
-/>
-    </View>
-  
-                  {/* Sort Buttons */}
-                  <View style={{ flexDirection: "row", justifyContent: "center" }}>
-                      <TouchableOpacity onPress={sortReportsByDate}>
-                          <Text style={webstyles.sortButtonText}>
-                              {isSortedAsc ? "Sort by Date (Latest)" : "Sort by Date (Earliest)"}
-                          </Text>
-                      </TouchableOpacity>
-                  </View>
-  
-                  {/* Reports List */}
-                  <ScrollView
-    contentContainerStyle={[
-        webstyles.reportList,
-        isAlignedRight && { width: "75%" },
-    ]}
->
-    {filteredReports.map((report) => {
-        let iconSource;
-        if (report.category === "carnapping") {
-            iconSource = require("../../assets/images/car-icon.png");
-        } else if (report.category === "rape") {
-            iconSource = require("../../assets/images/rape-icon.png");
-        } else if (report.category === "homicide") {
-            iconSource = require("../../assets/images/homicide-icon.png");
-        } else if (report.category === "murder") {
-            iconSource = require("../../assets/images/knife-icon.png");
-        } else if (report.category === "injury") {
-            iconSource = require("../../assets/images/injury-icon.png");
-        } else if (report.category === "theft") {
-            iconSource = require("../../assets/images/thief-icon.png");
-        } else if (report.category === "robbery") {
-            iconSource = require("../../assets/images/robbery-icon.png");
-        } else {
-            iconSource = require("../../assets/images/question-mark.png");
-        }
+            </View>
+          </View>
 
-        return (
-            <View key={report.id} style={webstyles.reportContainer}>
-                <Image source={iconSource} style={webstyles.reportIcon} />
-                <View style={{ flex: 1, flexDirection: "column" }}>
+          {/* Reports List */}
+
+          <ScrollView
+            contentContainerStyle={[
+              webstyles.reportList,
+              isAlignedRight && { width: "75%" },
+            ]}
+          >
+            {filteredReports.map((report) => {
+              let iconSource;
+              if (report.category === "carnapping") {
+                iconSource = require("../../assets/images/car-icon.png");
+              } else if (report.category === "rape") {
+                iconSource = require("../../assets/images/rape-icon.png");
+              } else if (report.category === "homicide") {
+                iconSource = require("../../assets/images/homicide-icon.png");
+              } else if (report.category === "murder") {
+                iconSource = require("../../assets/images/knife-icon.png");
+              } else if (report.category === "injury") {
+                iconSource = require("../../assets/images/injury-icon.png");
+              } else if (report.category === "theft") {
+                iconSource = require("../../assets/images/thief-icon.png");
+              } else if (report.category === "robbery") {
+                iconSource = require("../../assets/images/robbery-icon.png");
+              } else {
+                iconSource = require("../../assets/images/question-mark.png");
+              }
+
+              return (
+                <View key={report.id} style={webstyles.reportContainer}>
+                  <Image source={iconSource} style={webstyles.reportIcon} />
+                  <View style={{ flex: 1, flexDirection: "column" }}>
                     <View style={{ flexDirection: "row" }}>
-                        <Text style={webstyles.reportTitle}>
-                            {report.category.charAt(0).toUpperCase() +
-                                report.category.slice(1)}
-                        </Text>
-                        <Text
-                            style={{
-                                flex: 1,
-                                color: "white",
-                                alignSelf: "center",
-                                fontWeight: "300",
-                            }}
-                        >
-                            {report.date}
-                        </Text>
-                        <Text
-                            style={{ flex: 1, color: "white", fontWeight: "300" }}
-                        >
-                            {report.location.toUpperCase()}
-                        </Text>
+                      <Text style={webstyles.reportTitle}>
+                        {report.category.charAt(0).toUpperCase() +
+                          report.category.slice(1)}
+                      </Text>
+                      <Text
+                        style={{
+                          flex: 1,
+                          color: "white",
+                          alignSelf: "center",
+                          fontWeight: "300",
+                        }}
+                      >
+                        {report.date}
+                      </Text>
+                      <Text
+                        style={{ flex: 1, color: "white", fontWeight: "300" }}
+                      >
+                        {report.location.toUpperCase()}
+                      </Text>
                     </View>
                     <View style={{ flexDirection: "row" }}>
-                        <Text style={webstyles.reportInfo}>
-                            {report.title.charAt(0).toUpperCase() + report.title.slice(1)}
-                        </Text>
-                        <Text style={webstyles.reportInfo}>
-                            <b>Remarks:</b> {report.additionalInfo}
-                        </Text>
+                      <Text style={[webstyles.reportInfo, { marginLeft: 20 }]}>
+                        {report.title.charAt(0).toUpperCase() +
+                          report.title.slice(1)}
+                      </Text>
+                      <Text style={[webstyles.reportInfo]}>
+                        <b>Remarks:</b> {report.additionalInfo}
+                      </Text>
+                      <Text style={webstyles.reportInfo}></Text>
                     </View>
-                </View>
-                <View style={webstyles.reportActions}>
+                  </View>
+                  <View style={webstyles.reportActions}>
                     <TouchableOpacity
-                        style={webstyles.editIcon}
-                        onPress={() => handleEditReport(report)}
+                      style={webstyles.editIcon}
+                      onPress={() => handleEditReport(report)}
                     >
-                        <Ionicons name="create-outline" size={30} color="white" />
+                      <Ionicons name="create-outline" size={30} color="white" />
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={webstyles.editIcon}
-                        onPress={() => handleDeleteReport(report.id)}
+                      style={webstyles.editIcon}
+                      onPress={() => handleDeleteReport(report.id)}
                     >
-                        <Ionicons name="trash-bin-outline" size={30} color="#DA4B46" />
+                      <Ionicons
+                        name="trash-bin-outline"
+                        size={30}
+                        color="#DA4B46"
+                      />
                     </TouchableOpacity>
                     <Text style={webstyles.timeText}>{report.timeStamp}</Text>
-                </View>
-            </View>
-        );
-    })}
-</ScrollView>
-  
-                  {/* Pagination Controls */}
-                  <View style={[webstyles.paginationContainer]}>
-                      <TouchableOpacity
-                          disabled={currentPage === 1}
-                          onPress={() => setCurrentPage(currentPage - 1)}
-                          style={webstyles.paginationButton}
-                      >
-                          <Text style={webstyles.paginationText}>Previous</Text>
-                      </TouchableOpacity>
-                      <Text style={webstyles.paginationText}>
-                          Page {currentPage} of {totalPages}
-                      </Text>
-                      <TouchableOpacity
-                          disabled={currentPage === totalPages}
-                          onPress={() => setCurrentPage(currentPage + 1)}
-                          style={webstyles.paginationButton}
-                      >
-                          <Text style={webstyles.paginationText}>Next</Text>
-                      </TouchableOpacity>
                   </View>
-              </Animated.View>
-  
-              <TouchableOpacity
-                  style={webstyles.fab}
-                  onPress={() => navigation.navigate("NewReports")}
-              >
-                  <Ionicons name="add" size={30} color="white" />
-              </TouchableOpacity>
+                </View>
+              );
+            })}
+          </ScrollView>
+
+          {/* Pagination Controls */}
+          <View style={[webstyles.paginationContainer]}>
+            <TouchableOpacity
+              disabled={currentPage === 1}
+              onPress={() => setCurrentPage(currentPage - 1)}
+              style={webstyles.paginationButton}
+            >
+              <Text style={webstyles.paginationText}>Previous</Text>
+            </TouchableOpacity>
+            <Text style={webstyles.paginationText}>
+              Page {currentPage} of {totalPages}
+            </Text>
+            <TouchableOpacity
+              disabled={currentPage === totalPages}
+              onPress={() => setCurrentPage(currentPage + 1)}
+              style={webstyles.paginationButton}
+            >
+              <Text style={webstyles.paginationText}>Next</Text>
+            </TouchableOpacity>
           </View>
-      );
-  };
+        </Animated.View>
+
+        <TouchableOpacity
+          style={webstyles.fab}
+          onPress={() => navigation.navigate("NewReports")}
+        >
+          <Ionicons name="add" size={30} color="white" />
+        </TouchableOpacity>
+      </View>
+    );
   }
+}

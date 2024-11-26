@@ -9,6 +9,12 @@ const webstyles = StyleSheet.create({
     backgroundColor: "white",
     padding: 0,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff", // White background for loading state
+  },
   sidebar: {
     width: "25%", // Adjust to the sidebar's width
     backgroundColor: "#fff",
@@ -31,9 +37,9 @@ const webstyles = StyleSheet.create({
     borderColor: "#ddd",
   },
   reportHeader: {
-    flexDirection: "row",  // Arrange items horizontally
-    justifyContent: "space-between",  // Space between the date and button
-    alignItems: "center",  // Vertically center the items
+    flexDirection: "row", // Arrange items horizontally
+    justifyContent: "space-between", // Space between the date and button
+    alignItems: "center", // Vertically center the items
     marginBottom: 10,
   },
   reportDate: {
@@ -44,7 +50,7 @@ const webstyles = StyleSheet.create({
 
   // Custom CSS for the "Sort by Date" Button
   sortButton: {
-    backgroundColor: "#007BFF",  // Blue background for sort button
+    backgroundColor: "#007BFF", // Blue background for sort button
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 5,
@@ -52,7 +58,7 @@ const webstyles = StyleSheet.create({
     justifyContent: "center",
   },
   sortButtonText: {
-    color: "#115272",  // White text for sort button
+    color: "#115272", // White text for sort button
     fontSize: 20,
     fontWeight: "bold",
   },
@@ -406,7 +412,6 @@ const webstyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "200",
     flex: 2 / 5,
-    marginLeft: 20,
   },
 
   editIcon: {

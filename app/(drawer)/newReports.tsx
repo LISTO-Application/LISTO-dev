@@ -34,6 +34,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { FontAwesome } from "@expo/vector-icons";
 import { Image, type ImageSource } from "expo-image";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { subDays, subYears } from "date-fns";
 
 const database = db;
 // const storage = str;
@@ -188,7 +189,7 @@ export default function NewReports({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState(crimeType);
-
+  console.log(value);
   //Date
   const [startDate, setStartDate] = useState<Date | null>(new Date());
 
@@ -198,7 +199,8 @@ export default function NewReports({
     setDate(dateInput);
     setTime(timeInput);
   }, [startDate]);
-
+  const minDate =
+    value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
   //Image
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -331,7 +333,7 @@ export default function NewReports({
               value={title}
               onChangeText={setTitle}
               placeholder="Title (e.g: 'Murder at XX street' "
-              placeholderTextColor={"#CCC"}
+              placeholderTextColor={"#8c8c8c"}
             />
 
             <Text>Select Crime Type:</Text>
@@ -356,8 +358,8 @@ export default function NewReports({
               style={webstyles.inputField}
               value={location}
               onChangeText={setLocation}
-              placeholder="Street, Nearest Landmark"
-              placeholderTextColor={"#ccc"}
+              placeholder="House/Building No. Street Name , Subdivision/Village, Barangay, Nearest Landmark (e.g: 14 Faustino, Holy Spirit Drive, etc)"
+              placeholderTextColor={"#8c8c8c"}
             />
 
             <Text>Date and Time Happened:</Text>
@@ -386,7 +388,10 @@ export default function NewReports({
                 selected={startDate}
                 onChange={(date) => setStartDate(date)}
                 value={dateTime}
+                maxDate={new Date()}
+                minDate={minDate}
                 showTimeInput
+                showMonthYearDropdown
                 inline
               />
             </View>
@@ -398,6 +403,10 @@ export default function NewReports({
               numberOfLines={4}
               value={additionalInfo}
               onChangeText={setAdditionalInfo}
+              placeholder={
+                "Additional Information (e.g: suspects involved, witnesses, names, sequence of events, description of area, etc.)"
+              }
+              placeholderTextColor={"#8c8c8c"}
             />
 
             <Text>Image Upload:</Text>
