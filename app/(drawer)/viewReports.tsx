@@ -102,6 +102,24 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     });
     return unsubscribe;
   }, [navigation]);
+  const sortReportsByAlphabet = () => {
+    setReports((prevReports) => {
+      const sortedReports = [...prevReports].sort((a, b) => {
+        return a.title.localeCompare(b.title); // Sort by title alphabetically
+      });
+      return sortedReports;
+    });
+  };
+  
+  // Sorting reports by crime category (Alphabetically)
+  const sortReportsByCategory = () => {
+    setReports((prevReports) => {
+      const sortedReports = [...prevReports].sort((a, b) => {
+        return a.category.localeCompare(b.category); // Sort by category alphabetically
+      });
+      return sortedReports;
+    });
+  };
 
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -328,13 +346,26 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     </View>
   
                   {/* Sort Buttons */}
-                  <View style={{ flexDirection: "row", justifyContent: "center" }}>
-                      <TouchableOpacity onPress={sortReportsByDate}>
-                          <Text style={webstyles.sortButtonText}>
-                              {isSortedAsc ? "Sort by Date (Latest)" : "Sort by Date (Earliest)"}
-                          </Text>
-                      </TouchableOpacity>
-                  </View>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10, paddingHorizontal: 25 }}>
+  {/* Sort by Date Button */}
+  <TouchableOpacity onPress={sortReportsByDate}>
+    <Text style={webstyles.sortButtonText}>
+      {isSortedAsc ? "Sort by Date (Latest)" : "Sort by Date (Earliest)"}
+    </Text>
+  </TouchableOpacity>
+
+  {/* Sort by Alphabetical Button */}
+  <TouchableOpacity onPress={sortReportsByAlphabet}>
+    <Text style={webstyles.sortButtonText}>Sort by Alphabet</Text>
+  </TouchableOpacity>
+
+  {/* Sort by Crime Category Button */}
+  <TouchableOpacity onPress={sortReportsByCategory}>
+    <Text style={webstyles.sortButtonText}>Sort by Crime Category</Text>
+  </TouchableOpacity>
+
+ 
+</View>
   
                   {/* Reports List */}
                   <ScrollView
