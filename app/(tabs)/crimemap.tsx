@@ -31,7 +31,6 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useMemo, useCallback, useRef, useState, useEffect } from "react";
 import { Calendar, CalendarUtils } from "react-native-calendars";
 
-
 //Expo Imports
 import { useFocusEffect } from "expo-router";
 
@@ -77,7 +76,13 @@ import {
   crimeImages,
   dummyMarkers,
 } from "./data/marker";
-import { GeoPoint } from "@react-native-firebase/firestore";
+import {
+  collection,
+  firebase,
+  FirebaseFirestoreTypes,
+  GeoPoint,
+  getDocs,
+} from "@react-native-firebase/firestore";
 import React from "react";
 import { DateType, ModeType } from "react-native-ui-datepicker";
 import Animated, {
@@ -86,6 +91,10 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import FilterWebModal from "@/components/modal/FilterWebModal";
+import Geocoder from "react-native-geocoding";
+import * as Location from "expo-location";
+import { db } from "../FirebaseConfig";
+import { ReactNativeFirebase } from "@react-native-firebase/app";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -507,10 +516,10 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     const [dateFunction, setDateFunction] = useState(selectedDate);
     const [mode, setMode] = useState<ModeType>("single");
     //All Markers
-    const [allMarkers, setAllMarkers] = useState<MarkerType[]>(dummyMarkers);
-    const [pins, setMarkers] = useState<MarkerType[]>(dummyMarkers);
+    const [allMarkers, setAllMarkers] = useState<MarkerType[]>([]);
+    const [pins, setMarkers] = useState<MarkerType[]>([]);
+    console.log(pins);
     const [isAddingMarker, setIsAddingMarker] = useState(false);
-    console.log(allMarkers);
     //Handlers
     const closeError = () => {
       setShowError(false);
@@ -529,32 +538,95 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
           ? prevFilters.filter((filter) => filter.label !== selectedCrime.label)
           : [...prevFilters, selectedCrime];
       });
-
-      // console.log(
-      //   "Filters",
-      //   selectedCrimeFilters.some(
-      //     (filter) => filter.label === selectedCrime.label
-      //   )
-      // );
-      // console.log(
-      //   "If true, active, if false, inactive",
-      //   selectedCrimeFilters.some(
-      //     (filter) => filter.label === selectedCrime.label
-      //   )
-      // );
-      // if (selectedCrimeFilters.includes(selectedCrime)) {
-      //   let filters = selectedCrimeFilters.filter((el) => el === selectedCrime);
-
-      //   setSelectedCrimeFilters(filters);
-      // } else {
-      //   setSelectedCrimeFilters([...selectedCrimeFilters, selectedCrime]);
-      // }
     };
-
     const confirmFilter = () => {
       // filterByCrime();
       setIsFilterModalVisible(false);
     };
+
+    // console.log("markers", pins);
+
+    //GEOCODING
+
+    const geocodeAddress = async (
+      address: string
+    ): Promise<GeoPoint | string | null | undefined> => {
+      if (!address) return null;
+      const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
+      const bounds = {
+        northeast: "14.7741,121.0947",
+        southwest: "14.6082,121.0244",
+      };
+      const region = "PH";
+
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address
+      )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.status === "OK") {
+          console.log(data.results[0]);
+          const { lat, lng } = data.results[0].geometry.location;
+          console.log("Geocoded location:", lat, lng);
+
+          const [neLat, neLng] = bounds.northeast.split(",").map(Number);
+          const [swLat, swLng] = bounds.southwest.split(",").map(Number);
+          console.log(bounds);
+          const isWithinBounds =
+            lat <= neLat && lat >= swLat && lng <= neLng && lng >= swLng;
+          console.log("Within the bounds:", isWithinBounds);
+          console.log("Parsed bounds:", {
+            northeast: { lat: neLat, lng: neLng },
+            southwest: { lat: swLat, lng: swLng },
+          });
+          console.log(data.results[0].geometry.bounds);
+          return new firebase.firestore.GeoPoint(lat, lng);
+        } else {
+          console.error("Geocoding error:", data.status);
+          return null;
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+        return null;
+      }
+    };
+
+    //Fetching the Data
+    const fetchCrimes = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "crimes"));
+        const crimeList: MarkerType[] = await Promise.all(
+          querySnapshot.docs.map(async (doc) => {
+            const locationString = doc.data().location;
+            const geoPoint = await geocodeAddress(locationString);
+            return {
+              id: doc.id,
+              title: doc.data().title,
+              location: geoPoint || doc.data().location,
+              date: doc.data().date,
+              details: doc.data().additionalInfo,
+              crime: doc.data().category,
+              image: crimeImages[doc.data().category as CrimeType],
+            };
+          })
+        );
+
+        console.log("markers", crimeList);
+        setMarkers(crimeList);
+        setAllMarkers(crimeList);
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+      }
+    };
+
+    useEffect(() => {
+      const unsubscribe = navigation.addListener("focus", () => {
+        fetchCrimes();
+      });
+      return unsubscribe;
+    }, [navigation]);
 
     return (
       <GestureHandlerRootView>
@@ -565,7 +637,10 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
           alignItems="center"
           backgroundColor="#115272"
         >
-          <APIProvider apiKey={"AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"}>
+          <APIProvider
+            apiKey={"AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"}
+            region="PH"
+          >
             <Map
               style={style.map}
               defaultCenter={position}
@@ -586,7 +661,13 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
                 setMarkers={setMarkers}
                 selectedCrimeFilters={selectedCrimeFilters}
               />
-
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              ></View>
               <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
               {isHeatmapVisible && <WebHeatmap heatmap={filteredHeatmap} />}
               <PlacesLibrary />
@@ -612,7 +693,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
             visible={toggleModal}
             onRequestClose={() => setToggleModal(false)}
           >
-            
             <DateModal
               allMarkers={allMarkers}
               dateFunction={dateFunction}
@@ -660,29 +740,29 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               source={filter}
             />
           </Pressable>
-           {/* Megaphone Button */}
-           <Pressable
-        style={{
-          position: "absolute",
-          top: 225,  // Adjust the top position to be below the filter button
-          right: 20,
-          width: 50,                 // Circle size (adjust as needed)
-          height: 50,                // Circle size (adjust as needed)
-          borderRadius: 30,          // Make it circular
-          borderWidth: 3,            // Border width
-          borderColor: "#115272",       // Border color
-          justifyContent: "center",  // Center icon within circle
-          alignItems: "center", 
-          backgroundColor:"#fff"     // Center icon within circle
-        }}
-        onPress={() => navigation.navigate('NewReports')}  // Navigate to NewReports screen
-      >
-        <Ionicons
-          name="megaphone"  // Ionicons megaphone icon
-          size={30}         // Icon size (adjust to fit within the circle)
-          color="#115272"      // Set color of the icon
-        />
-      </Pressable>
+          {/* Megaphone Button */}
+          <Pressable
+            style={{
+              position: "absolute",
+              top: 225, // Adjust the top position to be below the filter button
+              right: 20,
+              width: 50, // Circle size (adjust as needed)
+              height: 50, // Circle size (adjust as needed)
+              borderRadius: 30, // Make it circular
+              borderWidth: 3, // Border width
+              borderColor: "#115272", // Border color
+              justifyContent: "center", // Center icon within circle
+              alignItems: "center",
+              backgroundColor: "#fff", // Center icon within circle
+            }}
+            onPress={() => navigation.navigate("NewReports")} // Navigate to NewReports screen
+          >
+            <Ionicons
+              name="megaphone" // Ionicons megaphone icon
+              size={30} // Icon size (adjust to fit within the circle)
+              color="#115272" // Set color of the icon
+            />
+          </Pressable>
           <DateDisplay
             markers={pins}
             allMarkers={allMarkers}

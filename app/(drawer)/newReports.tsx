@@ -19,7 +19,7 @@ import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { useRoute } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
-import { db } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
+import { db, str } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
 import { collection, addDoc } from "@react-native-firebase/firestore";
 import { getIconName } from "../../assets/utils/getIconName";
 import { SideBar } from "@/components/SideBar";
@@ -30,24 +30,44 @@ import "react-datepicker/dist/react-datepicker.css";
 import "react-datepicker/dist/react-datepicker-cssmodules.css";
 import { ForceTouchGestureHandler } from "react-native-gesture-handler";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import { FontAwesome } from "@expo/vector-icons";
 import { Image, type ImageSource } from "expo-image";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
-const uploadImage = async (imageUri: string, imageName: string) => {
-  const storage = getStorage();
-  const storageRef = ref(storage, `images/${imageName}`);
-
-  const response = await fetch(imageUri); // Fetch the image from the URI
-  const blob = await response.blob(); // Convert to Blob
-
-  await uploadBytes(storageRef, blob); // Upload to Cloud Storage
-  const downloadURL = await getDownloadURL(storageRef); // Get the image URL
-
-  return downloadURL;
-};
+import { subDays, subYears } from "date-fns";
 
 const database = db;
+// const storage = str;
+
+// const uploadImage = async (imageUri: string, imageName: string) => {
+//   const storageRef = ref(storage, `images/${imageName}`);
+
+//   const manipulatedImage = await ImageManipulator.manipulateAsync(
+//     imageUri,
+//     [{ resize: { width: 800 } }],
+//     { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+//   );
+
+//   const response = await fetch(manipulatedImage.uri, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "image/jpeg", // Match your file type
+//     },
+//   }); // Fetch the image from the URI
+
+//   console.log(response);
+//   const blob = await response.blob(); // Convert to Blob
+
+//   try {
+//     await uploadBytes(storageRef, blob);
+//     console.log("Image uploaded successfully!");
+//   } catch (error) {
+//     console.error("Error uploading image:", error);
+//   }
+//   const downloadURL = await getDownloadURL(storageRef); // Get the image URL
+
+//   return downloadURL;
+// };
 
 export interface DropdownCrimeTypes {
   label: string;
@@ -126,11 +146,11 @@ export default function NewReports({
     setIsDropdownVisible(false); // Close the dropdown
   };
   const handleSubmit = async () => {
-    let imageUrl = undefined;
+    // let imageUrl = undefined;
 
-    if (selectedImage && imageFilename) {
-      imageUrl = await uploadImage(selectedImage, imageFilename);
-    }
+    // if (selectedImage && imageFilename) {
+    //   imageUrl = await uploadImage(selectedImage, imageFilename);
+    // }
     const newReport = {
       id: uuidv4(),
       icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
@@ -142,10 +162,11 @@ export default function NewReports({
       additionalInfo: additionalInfo || "Undescribed Report",
       date: date || ["Unknown Date: ", new Date().toDateString()],
       time: time || ["Unknown Time: ", new Date().toTimeString()],
-      image: imageUrl,
-      // selectedImage && imageFilename
-      //   ? { filename: imageFilename, uri: selectedImage }
-      //   : undefined,
+      image:
+        // imageUrl,
+        selectedImage && imageFilename
+          ? { filename: imageFilename, uri: selectedImage }
+          : undefined,
       status: "PENDING",
       timeStamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
@@ -168,7 +189,7 @@ export default function NewReports({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState(crimeType);
-
+  console.log(value);
   //Date
   const [startDate, setStartDate] = useState<Date | null>(new Date());
 
@@ -178,7 +199,8 @@ export default function NewReports({
     setDate(dateInput);
     setTime(timeInput);
   }, [startDate]);
-
+  const minDate =
+    value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
   //Image
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -310,6 +332,8 @@ export default function NewReports({
               style={webstyles.inputField}
               value={title}
               onChangeText={setTitle}
+              placeholder="Title (e.g: 'Murder at XX street' "
+              placeholderTextColor={"#8c8c8c"}
             />
 
             <Text>Select Crime Type:</Text>
@@ -334,6 +358,8 @@ export default function NewReports({
               style={webstyles.inputField}
               value={location}
               onChangeText={setLocation}
+              placeholder="House/Building No. Street Name , Subdivision/Village, Barangay, Nearest Landmark (e.g: 14 Faustino, Holy Spirit Drive, etc)"
+              placeholderTextColor={"#8c8c8c"}
             />
 
             <Text>Date and Time Happened:</Text>
@@ -362,7 +388,10 @@ export default function NewReports({
                 selected={startDate}
                 onChange={(date) => setStartDate(date)}
                 value={dateTime}
+                maxDate={new Date()}
+                minDate={minDate}
                 showTimeInput
+                showMonthYearDropdown
                 inline
               />
             </View>
@@ -374,6 +403,10 @@ export default function NewReports({
               numberOfLines={4}
               value={additionalInfo}
               onChangeText={setAdditionalInfo}
+              placeholder={
+                "Additional Information (e.g: suspects involved, witnesses, names, sequence of events, description of area, etc.)"
+              }
+              placeholderTextColor={"#8c8c8c"}
             />
 
             <Text>Image Upload:</Text>
