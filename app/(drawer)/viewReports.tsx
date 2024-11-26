@@ -19,7 +19,7 @@ import { Report } from "../(tabs)/data/reports";
 import { Route } from "expo-router/build/Route";
 import { useRoute } from "@react-navigation/native";
 import { getIconName } from "../../assets/utils/getIconName";
-import { initializeApp } from "@react-native-firebase/app";
+import { initializeApp } from "firebase/app";
 import {
   collection,
   deleteDoc,

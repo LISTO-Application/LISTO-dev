@@ -85,6 +85,8 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import FilterWebModal from "@/components/modal/FilterWebModal";
+import Geocoder from "react-native-geocoding";
+import * as Location from "expo-location";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -555,6 +557,54 @@ export default function CrimeMap() {
       setIsFilterModalVisible(false);
     };
 
+    // //GEOCODING
+    // useEffect(() => {
+    //   Geocoder.init("AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0", {
+    //     region: "PH",
+    //   }); // use a valid API key
+    //   // With more options
+    //   // Geocoder.init("xxxxxxxxxxxxxxxxxxxxxxxxx", {language : "en"}); // set the language
+
+    //   // Search by address
+    //   Geocoder.from({
+    //     address: "Afni Building, Commo Ave",
+    //     bounds: {
+    //       northeast: { lat: 14.7741, lng: 121.0947 }, // Define bounds for Quezon City
+    //       southwest: { lat: 14.6082, lng: 121.0244 },
+    //     },
+    //   })
+    //     .then((json) => {
+    //       var location = json.results[0].geometry.location;
+    //       console.log(location);
+    //     })
+    //     .catch((error) => console.warn(error));
+    // });
+
+    const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
+    const address = "Fort Del Pilar St";
+    const bounds = {
+      northeast: "14.7741,121.0947",
+      southwest: "14.6082,121.0244",
+    };
+    const region = "PH";
+
+    fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address
+      )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "OK") {
+          console.log(data.results[0]);
+          const location = data.results[0].geometry.location;
+          console.log("Geocoded location:", location);
+        } else {
+          console.error("Geocoding error:", data.status);
+        }
+      })
+      .catch((error) => console.error("Fetch error:", error));
+
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -564,7 +614,10 @@ export default function CrimeMap() {
           alignItems="center"
           backgroundColor="#115272"
         >
-          <APIProvider apiKey={"AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"}>
+          <APIProvider
+            apiKey={"AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"}
+            region="PH"
+          >
             <Map
               style={style.map}
               defaultCenter={position}
@@ -585,7 +638,13 @@ export default function CrimeMap() {
                 setMarkers={setMarkers}
                 selectedCrimeFilters={selectedCrimeFilters}
               />
-
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              ></View>
               <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
               {isHeatmapVisible && <WebHeatmap heatmap={filteredHeatmap} />}
               <PlacesLibrary />

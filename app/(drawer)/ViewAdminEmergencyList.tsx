@@ -12,7 +12,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { db } from "../FirebaseConfig";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp } from "@react-native-firebase/firestore";
 import "firebase/database";
 import { collection, getDocs } from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";

@@ -16,9 +16,18 @@ import { db } from "../FirebaseConfig";
 import { Report } from "../(tabs)/data/reports";
 
 import "firebase/database";
-import { collection, getDocs } from "@react-native-firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  getDocs,
+  setDoc,
+} from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { doc, updateDoc } from "@react-native-firebase/firestore";
+
+const database = db;
+
 export default function ValidateReports({ navigation }: { navigation: any }) {
   const handleTitlePress = (report: Report) => {
     console.log("Navigating to details page for report:", report); // Debugging log
@@ -42,9 +51,33 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
         )
       );
 
-      const reportRef = doc(db, "reports", reportId);
-      await updateDoc(reportRef, { status: newStatus });
-      console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
+      const report = reports.find((r) => r.id === reportId);
+      if (report) {
+        const reportRef = doc(db, "reports", reportId);
+        await updateDoc(reportRef, { status: newStatus });
+        console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
+
+        if (newStatus === "VALID") {
+          try {
+            const newCrime = {
+              ...report,
+              status: "VALID",
+            };
+            console.log(newCrime);
+            const crimeRef = collection(database, "crimes");
+            await addDoc(crimeRef, newCrime);
+            console.log(
+              `Report ${report.id} transferred to incidents from ${report}`
+            );
+            setReports((prevReports) =>
+              prevReports.filter((r) => r.id !== reportId)
+            );
+            console.log(`Report ${report.id} removed from reports.`);
+          } catch (error) {
+            console.error("Error transferring report:", error);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -89,6 +122,8 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
     fetchReports();
   }, []);
+
+  const transferToCrimes = async (report: Report) => {};
 
   const [reports, setReports] = useState<Report[]>([]);
 
