@@ -664,7 +664,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
            <Pressable
         style={{
           position: "absolute",
-          top: 190,  // Adjust the top position to be below the filter button
+          top: 225,  // Adjust the top position to be below the filter button
           right: 20,
           width: 50,                 // Circle size (adjust as needed)
           height: 50,                // Circle size (adjust as needed)
