@@ -56,6 +56,43 @@ const webstyles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+  },
+  modalContent: {
+    width: "80%", // Adjust width as needed
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5, // For shadow effect on Android
+    shadowColor: "#000", // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalHeader: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#115272",
+    marginBottom: 15,
+  },
+  modalOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginBottom: 10,
+    borderRadius: 5,
+    backgroundColor: "#f8f8f8",
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: "#115272",
+    textAlign: "center",
+  },
   sidebarTitle: {
     fontSize: 24,
     fontWeight: "bold",

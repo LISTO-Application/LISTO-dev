@@ -9,7 +9,7 @@ import {
   Alert,
   Image,
   Platform,
-  TextInput
+  TextInput,Modal, FlatList, Button,TouchableWithoutFeedback, Keyboard 
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -35,7 +35,8 @@ import ImageViewer from "./ImageViewer";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
-  const [sortCriteria, setSortCriteria] = useState("date");
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [currentStatusSort, setCurrentStatusSort] = useState<"PENDING" | "VALID" | "PENALIZED">("PENDING");
   const [isSortedAsc, setIsSortedAsc] = useState(true); 
   const fetchReports = async () => {
     try {
@@ -81,45 +82,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     }
   };
   
-  const sortReportsByDate = () => {
-    setReports((prevReports) => {
-      const sortedReports = [...prevReports];
-      sortedReports.sort((a, b) => {
-        const dateA = new Date(a.date[1]);
-        const dateB = new Date(b.date[1]);
-        return isSortedAsc ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
-      });
-      return sortedReports;
-    });
   
-    // Toggle the sorting order for next time
-    setIsSortedAsc((prev) => !prev);
-  };
-  
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      fetchReports();
-    });
-    return unsubscribe;
-  }, [navigation]);
-  const sortReportsByAlphabet = () => {
-    setReports((prevReports) => {
-      const sortedReports = [...prevReports].sort((a, b) => {
-        return a.title.localeCompare(b.title); // Sort by title alphabetically
-      });
-      return sortedReports;
-    });
-  };
-  
-  // Sorting reports by crime category (Alphabetically)
-  const sortReportsByCategory = () => {
-    setReports((prevReports) => {
-      const sortedReports = [...prevReports].sort((a, b) => {
-        return a.category.localeCompare(b.category); // Sort by category alphabetically
-      });
-      return sortedReports;
-    });
-  };
 
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -276,24 +239,168 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       </View>
     );
   } else if (Platform.OS === "web") {
-    const [searchQuery, setSearchQuery] = useState<string>("");
+    const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
+    const [reports, setReports] = useState<Report[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
+    const [isCategoryModalVisible, setCategoryModalVisible] = useState(false); // State for category modal visibility
+    const [isSortedAsc, setIsSortedAsc] = useState(true); // State for sorting direction
+    const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
   
-      const handleSearch = (query: string) => {
-        setSearchQuery(query);
-        console.log("Search query:", query); // Add search logic here
+    useEffect(() => {
+      const fetchReports = async () => {
+        try {
+          const querySnapshot = await getDocs(collection(db, "reports"));
+          const reportList = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              icon: data.icon || "",
+              category: data.category || "Unknown",
+              title: data.title || "Untitled",
+              additionalInfo: data.additionalInfo || "Unknown Report",
+              location: data.location || "Unknown Location",
+              name: data.name || "Anonymous",
+              date: data.date || new Date().toDateString(),
+              time: data.time || new Date().toTimeString(),
+              image: {
+                filename: data.image?.filename || "Unknown Filename",
+                uri: data.image?.uri || "Unknown Uri",
+              },
+              status: data.status || "PENDING",
+              timeStamp: data.timeStamp || new Date().toISOString(),
+            };
+          });
+          setReports(reportList);
+          setFilteredReports(reportList); // Initialize filteredReports with all reports initially
+        } catch (error) {
+          console.error("Error fetching reports:", error);
+        }
+      };
+  
+      fetchReports();
+    }, []);
+  
+    // Handle search query change
+    const handleSearch = (query: string) => {
+      setSearchQuery(query); // Update search query state
+      filterReports(query, selectedCategory); // Re-filter reports based on query and selected category
+    };
+    const [isSortedAlphabetAsc, setIsSortedAlphabetAsc] = useState(true);
+    // Filter reports based on search query and selected category
+    const filterReports = (searchQuery: string, category: string | null) => {
+      let filtered = reports; // Start with all reports
+    
+      // Apply category filter if a category is selected
+      if (category) {
+        filtered = filtered.filter((report) => report.category === category);
+      }
+    
+      // Apply search query filter if a query is provided
+      if (searchQuery) {
+        filtered = filtered.filter((report) => {
+          const query = searchQuery.toLowerCase();
+          return (
+            report.title.toLowerCase().includes(query) ||
+            report.location.toLowerCase().includes(query) ||
+            report.category.toLowerCase().includes(query) ||
+            report.date.toLowerCase().includes(query) ||
+            report.status.toLowerCase().includes(query)
+          );
+        });
+      }
+    
+      setFilteredReports(filtered); // Update the filtered reports state
+    };
+  
+    // Handle category selection from the modal
+    const handleCategorySelect = (category: string) => {
+      setSelectedCategory(category); // Set the selected category
+      setCategoryModalVisible(false); // Close the modal
+      filterReports(searchQuery, category); // Apply the category filter along with the current search query
+    };
+  
+    // Clear category filter
+    const handleClearFilter = () => {
+      setSearchQuery(""); // Clear search query
+      setSelectedCategory(null); // Clear selected category
+      setFilteredReports(reports); // Show all reports again
+    };
+  
+    // Get unique crime categories from reports
+    const crimeCategories = Array.from(new Set(reports.map((report) => report.category)));
+  
+    // Sort reports by date (ascending/descending)
+    const sortReportsByDate = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports];
+        sortedReports.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return isSortedAsc ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+        });
+        return sortedReports;
+      });
+      setIsSortedAsc((prev) => !prev); // Toggle sorting order
+    };
+  
+    // Sort reports alphabetically by title
+    const sortReportsByAlphabet = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => {
+          return isSortedAlphabetAsc
+            ? a.title.localeCompare(b.title) // Sort A to Z
+            : b.title.localeCompare(a.title); // Sort Z to A
+        });
+        return sortedReports;
+      });
+      setIsSortedAlphabetAsc((prev) => !prev); // Toggle the sorting order
     };
 
-    const filteredReports = currentReports.filter((report) => {
-      const lowercasedQuery = searchQuery.toLowerCase();
-      return (
-          report.title.toLowerCase().includes(lowercasedQuery) || // Search by title
-          report.location.toLowerCase().includes(lowercasedQuery) || // Search by location
-          report.category.toLowerCase().includes(lowercasedQuery) || // Search by category
-          report.date.toLowerCase().includes(lowercasedQuery) // Search by date
-      );
-  });
-
-
+    const sortReportsByStatus = () => {
+      // Cycle through status types
+      const nextStatus = currentStatusSort === "PENDING"
+        ? "VALID"
+        : currentStatusSort === "VALID"
+        ? "PENALIZED"
+        : "PENDING";
+    
+      setCurrentStatusSort(nextStatus); // Update the state to the next status
+    
+      // Sort the reports based on the new status
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => {
+          const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+          // Sort reports by the status order
+          return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        });
+        return sortedReports;
+      });
+    };
+    const [currentPage, setCurrentPage] = useState(1);
+    const reportsPerPage = 10;  // Adjust this number based on how many reports per page
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(filteredReports.length / reportsPerPage);
+    
+    // Get the reports for the current page
+   
+    
+    // Pagination functions
+    const handleNextPage = () => {
+      if (currentPage < totalPages) {
+        setCurrentPage(currentPage + 1);
+      }
+    };
+    
+    const handlePreviousPage = () => {
+      if (currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    };
+    const currentReports = filteredReports.slice(
+      (currentPage - 1) * reportsPerPage,
+      currentPage * reportsPerPage
+    );
       return (
           <View style={webstyles.container}>
               <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
@@ -356,16 +463,47 @@ export default function ViewReports({ navigation }: { navigation: any }) {
 
   {/* Sort by Alphabetical Button */}
   <TouchableOpacity onPress={sortReportsByAlphabet}>
-    <Text style={webstyles.sortButtonText}>Sort by Alphabet</Text>
-  </TouchableOpacity>
+  <Text style={webstyles.sortButtonText}>
+    {isSortedAlphabetAsc ? "Sort by Alphabet " : "Sorted by Alphabet (A-Z)"}
+  </Text>
+</TouchableOpacity>
 
   {/* Sort by Crime Category Button */}
-  <TouchableOpacity onPress={sortReportsByCategory}>
-    <Text style={webstyles.sortButtonText}>Sort by Crime Category</Text>
-  </TouchableOpacity>
+  <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
+            <Text style={webstyles.sortButtonText}>Sort by Crime Category</Text> 
+          </TouchableOpacity>
 
  
 </View>
+
+<Modal
+  visible={isCategoryModalVisible}
+  animationType="slide"
+  transparent={true}
+  onRequestClose={() => setCategoryModalVisible(false)}
+>
+  {/* TouchableWithoutFeedback to close the modal when clicking outside */}
+  <TouchableWithoutFeedback onPress={() => setCategoryModalVisible(false)}>
+    <View style={webstyles.modalContainer}>
+      <View style={webstyles.modalContent}>
+        <Text style={webstyles.modalHeader}>Select A Crime Category</Text>
+        <FlatList
+          data={crimeCategories}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={webstyles.modalOption}
+              onPress={() => handleCategorySelect(item)}
+            >
+              <Text style={webstyles.modalOptionText}>{item}</Text>
+            </TouchableOpacity>
+          )}
+        />
+        <Button title="Clear Filter" onPress={handleClearFilter} color="#dc3545" />
+      </View>
+    </View>
+  </TouchableWithoutFeedback>
+</Modal>
   
                   {/* Reports List */}
                   <ScrollView
@@ -374,7 +512,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         isAlignedRight && { width: "75%" },
     ]}
 >
-    {filteredReports.map((report) => {
+    {currentReports.map((report) => {
         let iconSource;
         if (report.category === "carnapping") {
             iconSource = require("../../assets/images/car-icon.png");
@@ -449,34 +587,33 @@ export default function ViewReports({ navigation }: { navigation: any }) {
 </ScrollView>
   
                   {/* Pagination Controls */}
-                  <View style={[webstyles.paginationContainer]}>
-                      <TouchableOpacity
-                          disabled={currentPage === 1}
-                          onPress={() => setCurrentPage(currentPage - 1)}
-                          style={webstyles.paginationButton}
-                      >
-                          <Text style={webstyles.paginationText}>Previous</Text>
-                      </TouchableOpacity>
-                      <Text style={webstyles.paginationText}>
-                          Page {currentPage} of {totalPages}
-                      </Text>
-                      <TouchableOpacity
-                          disabled={currentPage === totalPages}
-                          onPress={() => setCurrentPage(currentPage + 1)}
-                          style={webstyles.paginationButton}
-                      >
-                          <Text style={webstyles.paginationText}>Next</Text>
-                      </TouchableOpacity>
-                  </View>
-              </Animated.View>
-  
-              <TouchableOpacity
-                  style={webstyles.fab}
-                  onPress={() => navigation.navigate("NewReports")}
-              >
-                  <Ionicons name="add" size={30} color="white" />
-              </TouchableOpacity>
-          </View>
+                  <View style={webstyles.paginationContainer}>
+        <TouchableOpacity
+          disabled={currentPage === 1}
+          onPress={handlePreviousPage}
+          style={webstyles.paginationButton}
+        >
+          <Text style={webstyles.paginationText}>Previous</Text>
+        </TouchableOpacity>
+        <Text style={webstyles.paginationText}>
+          Page {currentPage} of {totalPages}
+        </Text>
+        <TouchableOpacity
+          disabled={currentPage === totalPages}
+          onPress={handleNextPage}
+          style={webstyles.paginationButton}
+        >
+          <Text style={webstyles.paginationText}>Next</Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+    <TouchableOpacity
+      style={webstyles.fab}
+      onPress={() => navigation.navigate("NewReports")}
+    >
+      <Ionicons name="add" size={30} color="white" />
+    </TouchableOpacity>
+  </View>
       );
   };
   }

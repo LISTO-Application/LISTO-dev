@@ -7,6 +7,8 @@ import {
   Platform,
   Animated,
   Dimensions,
+  TextInput,
+  Modal, FlatList, Button,TouchableWithoutFeedback, Keyboard 
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -20,6 +22,8 @@ import { collection, getDocs } from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { doc, updateDoc } from "@react-native-firebase/firestore";
 export default function ValidateReports({ navigation }: { navigation: any }) {
+  const [isSortedAsc, setIsSortedAsc] = useState(true); 
+  const [currentStatusSort, setCurrentStatusSort] = useState<"PENDING" | "VALID" | "PENALIZED">("PENDING");
   const handleTitlePress = (report: Report) => {
     console.log("Navigating to details page for report:", report); // Debugging log
     navigation.navigate("ReportDetails", {
@@ -36,15 +40,26 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     newStatus: "PENDING" | "VALID" | "PENALIZED"
   ) => {
     try {
+      // Update the status of the report locally
       setReports((prevReports) =>
         prevReports.map((report) =>
           report.id === reportId ? { ...report, status: newStatus } : report
         )
       );
-
+  
+      // Update the status in Firebase Firestore
       const reportRef = doc(db, "reports", reportId);
       await updateDoc(reportRef, { status: newStatus });
       console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
+  
+      // Re-sort the reports based on the new status
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => {
+          const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+          return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        });
+        return sortedReports;
+      });
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -112,7 +127,9 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
   const contentPosition = useRef(new Animated.Value(0)).current;
   const [isAlignedRight, setIsAlignedRight] = useState(false);
-
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [filteredReports, setFilteredReports] = useState<Report[]>(reports);
   const toggleSideBar = () => {
     Animated.timing(sideBarPosition, {
       toValue: isSidebarVisible ? -sidebarWidth : 0,
@@ -226,164 +243,302 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
       </View>
     );
   } else if (Platform.OS === "web") {
+
+    const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
+    const [reports, setReports] = useState<Report[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
+    const [isCategoryModalVisible, setCategoryModalVisible] = useState(false); // State for category modal visibility
+    const [isSortedAsc, setIsSortedAsc] = useState(true); // State for sorting direction
+    const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
+  
+    useEffect(() => {
+      const fetchReports = async () => {
+        try {
+          const querySnapshot = await getDocs(collection(db, "reports"));
+          const reportList = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              icon: data.icon || "",
+              category: data.category || "Unknown",
+              title: data.title || "Untitled",
+              additionalInfo: data.additionalInfo || "Unknown Report",
+              location: data.location || "Unknown Location",
+              name: data.name || "Anonymous",
+              date: data.date || new Date().toDateString(),
+              time: data.time || new Date().toTimeString(),
+              image: {
+                filename: data.image?.filename || "Unknown Filename",
+                uri: data.image?.uri || "Unknown Uri",
+              },
+              status: data.status || "PENDING",
+              timeStamp: data.timeStamp || new Date().toISOString(),
+            };
+          });
+          setReports(reportList);
+          setFilteredReports(reportList); // Initialize filteredReports with all reports initially
+        } catch (error) {
+          console.error("Error fetching reports:", error);
+        }
+      };
+  
+      fetchReports();
+    }, []);
+  
+    // Handle search query change
+    const handleSearch = (query: string) => {
+      setSearchQuery(query); // Update search query state
+      filterReports(query, selectedCategory); // Re-filter reports based on query and selected category
+    };
+  
+    // Filter reports based on search query and selected category
+    const filterReports = (searchQuery: string, category: string | null) => {
+      let filtered = reports; // Start with all reports
+    
+      // Apply category filter if a category is selected
+      if (category) {
+        filtered = filtered.filter((report) => report.category === category);
+      }
+    
+      // Apply search query filter if a query is provided
+      if (searchQuery) {
+        filtered = filtered.filter((report) => {
+          const query = searchQuery.toLowerCase();
+          return (
+            report.title.toLowerCase().includes(query) ||
+            report.location.toLowerCase().includes(query) ||
+            report.category.toLowerCase().includes(query) ||
+            report.date.toLowerCase().includes(query) ||
+            report.status.toLowerCase().includes(query)
+          );
+        });
+      }
+    
+      setFilteredReports(filtered); // Update the filtered reports state
+    };
+  
+    // Handle category selection from the modal
+    const handleCategorySelect = (category: string) => {
+      setSelectedCategory(category); // Set the selected category
+      setCategoryModalVisible(false); // Close the modal
+      filterReports(searchQuery, category); // Apply the category filter along with the current search query
+    };
+  
+    // Clear category filter
+    const handleClearFilter = () => {
+      setSearchQuery(""); // Clear search query
+      setSelectedCategory(null); // Clear selected category
+      setFilteredReports(reports); // Show all reports again
+    };
+  
+    // Get unique crime categories from reports
+    const crimeCategories = Array.from(new Set(reports.map((report) => report.category)));
+  
+    // Sort reports by date (ascending/descending)
+    const sortReportsByDate = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports];
+        sortedReports.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return isSortedAsc ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+        });
+        return sortedReports;
+      });
+      setIsSortedAsc((prev) => !prev); // Toggle sorting order
+    };
+  
+    // Sort reports alphabetically by title
+    const sortReportsByAlphabet = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => {
+          return a.title.localeCompare(b.title); // Sort by title alphabetically
+        });
+        return sortedReports;
+      });
+    };
+
+    const sortReportsByStatus = () => {
+      // Cycle through status types
+      const nextStatus = currentStatusSort === "PENDING"
+        ? "VALID"
+        : currentStatusSort === "VALID"
+        ? "PENALIZED"
+        : "PENDING";
+    
+      setCurrentStatusSort(nextStatus); // Update the state to the next status
+    
+      // Sort the reports based on the new status
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => {
+          const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+          // Sort reports by the status order
+          return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        });
+        return sortedReports;
+      });
+    };
     return (
       <View style={webstyles.container}>
-        <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
-        {/* Toggle Button */}
-        <TouchableOpacity
-          onPress={toggleSideBar}
-          style={[
-            webstyles.toggleButton,
-            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
-          ]}
-        >
-          <Ionicons
-            name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
-            size={24}
-            color={"#333"}
+      <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
+      <TouchableOpacity onPress={toggleSideBar} style={[webstyles.toggleButton, { left: isSidebarVisible ? sidebarWidth : 10 }]}>
+        <Ionicons name={isSidebarVisible ? "chevron-back" : "chevron-forward"} size={24} color={"#333"} />
+      </TouchableOpacity>
+
+      <Animated.View style={[webstyles.mainContainer, { transform: [{ translateX: contentPosition }] }]}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <Text style={[webstyles.headerText, { marginRight: 10 }]}>Listed Reports</Text>
+          <TextInput
+            style={{
+              width: 200,
+              borderWidth: 1,
+              borderColor: "#ccc",
+              borderRadius: 8,
+              padding: 8,
+            }}
+            placeholder="Search reports..."
+            value={searchQuery}
+            onChangeText={handleSearch}
           />
-        </TouchableOpacity>
-        <Animated.View
-          style={[
-            webstyles.mainContainer,
-            { transform: [{ translateX: contentPosition }] },
-          ]}
-        >
-          <Text style={webstyles.headerText}>Listed Reports</Text>
+        </View>
 
-          <ScrollView
-            contentContainerStyle={[
-              webstyles.reportList,
-              isAlignedRight && { width: "75%" },
-            ]}
-          >
-            {reports.length > 0 ? (
-              reports.map((report) => (
-                <View
-                  key={report.id}
-                  style={{
-                    marginBottom: 20,
-                    padding: 15,
-                    borderRadius: 8,
-                    backgroundColor: "#f9f9f9",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                  }}
-                >
-                  {/* Title and Time Row */}
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <TouchableOpacity onPress={() => handleTitlePress(report)}>
-                      <Text
-                        style={{
-                          fontSize: 18,
-                          fontWeight: "bold",
-                          color: "#115272",
-                        }}
-                      >
-                        {report.title}
-                      </Text>
-                    </TouchableOpacity>
-                    <Text
-                      style={{ color: "#115272", fontSize: 14, marginLeft: 10 }}
-                    >
-                      {report.time}
-                    </Text>
-                  </View>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10, paddingHorizontal: 25 }}>
+          <TouchableOpacity onPress={sortReportsByDate}>
+            <Text style={webstyles.sortButtonText}>
+              {isSortedAsc ? "Sort by Date (Latest)" : "Sort by Date (Earliest)"}
+            </Text>
+          </TouchableOpacity>
 
-                  {/* Report Category */}
-                  <Text style={{ color: "#115272", marginTop: 5 }}>
-                    {`Category: ${report.category}`}
-                  </Text>
+          <TouchableOpacity onPress={sortReportsByAlphabet}>
+            <Text style={webstyles.sortButtonText}>Sort by Alphabet</Text>
+          </TouchableOpacity>
 
-                  {/* Report Location */}
-                  <Text style={{ color: "#115272", marginTop: 5 }}>
-                    {`Location: ${report.location || "Not provided"}`}
-                  </Text>
+          <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
+            <Text style={webstyles.sortButtonText}>Sort by Crime Category</Text>
+          </TouchableOpacity>
 
-                  {/* Action Buttons */}
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "flex-end",
-                      alignItems: "center",
-                      marginTop: 10,
-                    }}
-                  >
-                    {report.status === "PENDING" ? (
-                      <>
-                        <TouchableOpacity
-                          style={{
-                            backgroundColor: "#28a745",
-                            paddingVertical: 5,
-                            paddingHorizontal: 10,
-                            borderRadius: 5,
-                            marginLeft: 5,
-                          }}
-                          onPress={() => handleStatusChange(report.id, "VALID")}
-                        >
-                          <Text
-                            style={{
-                              color: "#fff",
-                              fontSize: 20,
-                              textAlign: "center",
-                            }}
-                          >
-                            Validate
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={{
-                            backgroundColor: "#dc3545",
-                            paddingVertical: 5,
-                            paddingHorizontal: 10,
-                            borderRadius: 5,
-                            marginLeft: 5,
-                          }}
-                          onPress={() =>
-                            handleStatusChange(report.id, "PENALIZED")
-                          }
-                        >
-                          <Text
-                            style={{
-                              color: "#fff",
-                              fontSize: 20,
-                              textAlign: "center",
-                            }}
-                          >
-                            Penalize
-                          </Text>
-                        </TouchableOpacity>
-                      </>
-                    ) : (
-                      <Text
-                        style={{
-                          color:
-                            report.status === "VALID"
-                              ? "#28a745"
-                              : report.status === "PENALIZED"
-                                ? "#dc3545"
-                                : "#6c757d",
-                          fontWeight: "bold",
-                          fontSize: 20,
-                          textAlign: "right",
-                        }}
-                      >
-                        {report.status === "VALID" ? "Validated" : "Penalized"}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              ))
-            ) : (
-              <Text style={{ textAlign: "center", marginTop: 20 }}>
-                No reports available.
-              </Text>
-            )}
-          </ScrollView>
-        </Animated.View>
+          <TouchableOpacity onPress={sortReportsByStatus}>
+  <Text style={webstyles.sortButtonText}>
+    Sort by Report Status ({currentStatusSort})
+  </Text>
+</TouchableOpacity>
+        </View>
+
+        {/* Category Modal */}
+        <Modal
+  visible={isCategoryModalVisible}
+  animationType="slide"
+  transparent={true}
+  onRequestClose={() => setCategoryModalVisible(false)}
+>
+  {/* TouchableWithoutFeedback to close the modal when clicking outside */}
+  <TouchableWithoutFeedback onPress={() => setCategoryModalVisible(false)}>
+    <View style={webstyles.modalContainer}>
+      <View style={webstyles.modalContent}>
+        <Text style={webstyles.modalHeader}>Select a Crime Category</Text>
+        <FlatList
+          data={crimeCategories}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={webstyles.modalOption}
+              onPress={() => handleCategorySelect(item)}
+            >
+              <Text style={webstyles.modalOptionText}>{item}</Text>
+            </TouchableOpacity>
+          )}
+        />
+        <Button title="Clear Filter" onPress={handleClearFilter} color="#dc3545" />
       </View>
+    </View>
+  </TouchableWithoutFeedback>
+</Modal>
+
+        <ScrollView contentContainerStyle={webstyles.reportList}>
+          {filteredReports.length > 0 ? (
+            filteredReports.map((report) => (
+              <View key={report.id} style={{ marginBottom: 20, padding: 15, borderRadius: 8, backgroundColor: "#f9f9f9" }}>
+                {/* Title and Time Row */}
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <TouchableOpacity onPress={() => handleTitlePress(report)}>
+                    <Text style={{ fontSize: 18, fontWeight: "bold", color: "#115272" }}>
+                      {report.title}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={{ color: "#115272", fontSize: 14, marginLeft: 10 }}>
+                    {report.time} &nbsp; {report.date}
+                  </Text>
+                </View>
+
+                {/* Report Category */}
+                <Text style={{ color: "#115272", marginTop: 5 }}>
+                  {`Category: ${report.category}`}
+                </Text>
+
+                {/* Report Location */}
+                <Text style={{ color: "#115272", marginTop: 5 }}>
+                  {`Location: ${report.location || "Not provided"}`}
+                </Text>
+
+                {/* Action Buttons */}
+                <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginTop: 10 }}>
+                  {report.status === "PENDING" ? (
+                    <>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "#28a745",
+                          paddingVertical: 5,
+                          paddingHorizontal: 10,
+                          borderRadius: 5,
+                          marginLeft: 5,
+                        }}
+                        onPress={() => handleStatusChange(report.id, "VALID")}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 20, textAlign: "center" }}>
+                          Validate
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "#dc3545",
+                          paddingVertical: 5,
+                          paddingHorizontal: 10,
+                          borderRadius: 5,
+                          marginLeft: 5,
+                        }}
+                        onPress={() => handleStatusChange(report.id, "PENALIZED")}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 20, textAlign: "center" }}>
+                          Penalize
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <Text
+                      style={{
+                        color:
+                          report.status === "VALID"
+                            ? "#28a745"
+                            : report.status === "PENALIZED"
+                            ? "#dc3545"
+                            : "#6c757d",
+                        fontWeight: "bold",
+                        fontSize: 20,
+                        textAlign: "right",
+                      }}
+                    >
+                      {report.status === "VALID" ? "Valid" : "Penalized"}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={{ textAlign: "center", marginTop: 20 }}>No reports available.</Text>
+          )}
+        </ScrollView>
+      </Animated.View>
+    </View>
     );
-  }
-}
+
+  }}
