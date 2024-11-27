@@ -457,6 +457,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             webstyles.toggleButton,
             { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
           ]}
+          aria
         >
           <Ionicons
             name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
@@ -729,7 +730,28 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           style={webstyles.fab}
           onPress={() => navigation.navigate("NewReports")}
         >
-          <Ionicons name="add" size={30} color="white" />
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 20,
+            }}
+          >
+            <Text
+              style={{
+                alignSelf: "center",
+                color: "white",
+                fontWeight: "bold",
+                fontSize: 20,
+              }}
+            >
+              Add a report
+            </Text>
+            <View style={{ alignSelf: "center" }}>
+              <Ionicons name="add" size={30} color="white" />
+            </View>
+          </View>
         </TouchableOpacity>
       </View>
     );
