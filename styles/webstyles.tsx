@@ -151,10 +151,12 @@ const webstyles = StyleSheet.create({
     width: 30,
     height: 30,
     backgroundColor: "#fff",
+    borderColor: "black",
+    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
     position: "absolute",
-    top: 20,
+    top: 40,
     left: 260, // Adjust to position the toggle button
     zIndex: 20,
     borderRadius: 15,
@@ -425,8 +427,8 @@ const webstyles = StyleSheet.create({
     right: 20, // Adjust based on your layout needs
     backgroundColor: "#0078A8", // Blue background
     borderRadius: 50, // Circular shape
-    width: 56, // Diameter
-    height: 56, // Diameter
+    width: 250, // Diameter
+    height: "6%", // Diameter
     justifyContent: "center",
     alignItems: "center",
     elevation: 5, // Optional for shadow
