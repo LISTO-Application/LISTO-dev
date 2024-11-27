@@ -457,7 +457,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             webstyles.toggleButton,
             { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
           ]}
-          aria
         >
           <Ionicons
             name={isSidebarVisible ? "chevron-back" : "chevron-forward"}
@@ -543,6 +542,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                   setValue(val);
                   handleDropDownChange(val);
                 }}
+                placeholder="Select a filter"
               />
             </View>
           </View>
