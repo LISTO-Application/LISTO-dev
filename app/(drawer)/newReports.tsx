@@ -33,41 +33,36 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { FontAwesome } from "@expo/vector-icons";
 import { Image, type ImageSource } from "expo-image";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import storage from "@react-native-firebase/storage";
+import firestore from "@react-native-firebase/firestore";
 import { subDays, subYears } from "date-fns";
 
 const database = db;
-// const storage = str;
 
-// const uploadImage = async (imageUri: string, imageName: string) => {
-//   const storageRef = ref(storage, `images/${imageName}`);
+const compressImage = async (uri: any) => {
+  const result = await ImageManipulator.manipulateAsync(
+    uri,
+    [{ resize: { width: 800 } }],
+    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+  );
+  return result.uri;
+};
 
-//   const manipulatedImage = await ImageManipulator.manipulateAsync(
-//     imageUri,
-//     [{ resize: { width: 800 } }],
-//     { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-//   );
+const uploadImageToFirebase = async (
+  filename: any,
+  uri: string | URL | Request
+) => {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  const ref = storage().ref().child(`images/${filename}`);
+  await ref.put(blob);
+  const downloadURL = await ref.getDownloadURL();
+  return downloadURL;
+};
 
-//   const response = await fetch(manipulatedImage.uri, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "image/jpeg", // Match your file type
-//     },
-//   }); // Fetch the image from the URI
-
-//   console.log(response);
-//   const blob = await response.blob(); // Convert to Blob
-
-//   try {
-//     await uploadBytes(storageRef, blob);
-//     console.log("Image uploaded successfully!");
-//   } catch (error) {
-//     console.error("Error uploading image:", error);
-//   }
-//   const downloadURL = await getDownloadURL(storageRef); // Get the image URL
-
-//   return downloadURL;
-// };
+const saveImageToFirestore = async (uri: any) => {
+  await firestore().collection("reports").add({});
+};
 
 export interface DropdownCrimeTypes {
   label: string;
@@ -146,11 +141,20 @@ export default function NewReports({
     setIsDropdownVisible(false); // Close the dropdown
   };
   const handleSubmit = async () => {
-    // let imageUrl = undefined;
-
-    // if (selectedImage && imageFilename) {
-    //   imageUrl = await uploadImage(selectedImage, imageFilename);
-    // }
+    let resizedImage = null;
+    if (selectedImage) {
+      try {
+        resizedImage = await ImageManipulator.manipulateAsync(
+          selectedImage,
+          [{ resize: { width: 800 } }],
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        );
+      } catch (error) {
+        console.error("Error resizing image:", error);
+        alert("Failed to process the image. Please try again.");
+        return;
+      }
+    }
     const newReport = {
       id: uuidv4(),
       icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
@@ -162,11 +166,13 @@ export default function NewReports({
       additionalInfo: additionalInfo || "Undescribed Report",
       date: date || ["Unknown Date: ", new Date().toDateString()],
       time: time || ["Unknown Time: ", new Date().toTimeString()],
-      image:
-        // imageUrl,
-        selectedImage && imageFilename
-          ? { filename: imageFilename, uri: selectedImage }
-          : undefined,
+      image: resizedImage
+        ? { filename: imageFilename, uri: resizedImage.uri }
+        : undefined,
+      // imageUrl,
+      // selectedImage && imageFilename
+      //   ? { filename: imageFilename, uri: selectedImage }
+      //   : undefined,
       status: "PENDING",
       timeStamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",

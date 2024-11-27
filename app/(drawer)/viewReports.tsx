@@ -90,9 +90,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-
-  console.log("Known Reports: ", reports);
-
   const reportsPerPage = 10;
   // Calculate total pages
   const totalPages = Math.ceil(reports.length / reportsPerPage);

@@ -70,18 +70,15 @@ import { MarkerWithInfoWindow } from "@/components/MarkerWithInfoWindow";
 import WebHeatmap from "@/components/WebHeatmap";
 import heatmapData from "./data/heatmap";
 import dayjs, { Dayjs, locale } from "dayjs";
-import {
-  CrimeType,
-  MarkerType,
-  crimeImages,
-  dummyMarkers,
-} from "./data/marker";
+import { CrimeType, MarkerType, crimeImages } from "./data/marker";
 import {
   collection,
+  doc,
   firebase,
   FirebaseFirestoreTypes,
   GeoPoint,
   getDocs,
+  setDoc,
 } from "@react-native-firebase/firestore";
 import React from "react";
 import { DateType, ModeType } from "react-native-ui-datepicker";
