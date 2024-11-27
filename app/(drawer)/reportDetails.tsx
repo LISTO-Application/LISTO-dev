@@ -4,7 +4,7 @@ import {
   Text,
   ActivityIndicator,
   StyleSheet,
-  ScrollView,
+  ScrollView, Image
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import firestore from "@react-native-firebase/firestore";
@@ -20,6 +20,10 @@ interface ReportDetailsType {
   status: "PENDING" | "VALID" | "PENALIZED";
   additionalInfo: string | null;
   reporterName?: string | null;
+  image?: {
+    filename: string;
+    uri: string;
+  };
 }
 
 const ReportDetails = ({ navigation }: { navigation: any }) => {
@@ -42,7 +46,7 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
         try {
           const reportRef = firestore().collection("reports").doc(id);
           const reportDoc = await reportRef.get();
-
+  
           if (reportDoc.exists) {
             const reportData = reportDoc.data();
             setReportDetails({
@@ -55,6 +59,7 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
               additionalInfo:
                 reportData?.additionalInfo || "No additional information",
               reporterName: reportData?.name || "Anonymous",
+              image: reportData?.image || null, // Add image field
             });
           } else {
             setError("No such document found.");
@@ -66,7 +71,7 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
           setLoading(false);
         }
       };
-
+  
       fetchReportDetails();
     }
   }, [id]);
@@ -167,6 +172,23 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
                 "No additional information provided"}
             </Text>
           </View>
+          <View style={styles.detailRow}>
+
+  <Text style={styles.label}>Attached Image:</Text>
+  {reportDetails.image ? (
+    <View style={styles.imageContainer}>
+      <Image
+        source={{ uri: reportDetails.image.uri }}
+        style={styles.image}
+        resizeMode="contain"
+      />
+      <Text style={styles.filename}>{reportDetails.image.filename}</Text>
+    </View>
+  ) : (
+    <Text style={styles.value}>No image attached.</Text>
+  )}
+</View>
+
         </View>
       </View>
     </ScrollView>
@@ -197,6 +219,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 5,
+  },
+  imageContainer: {
+    alignItems: "center",
+    marginTop: 10,
+  },
+  image: {
+    width: 500, // Increase width
+    height: 500, // Increase height
+    borderRadius: 8, // Optional, keep or remove based on design preference
+    marginBottom: 5,
+  },
+  filename: {
+    marginTop: 5,
+    fontSize: 16,
+    color: "#555",
+    textAlign: "center",
   },
   detailRow: {
     marginBottom: 20,

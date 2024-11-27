@@ -335,19 +335,29 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     );
 
     // Sort reports by date (ascending/descending)
-    const sortReportsByDate = () => {
+    const sortReportsByEarliest = () => {
       setFilteredReports((prevReports) => {
         const sortedReports = [...prevReports];
         sortedReports.sort((a, b) => {
           const dateA = new Date(a.date);
           const dateB = new Date(b.date);
-          return isSortedAsc
-            ? dateA.getTime() - dateB.getTime()
-            : dateB.getTime() - dateA.getTime();
+          return dateA.getTime() - dateB.getTime(); // Earliest to Latest (Ascending)
         });
         return sortedReports;
       });
-      setIsSortedAsc((prev) => !prev); // Toggle sorting order
+    };
+  
+    // Function to sort reports by Latest
+    const sortReportsByLatest = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports];
+        sortedReports.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateB.getTime() - dateA.getTime(); // Latest to Earliest (Descending)
+        });
+        return sortedReports;
+      });
     };
 
     // Sort reports alphabetically by title
@@ -414,33 +424,44 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     const [value, setValue] = useState(null);
     const [items, setItems] = useState([
       {
-        label: `${isSortedAsc ? "Sort by Date (Latest)" : "Sort by Date (Earliest)"}`,
-        value: "date",
+        label: 'Sort by Date (Earliest)', // Default label for Earliest
+        value: 'date-asc',
       },
       {
-        label: `${isSortedAlphabetAsc ? "Sort by Alphabet" : "Sorted by Alphabet (A-Z)"}`,
-        value: "alphabet",
+        label: 'Sort by Date (Latest)', // New label for Latest
+        value: 'date-desc',
       },
       {
-        label: "Sort by Status",
-        value: "status",
+        label: 'Sort by Alphabet (A-Z)', // Default label for Alphabet sorting
+        value: 'alphabet',
       },
-      { label: "Sort by Crime Category", value: "category" },
+      {
+        label: 'Sort by Status', // Label for Status sorting
+        value: 'status',
+      },
+      {
+        label: 'Sort by Crime Category', // Label for Crime Category sorting
+        value: 'category',
+      },
     ]);
 
     const handleDropDownChange = (selectedValue: any) => {
       switch (selectedValue) {
-        case "date":
-          sortReportsByDate();
+        case 'date-asc':
+          sortReportsByEarliest(); // Sort by Earliest (Ascending)
           break;
-        case "alphabet":
-          sortReportsByAlphabet();
+        case 'date-desc':
+          sortReportsByLatest(); // Sort by Latest (Descending)
           break;
-        case "status":
-          sortReportsByStatus();
+        case 'alphabet':
+          setIsSortedAlphabetAsc((prev) => !prev); // Toggle the alphabet order
+          sortReportsByAlphabet(); // Call the sort function when "Sort by Alphabet" is selected
           break;
-        case "category":
-          setCategoryModalVisible(true);
+        case 'status':
+          sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
+          break;
+        case 'category':
+          setCategoryModalVisible(true); // Show category modal
           break;
         default:
           break;
