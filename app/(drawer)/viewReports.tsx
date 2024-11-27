@@ -307,7 +307,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             report.location.toLowerCase().includes(query) ||
             report.category.toLowerCase().includes(query) ||
             report.date.toLowerCase().includes(query) ||
-            report.status.toLowerCase().includes(query)
+            report.status.toLowerCase().includes(query) ||
+            report.additionalInfo.toLowerCase().includes(query) ||
+            report.date.includes(query)
           );
         });
       }
@@ -335,38 +337,45 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     );
 
     // Sort reports by date (ascending/descending)
-    const sortReportsByEarliest = () => {
+    const sortReportsByDateAsc = () => {
       setFilteredReports((prevReports) => {
         const sortedReports = [...prevReports];
         sortedReports.sort((a, b) => {
           const dateA = new Date(a.date);
           const dateB = new Date(b.date);
-          return dateA.getTime() - dateB.getTime(); // Earliest to Latest (Ascending)
-        });
-        return sortedReports;
-      });
-    };
-  
-    // Function to sort reports by Latest
-    const sortReportsByLatest = () => {
-      setFilteredReports((prevReports) => {
-        const sortedReports = [...prevReports];
-        sortedReports.sort((a, b) => {
-          const dateA = new Date(a.date);
-          const dateB = new Date(b.date);
-          return dateB.getTime() - dateA.getTime(); // Latest to Earliest (Descending)
+          return dateA.getTime() - dateB.getTime();
         });
         return sortedReports;
       });
     };
 
+    const sortReportsByDateDesc = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports];
+        sortedReports.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        return sortedReports;
+      });
+      setIsSortedAsc((prev) => !prev); // Toggle sorting order
+    };
     // Sort reports alphabetically by title
-    const sortReportsByAlphabet = () => {
+    const sortReportsByAlphabetDesc = () => {
       setFilteredReports((prevReports) => {
         const sortedReports = [...prevReports].sort((a, b) => {
-          return isSortedAlphabetAsc
-            ? a.title.localeCompare(b.title) // Sort A to Z
-            : b.title.localeCompare(a.title); // Sort Z to A
+          return b.title.localeCompare(a.title); // Sort Z to A
+        });
+        return sortedReports;
+      });
+      setIsSortedAlphabetAsc((prev) => !prev); // Toggle the sorting order
+    };
+    const sortReportsByAlphabetAsc = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => {
+          return a.title.localeCompare(b.title); // Sort A to Z
         });
         return sortedReports;
       });
@@ -423,39 +432,27 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState(null);
     const [items, setItems] = useState([
-      {
-        label: 'Sort by Date (Earliest)', // Default label for Earliest
-        value: 'date-asc',
-      },
-      {
-        label: 'Sort by Date (Latest)', // New label for Latest
-        value: 'date-desc',
-      },
-      {
-        label: 'Sort by Alphabet (A-Z)', // Default label for Alphabet sorting
-        value: 'alphabet',
-      },
-      {
-        label: 'Sort by Status', // Label for Status sorting
-        value: 'status',
-      },
-      {
-        label: 'Sort by Crime Category', // Label for Crime Category sorting
-        value: 'category',
-      },
+      { label: "Sort by Date (Earliest)", value: "date-asc" },
+      { label: "Sort by Date (Latest)", value: "date-desc" },
+      { label: "Sort by Alphabet (A-Z)", value: "alphabet-asc" },
+      { label: "Sort by Alphabet (Z-A)", value: "alphabet-desc" },
+      { label: "Sort by Crime Category", value: "category" },
+      { label: "Sort by Status", value: "status" },
     ]);
 
     const handleDropDownChange = (selectedValue: any) => {
       switch (selectedValue) {
-        case 'date-asc':
-          sortReportsByEarliest(); // Sort by Earliest (Ascending)
+        case "date-asc":
+          sortReportsByDateAsc();
           break;
-        case 'date-desc':
-          sortReportsByLatest(); // Sort by Latest (Descending)
+        case "date-desc":
+          sortReportsByDateDesc();
           break;
-        case 'alphabet':
-          setIsSortedAlphabetAsc((prev) => !prev); // Toggle the alphabet order
-          sortReportsByAlphabet(); // Call the sort function when "Sort by Alphabet" is selected
+        case "alphabet-asc":
+          sortReportsByAlphabetAsc();
+          break;
+        case "alphabet-desc":
+          sortReportsByAlphabetDesc();
           break;
         case 'status':
           sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
@@ -468,6 +465,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       }
       console.log(selectedValue);
     };
+
     return (
       <View style={webstyles.container}>
         <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
@@ -535,7 +533,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 onChangeText={handleSearch}
               />
               <View style={{ alignSelf: "center", left: -40 }}>
-                {" "}
                 <Ionicons name={"search-outline"} size={24} />
               </View>
             </View>
@@ -544,6 +541,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 {
                   alignSelf: "flex-end",
                   paddingRight: 20,
+                  width: "18%",
                 },
                 isAlignedRight && {
                   left: -450,
@@ -558,11 +556,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 setOpen={setOpen}
                 setItems={setItems}
                 setValue={setValue}
-                onChangeValue={(val: any) => {
-                  console.log("Selected Value:", val);
-                  setValue(val);
-                  handleDropDownChange(val);
-                }}
+                onChangeValue={handleDropDownChange}
                 placeholder="Select a filter"
               />
             </View>
