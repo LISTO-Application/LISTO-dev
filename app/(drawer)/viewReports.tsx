@@ -345,10 +345,8 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           const dateB = new Date(b.date);
           return dateA.getTime() - dateB.getTime();
         });
-
         return sortedReports;
       });
-      setIsSortedAsc((prev) => !prev); // Toggle sorting order
     };
 
     const sortReportsByDateDesc = () => {
@@ -456,11 +454,11 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         case "alphabet-desc":
           sortReportsByAlphabetDesc();
           break;
-        case "status":
-          sortReportsByStatus();
+        case 'status':
+          sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
           break;
-        case "category":
-          setCategoryModalVisible(true);
+        case 'category':
+          setCategoryModalVisible(true); // Show category modal
           break;
         default:
           break;
