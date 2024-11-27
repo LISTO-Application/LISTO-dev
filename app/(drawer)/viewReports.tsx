@@ -15,6 +15,7 @@ import {
   Button,
   TouchableWithoutFeedback,
   Keyboard,
+  Pressable,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -37,6 +38,7 @@ import { db } from "../FirebaseConfig";
 import { AuthContext } from "../AuthContext";
 import SideBar from "@/components/SideBar";
 import ImageViewer from "./ImageViewer";
+import DropDownPicker from "react-native-dropdown-picker";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -406,6 +408,45 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       (currentPage - 1) * reportsPerPage,
       currentPage * reportsPerPage
     );
+
+    //DropDown Sorter
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState(null);
+    const [items, setItems] = useState([
+      {
+        label: `${isSortedAsc ? "Sort by Date (Latest)" : "Sort by Date (Earliest)"}`,
+        value: "date",
+      },
+      {
+        label: `${isSortedAlphabetAsc ? "Sort by Alphabet" : "Sorted by Alphabet (A-Z)"}`,
+        value: "alphabet",
+      },
+      {
+        label: "Sort by Status",
+        value: "status",
+      },
+      { label: "Sort by Crime Category", value: "category" },
+    ]);
+
+    const handleDropDownChange = (selectedValue: any) => {
+      switch (selectedValue) {
+        case "date":
+          sortReportsByDate();
+          break;
+        case "alphabet":
+          sortReportsByAlphabet();
+          break;
+        case "status":
+          sortReportsByStatus();
+          break;
+        case "category":
+          setCategoryModalVisible(true);
+          break;
+        default:
+          break;
+      }
+      console.log(selectedValue);
+    };
     return (
       <View style={webstyles.container}>
         <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
@@ -433,67 +474,79 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             },
           ]}
         >
-          {/* Header and Search Bar */}
+          {/* Header Component */}
           <View
             style={{
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "space-between", // Makes sure the header and search bar are spaced
+              justifyContent: "flex-start", // Makes sure the header and search bar are spaced
               marginBottom: 10, // Space between this row and the rest of the content
+              paddingLeft: 20,
             }}
           >
             <Text style={[webstyles.headerText, { marginRight: 10 }]}>
               Reports
             </Text>
-            <TextInput
-              style={{
-                width: 200, // Set a fixed width for the search bar
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 8,
-                padding: 8,
-              }}
-              placeholder="Search reports..."
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
           </View>
 
-          {/* Sort Buttons */}
+          {/* Search and Sort Component */}
           <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginTop: 10,
-              paddingHorizontal: 25,
-            }}
+            style={[
+              {
+                zIndex: 1,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingHorizontal: 20,
+              },
+            ]}
           >
-            {/* Sort by Date Button */}
-            <TouchableOpacity onPress={sortReportsByDate}>
-              <Text style={webstyles.sortButtonText}>
-                {isSortedAsc
-                  ? "Sort by Date (Latest)"
-                  : "Sort by Date (Earliest)"}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Sort by Alphabetical Button */}
-            <TouchableOpacity onPress={sortReportsByAlphabet}>
-              <Text style={webstyles.sortButtonText}>
-                {isSortedAlphabetAsc
-                  ? "Sort by Alphabet "
-                  : "Sorted by Alphabet (A-Z)"}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Sort by Crime Category Button */}
-            <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
-              <Text style={webstyles.sortButtonText}>
-                Sort by Crime Category
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row" }}>
+              <TextInput
+                style={{
+                  width: 300, // Set a fixed width for the search bar
+                  borderWidth: 1,
+                  borderColor: "black",
+                  borderRadius: 8,
+                  padding: 10,
+                }}
+                placeholder="Search reports..."
+                value={searchQuery}
+                onChangeText={handleSearch}
+              />
+              <View style={{ alignSelf: "center", left: -40 }}>
+                {" "}
+                <Ionicons name={"search-outline"} size={24} />
+              </View>
+            </View>
+            <View
+              style={[
+                {
+                  alignSelf: "flex-end",
+                  paddingRight: 20,
+                },
+                isAlignedRight && {
+                  left: -450,
+                },
+              ]}
+            >
+              <DropDownPicker
+                multiple={false}
+                open={open}
+                value={value}
+                items={items}
+                setOpen={setOpen}
+                setItems={setItems}
+                setValue={setValue}
+                onChangeValue={(val: any) => {
+                  console.log("Selected Value:", val);
+                  setValue(val);
+                  handleDropDownChange(val);
+                }}
+              />
+            </View>
           </View>
 
+          {/* Crime Category Modal */}
           <Modal
             visible={isCategoryModalVisible}
             animationType="slide"
@@ -504,7 +557,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             <TouchableWithoutFeedback
               onPress={() => setCategoryModalVisible(false)}
             >
-              <View style={webstyles.modalContainer}>
+              <View style={[webstyles.modalContainer, { height: "100%" }]}>
                 <View style={webstyles.modalContent}>
                   <Text style={webstyles.modalHeader}>
                     Select A Crime Category
@@ -517,15 +570,43 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                         style={webstyles.modalOption}
                         onPress={() => handleCategorySelect(item)}
                       >
-                        <Text style={webstyles.modalOptionText}>{item}</Text>
+                        <Text style={webstyles.modalOptionText}>
+                          {item.charAt(0).toUpperCase() + item.slice(1)}
+                        </Text>
                       </TouchableOpacity>
                     )}
                   />
-                  <Button
-                    title="Clear Filter"
+                  <Pressable
                     onPress={handleClearFilter}
-                    color="#dc3545"
-                  />
+                    style={{
+                      height: 30,
+                      width: "50%",
+                      alignSelf: "center",
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "#dc3545",
+                        width: "100%",
+                        flex: 1,
+                        justifyContent: "center",
+                        height: "100%",
+                        borderRadius: 50,
+                      }}
+                    >
+                      {" "}
+                      <Text
+                        style={{
+                          alignSelf: "center",
+                          color: "#fff",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Clear Filter
+                      </Text>
+                    </View>
+                  </Pressable>
+                  {/* Clear Filter Component */}
                 </View>
               </View>
             </TouchableWithoutFeedback>
@@ -619,7 +700,12 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           </ScrollView>
 
           {/* Pagination Controls */}
-          <View style={webstyles.paginationContainer}>
+          <View
+            style={[
+              webstyles.paginationContainer,
+              isAlignedRight && { width: "75%" },
+            ]}
+          >
             <TouchableOpacity
               disabled={currentPage === 1}
               onPress={handlePreviousPage}
