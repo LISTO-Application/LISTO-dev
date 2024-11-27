@@ -307,7 +307,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             report.location.toLowerCase().includes(query) ||
             report.category.toLowerCase().includes(query) ||
             report.date.toLowerCase().includes(query) ||
-            report.status.toLowerCase().includes(query)
+            report.status.toLowerCase().includes(query) ||
+            report.additionalInfo.toLowerCase().includes(query) ||
+            report.date.includes(query)
           );
         });
       }
@@ -335,28 +337,47 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     );
 
     // Sort reports by date (ascending/descending)
-    const sortReportsByDate = () => {
+    const sortReportsByDateAsc = () => {
       setFilteredReports((prevReports) => {
         const sortedReports = [...prevReports];
         sortedReports.sort((a, b) => {
           const dateA = new Date(a.date);
           const dateB = new Date(b.date);
-          return isSortedAsc
-            ? dateA.getTime() - dateB.getTime()
-            : dateB.getTime() - dateA.getTime();
+          return dateA.getTime() - dateB.getTime();
         });
+
         return sortedReports;
       });
       setIsSortedAsc((prev) => !prev); // Toggle sorting order
     };
 
+    const sortReportsByDateDesc = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports];
+        sortedReports.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        return sortedReports;
+      });
+      setIsSortedAsc((prev) => !prev); // Toggle sorting order
+    };
     // Sort reports alphabetically by title
-    const sortReportsByAlphabet = () => {
+    const sortReportsByAlphabetDesc = () => {
       setFilteredReports((prevReports) => {
         const sortedReports = [...prevReports].sort((a, b) => {
-          return isSortedAlphabetAsc
-            ? a.title.localeCompare(b.title) // Sort A to Z
-            : b.title.localeCompare(a.title); // Sort Z to A
+          return b.title.localeCompare(a.title); // Sort Z to A
+        });
+        return sortedReports;
+      });
+      setIsSortedAlphabetAsc((prev) => !prev); // Toggle the sorting order
+    };
+    const sortReportsByAlphabetAsc = () => {
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => {
+          return a.title.localeCompare(b.title); // Sort A to Z
         });
         return sortedReports;
       });
@@ -413,28 +434,27 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState(null);
     const [items, setItems] = useState([
-      {
-        label: `${isSortedAsc ? "Sort by Date (Latest)" : "Sort by Date (Earliest)"}`,
-        value: "date",
-      },
-      {
-        label: `${isSortedAlphabetAsc ? "Sort by Alphabet" : "Sorted by Alphabet (A-Z)"}`,
-        value: "alphabet",
-      },
-      {
-        label: "Sort by Status",
-        value: "status",
-      },
+      { label: "Sort by Date (Earliest)", value: "date-asc" },
+      { label: "Sort by Date (Latest)", value: "date-desc" },
+      { label: "Sort by Alphabet (A-Z)", value: "alphabet-asc" },
+      { label: "Sort by Alphabet (Z-A)", value: "alphabet-desc" },
       { label: "Sort by Crime Category", value: "category" },
+      { label: "Sort by Status", value: "status" },
     ]);
 
     const handleDropDownChange = (selectedValue: any) => {
       switch (selectedValue) {
-        case "date":
-          sortReportsByDate();
+        case "date-asc":
+          sortReportsByDateAsc();
           break;
-        case "alphabet":
-          sortReportsByAlphabet();
+        case "date-desc":
+          sortReportsByDateDesc();
+          break;
+        case "alphabet-asc":
+          sortReportsByAlphabetAsc();
+          break;
+        case "alphabet-desc":
+          sortReportsByAlphabetDesc();
           break;
         case "status":
           sortReportsByStatus();
@@ -447,6 +467,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       }
       console.log(selectedValue);
     };
+
     return (
       <View style={webstyles.container}>
         <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
@@ -514,7 +535,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 onChangeText={handleSearch}
               />
               <View style={{ alignSelf: "center", left: -40 }}>
-                {" "}
                 <Ionicons name={"search-outline"} size={24} />
               </View>
             </View>
@@ -523,6 +543,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 {
                   alignSelf: "flex-end",
                   paddingRight: 20,
+                  width: "18%",
                 },
                 isAlignedRight && {
                   left: -450,
@@ -537,11 +558,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 setOpen={setOpen}
                 setItems={setItems}
                 setValue={setValue}
-                onChangeValue={(val: any) => {
-                  console.log("Selected Value:", val);
-                  setValue(val);
-                  handleDropDownChange(val);
-                }}
+                onChangeValue={handleDropDownChange}
                 placeholder="Select a filter"
               />
             </View>
