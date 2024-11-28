@@ -55,51 +55,62 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     newStatus: "PENDING" | "VALID" | "PENALIZED"
   ) => {
     try {
-      // Update the status of the report locally
+      // Optimistically update the local state
       setReports((prevReports) =>
         prevReports.map((report) =>
           report.id === reportId ? { ...report, status: newStatus } : report
         )
       );
-
+  
+      // Find the report being updated
       const report = reports.find((r) => r.id === reportId);
-      if (report) {
-        const reportRef = doc(db, "reports", reportId);
-        await updateDoc(reportRef, { status: newStatus });
-        console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
-
-        if (newStatus === "VALID") {
-          try {
-            const newCrime = {
-              ...report,
-              status: "VALID",
-            };
-            console.log(newCrime);
-            const crimeRef = collection(database, "crimes");
-            await addDoc(crimeRef, newCrime);
-            console.log(
-              `Report ${report.id} transferred to incidents from ${report}`
-            );
-            setReports((prevReports) =>
-              prevReports.filter((r) => r.id !== reportId)
-            );
-
-            // Re-sort the reports based on the new status
-            setFilteredReports((prevReports) => {
-              const sortedReports = [...prevReports].sort((a, b) => {
-                const statusOrder = ["PENDING", "VALID", "PENALIZED"];
-                return (
-                  statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
-                );
-              });
-              return sortedReports;
-            });
-            console.log(`Report ${report.id} removed from reports.`);
-          } catch (error) {
-            console.error("Error transferring report:", error);
-          }
+      if (!report) {
+        console.warn(`Report with ID ${reportId} not found.`);
+        return;
+      }
+  
+      // Update the status in Firestore
+      const reportRef = doc(db, "reports", reportId);
+      await updateDoc(reportRef, { status: newStatus });
+      console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
+  
+      // Handle additional logic for "VALID" status
+      if (newStatus === "VALID") {
+        try {
+          // Create a new crime object for the "crimes" collection
+          const newCrime = {
+            ...report,
+            status: "VALID",
+          };
+  
+          // Add to "crimes" collection
+          const crimeRef = collection(database, "crimes");
+          await addDoc(crimeRef, newCrime);
+          console.log(`Report ${report.id} transferred to crimes collection.`);
+  
+          // Remove the report from the local state
+          setReports((prevReports) =>
+            prevReports.filter((r) => r.id !== reportId)
+          );
+  
+          // Update the filtered reports
+          setFilteredReports((prevFilteredReports) =>
+            prevFilteredReports.filter((r) => r.id !== reportId)
+          );
+          console.log(`Report ${report.id} removed from displayed reports.`);
+        } catch (error) {
+          console.error("Error transferring report to crimes collection:", error);
         }
       }
+  
+      // Re-sort reports based on the new status
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => {
+          const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+          return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        });
+        return sortedReports;
+      });
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -145,7 +156,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     fetchReports();
   }, []);
 
-  const transferToCrimes = async (report: Report) => {};
+  
 
   const [reports, setReports] = useState<Report[]>([]);
 

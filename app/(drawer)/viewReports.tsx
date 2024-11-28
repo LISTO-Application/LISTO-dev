@@ -320,7 +320,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     // Handle category selection from the modal
     const handleCategorySelect = (category: string) => {
       setSelectedCategory(category); // Set the selected category
-      setCategoryModalVisible(false); // Close the modal
+       // Close the modal
       filterReports(searchQuery, category); // Apply the category filter along with the current search query
     };
 
@@ -441,6 +441,14 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     ]);
 
     const handleDropDownChange = (selectedValue: any) => {
+      // Show the category modal directly for "Sort by Crime Category"
+      if (selectedValue === "category") {
+        setValue(null); // Reset the dropdown value to allow reselection
+        setCategoryModalVisible(true); // Show the modal
+        return;
+      }
+    
+      // Perform sorting logic based on the selected value
       switch (selectedValue) {
         case "date-asc":
           sortReportsByDateAsc();
@@ -454,16 +462,15 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         case "alphabet-desc":
           sortReportsByAlphabetDesc();
           break;
-        case 'status':
-          sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
-          break;
-        case 'category':
-          setCategoryModalVisible(true); // Show category modal
+        case "status":
+          sortReportsByStatus();
           break;
         default:
           break;
       }
-      console.log(selectedValue);
+    
+      setValue(selectedValue); // Update the selected value in dropdown
+      console.log("Selected value:", selectedValue);
     };
 
     return (
@@ -564,69 +571,82 @@ export default function ViewReports({ navigation }: { navigation: any }) {
 
           {/* Crime Category Modal */}
           <Modal
-            visible={isCategoryModalVisible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={() => setCategoryModalVisible(false)}
+  visible={isCategoryModalVisible}
+  animationType="slide"
+  transparent={true}
+  onRequestClose={() => setCategoryModalVisible(false)} // Close modal on back button press
+>
+  {/* Close modal when tapping outside */}
+  <TouchableWithoutFeedback onPress={() => setCategoryModalVisible(false)}>
+    <View style={[webstyles.modalContainer, { height: "100%" }]}>
+      <TouchableWithoutFeedback>
+        <View style={webstyles.modalContent}>
+          <Text style={webstyles.modalHeader}>Select A Crime Category</Text>
+
+          {/* List of Crime Categories */}
+          <FlatList
+  data={crimeCategories}
+  keyExtractor={(item) => item}
+  renderItem={({ item }) => {
+    const isSelected = item === selectedCategory; // Check if this category is selected
+    return (
+      <TouchableOpacity
+        style={[
+          webstyles.modalOption,
+          isSelected && { backgroundColor: "#d3d3d3" }, // Highlight selected category
+        ]}
+        onPress={() => handleCategorySelect(item)} // Handle category selection
+      >
+        <Text
+          style={[
+            webstyles.modalOptionText,
+            isSelected && { fontWeight: "bold", color: "#115272" }, // Bold text and different color for selected category
+          ]}
+        >
+          {item.charAt(0).toUpperCase() + item.slice(1)}
+        </Text>
+        
+        
+      </TouchableOpacity>
+    );
+  }}
+/>
+
+          {/* Clear Filter Button */}
+          <Pressable
+            onPress={handleClearFilter}
+            style={{
+              height: 30,
+              width: "50%",
+              alignSelf: "center",
+            }}
           >
-            {/* TouchableWithoutFeedback to close the modal when clicking outside */}
-            <TouchableWithoutFeedback
-              onPress={() => setCategoryModalVisible(false)}
+            <View
+              style={{
+                backgroundColor: "#dc3545",
+                width: "100%",
+                flex: 1,
+                justifyContent: "center",
+                height: "100%",
+                borderRadius: 50,
+              }}
             >
-              <View style={[webstyles.modalContainer, { height: "100%" }]}>
-                <View style={webstyles.modalContent}>
-                  <Text style={webstyles.modalHeader}>
-                    Select A Crime Category
-                  </Text>
-                  <FlatList
-                    data={crimeCategories}
-                    keyExtractor={(item) => item}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        style={webstyles.modalOption}
-                        onPress={() => handleCategorySelect(item)}
-                      >
-                        <Text style={webstyles.modalOptionText}>
-                          {item.charAt(0).toUpperCase() + item.slice(1)}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  />
-                  <Pressable
-                    onPress={handleClearFilter}
-                    style={{
-                      height: 30,
-                      width: "50%",
-                      alignSelf: "center",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#dc3545",
-                        width: "100%",
-                        flex: 1,
-                        justifyContent: "center",
-                        height: "100%",
-                        borderRadius: 50,
-                      }}
-                    >
-                      {" "}
-                      <Text
-                        style={{
-                          alignSelf: "center",
-                          color: "#fff",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Clear Filter
-                      </Text>
-                    </View>
-                  </Pressable>
-                  {/* Clear Filter Component */}
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
+              <Text
+                style={{
+                  alignSelf: "center",
+                  color: "#fff",
+                  fontWeight: "bold",
+                }}
+              >
+                Clear Filter
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+      </TouchableWithoutFeedback>
+    </View>
+  </TouchableWithoutFeedback>
+</Modal>
 
           {/* Reports List */}
           <ScrollView
