@@ -109,8 +109,13 @@ export const SideBar = ({
       >
         <Text style={webstyles.sidebarTitle}>{userRole}</Text>
         {menuItems.map((item, index) =>
-          (item.name === "Validate Tickets" && userRole === "Admin") ||
-          item.name !== "Validate Tickets" ? (
+          (["Validate Tickets", "View Admin Emergency List"].includes(
+            item.name
+          ) &&
+            userRole === "Admin") ||
+          !["Validate Tickets", "View Admin Emergency List"].includes(
+            item.name
+          ) ? (
             <TouchableOpacity
               key={index}
               style={webstyles.sidebarItem}

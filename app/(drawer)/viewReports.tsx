@@ -39,6 +39,7 @@ import { AuthContext } from "../AuthContext";
 import SideBar from "@/components/SideBar";
 import ImageViewer from "./ImageViewer";
 import DropDownPicker from "react-native-dropdown-picker";
+import ClearFilter from "@/components/ClearFilter";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -454,10 +455,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         case "alphabet-desc":
           sortReportsByAlphabetDesc();
           break;
-        case 'status':
+        case "status":
           sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
           break;
-        case 'category':
+        case "category":
           setCategoryModalVisible(true); // Show category modal
           break;
         default:
@@ -540,25 +541,30 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               style={[
                 {
                   alignSelf: "flex-end",
-                  paddingRight: 20,
-                  width: "18%",
+                  paddingRight: 40,
+                  width: "25%",
+                  flexDirection: "row",
+                  gap: 20,
                 },
                 isAlignedRight && {
                   left: -450,
                 },
               ]}
             >
-              <DropDownPicker
-                multiple={false}
-                open={open}
-                value={value}
-                items={items}
-                setOpen={setOpen}
-                setItems={setItems}
-                setValue={setValue}
-                onChangeValue={handleDropDownChange}
-                placeholder="Select a filter"
-              />
+              <ClearFilter handleClearFilter={handleClearFilter} />
+              <View style={{ width: "75%" }}>
+                <DropDownPicker
+                  multiple={false}
+                  open={open}
+                  value={value}
+                  items={items}
+                  setOpen={setOpen}
+                  setItems={setItems}
+                  setValue={setValue}
+                  onChangeValue={handleDropDownChange}
+                  placeholder="Select a filter"
+                />
+              </View>
             </View>
           </View>
 
@@ -592,36 +598,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                       </TouchableOpacity>
                     )}
                   />
-                  <Pressable
-                    onPress={handleClearFilter}
-                    style={{
-                      height: 30,
-                      width: "50%",
-                      alignSelf: "center",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#dc3545",
-                        width: "100%",
-                        flex: 1,
-                        justifyContent: "center",
-                        height: "100%",
-                        borderRadius: 50,
-                      }}
-                    >
-                      {" "}
-                      <Text
-                        style={{
-                          alignSelf: "center",
-                          color: "#fff",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Clear Filter
-                      </Text>
-                    </View>
-                  </Pressable>
+
                   {/* Clear Filter Component */}
                 </View>
               </View>

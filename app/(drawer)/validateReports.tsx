@@ -11,7 +11,9 @@ import {
   FlatList,
   Modal,
   TextInput,
+  Image,
   TouchableWithoutFeedback,
+  StyleSheet,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -24,6 +26,9 @@ import "firebase/database";
 import { addDoc, collection, getDocs } from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { doc, updateDoc } from "@react-native-firebase/firestore";
+import DropDownPicker from "react-native-dropdown-picker";
+import ClearFilter from "@/components/ClearFilter";
+import ValidateReportCard from "@/components/ValidateReportCard";
 
 const database = db;
 
@@ -237,15 +242,26 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   );
 
   // Sort reports by date (ascending/descending)
-  const sortReportsByDate = () => {
+  const sortReportsByDateAsc = () => {
     setFilteredReports((prevReports) => {
       const sortedReports = [...prevReports];
       sortedReports.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
-        return isSortedAsc
-          ? dateA.getTime() - dateB.getTime()
-          : dateB.getTime() - dateA.getTime();
+        return dateA.getTime() - dateB.getTime();
+      });
+      return sortedReports;
+    });
+    setIsSortedAsc((prev) => !prev); // Toggle sorting order
+  };
+
+  const sortReportsByDateDesc = () => {
+    setFilteredReports((prevReports) => {
+      const sortedReports = [...prevReports];
+      sortedReports.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB.getTime() - dateA.getTime();
       });
       return sortedReports;
     });
@@ -253,10 +269,20 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   };
 
   // Sort reports alphabetically by title
-  const sortReportsByAlphabet = () => {
+  const sortReportsByAlphabetAsc = () => {
     setFilteredReports((prevReports) => {
       const sortedReports = [...prevReports].sort((a, b) => {
-        return a.title.localeCompare(b.title); // Sort by title alphabetically
+        return a.title.localeCompare(b.title);
+      });
+      return sortedReports;
+    });
+  };
+
+  // Sort reports alphabetically by title
+  const sortReportsByAlphabetDesc = () => {
+    setFilteredReports((prevReports) => {
+      const sortedReports = [...prevReports].sort((a, b) => {
+        return b.title.localeCompare(a.title);
       });
       return sortedReports;
     });
@@ -282,6 +308,44 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
       });
       return sortedReports;
     });
+  };
+
+  //DropDown Sorter
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(null);
+  const [items, setItems] = useState([
+    { label: "Sort by Date (Earliest)", value: "date-asc" },
+    { label: "Sort by Date (Latest)", value: "date-desc" },
+    { label: "Sort by Alphabet (A-Z)", value: "alphabet-asc" },
+    { label: "Sort by Alphabet (Z-A)", value: "alphabet-desc" },
+    { label: "Sort by Crime Category", value: "category" },
+    { label: "Sort by Status", value: "status" },
+  ]);
+
+  const handleDropDownChange = (selectedValue: any) => {
+    switch (selectedValue) {
+      case "date-asc":
+        sortReportsByDateAsc();
+        break;
+      case "date-desc":
+        sortReportsByDateDesc();
+        break;
+      case "alphabet-asc":
+        sortReportsByAlphabetAsc();
+        break;
+      case "alphabet-desc":
+        sortReportsByAlphabetDesc();
+        break;
+      case "status":
+        sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
+        break;
+      case "category":
+        setCategoryModalVisible(true); // Show category modal
+        break;
+      default:
+        break;
+    }
+    console.log(selectedValue);
   };
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
@@ -404,62 +468,77 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             { transform: [{ translateX: contentPosition }] },
           ]}
         >
+          {/* Header Component */}
           <View
             style={{
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
               marginBottom: 10,
+              paddingLeft: 20,
             }}
           >
             <Text style={[webstyles.headerText, { marginRight: 10 }]}>
               Listed Reports
             </Text>
-            <TextInput
-              style={{
-                width: 200,
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 8,
-                padding: 8,
-              }}
-              placeholder="Search reports..."
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
           </View>
-
+          {/* Search and Sort Component */}
           <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginTop: 10,
-              paddingHorizontal: 25,
-            }}
+            style={[
+              {
+                zIndex: 1,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingHorizontal: 20,
+              },
+            ]}
           >
-            <TouchableOpacity onPress={sortReportsByDate}>
-              <Text style={webstyles.sortButtonText}>
-                {isSortedAsc
-                  ? "Sort by Date (Latest)"
-                  : "Sort by Date (Earliest)"}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={sortReportsByAlphabet}>
-              <Text style={webstyles.sortButtonText}>Sort by Alphabet</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
-              <Text style={webstyles.sortButtonText}>
-                Sort by Crime Category
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={sortReportsByStatus}>
-              <Text style={webstyles.sortButtonText}>
-                Sort by Report Status ({currentStatusSort})
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row" }}>
+              <TextInput
+                placeholder="Search reports..."
+                value={searchQuery}
+                onChangeText={handleSearch}
+                style={{
+                  width: 200,
+                  borderWidth: 1,
+                  borderColor: "#000",
+                  borderRadius: 8,
+                  padding: 8,
+                }}
+              />
+              <View style={{ alignSelf: "center", left: -40 }}>
+                <Ionicons name={"search-outline"} size={24} />
+              </View>
+            </View>
+            <View
+              style={[
+                {
+                  alignSelf: "flex-end",
+                  paddingRight: 40,
+                  width: "25%",
+                  flexDirection: "row",
+                  gap: 20,
+                },
+                isAlignedRight && {
+                  left: -450,
+                },
+              ]}
+            >
+              <ClearFilter handleClearFilter={handleClearFilter} />
+              <View style={{ width: "75%" }}>
+                <DropDownPicker
+                  multiple={false}
+                  open={open}
+                  value={value}
+                  items={items}
+                  setOpen={setOpen}
+                  setItems={setItems}
+                  setValue={setValue}
+                  onChangeValue={handleDropDownChange}
+                  placeholder="Select a filter"
+                />
+              </View>
+            </View>
           </View>
 
           {/* Category Modal */}
@@ -521,108 +600,11 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                     shadowRadius: 3.84,
                   }}
                 >
-                  {/* Title and Time Row */}
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <TouchableOpacity onPress={() => handleTitlePress(report)}>
-                      <Text
-                        style={{
-                          fontSize: 18,
-                          fontWeight: "bold",
-                          color: "#115272",
-                        }}
-                      >
-                        {report.title}
-                      </Text>
-                    </TouchableOpacity>
-                    <Text
-                      style={{ color: "#115272", fontSize: 14, marginLeft: 10 }}
-                    >
-                      {report.time} &nbsp; {report.date}
-                    </Text>
-                  </View>
-
-                  {/* Report Category */}
-                  <Text style={{ color: "#115272", marginTop: 5 }}>
-                    {`Category: ${report.category}`}
-                  </Text>
-
-                  {/* Report Location */}
-                  <Text style={{ color: "#115272", marginTop: 5 }}>
-                    {`Location: ${report.location || "Not provided"}`}
-                  </Text>
-
-                  {/* Action Buttons */}
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "flex-end",
-                      alignItems: "center",
-                      marginTop: 10,
-                    }}
-                  >
-                    {report.status === "PENDING" ? (
-                      <>
-                        <TouchableOpacity
-                          style={{
-                            backgroundColor: "#28a745",
-                            paddingVertical: 5,
-                            paddingHorizontal: 10,
-                            borderRadius: 5,
-                            marginLeft: 5,
-                          }}
-                          onPress={() => handleStatusChange(report.id, "VALID")}
-                        >
-                          <Text
-                            style={{
-                              color: "#fff",
-                              fontSize: 20,
-                              textAlign: "center",
-                            }}
-                          >
-                            Validate
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={{
-                            backgroundColor: "#dc3545",
-                            paddingVertical: 5,
-                            paddingHorizontal: 10,
-                            borderRadius: 5,
-                            marginLeft: 5,
-                          }}
-                          onPress={() =>
-                            handleStatusChange(report.id, "PENALIZED")
-                          }
-                        >
-                          <Text
-                            style={{
-                              color: "#fff",
-                              fontSize: 20,
-                              textAlign: "center",
-                            }}
-                          >
-                            Penalize
-                          </Text>
-                        </TouchableOpacity>
-                      </>
-                    ) : (
-                      <Text
-                        style={{
-                          color:
-                            report.status === "VALID"
-                              ? "#28a745"
-                              : report.status === "PENALIZED"
-                                ? "#dc3545"
-                                : "#6c757d",
-                          fontWeight: "bold",
-                          fontSize: 20,
-                          textAlign: "right",
-                        }}
-                      >
-                        {report.status === "VALID" ? "Valid" : "Penalized"}
-                      </Text>
-                    )}
-                  </View>
+                  <ValidateReportCard
+                    report={report}
+                    handleTitlePress={handleTitlePress}
+                    handleStatusChange={handleStatusChange}
+                  />
                 </View>
               ))
             ) : (
