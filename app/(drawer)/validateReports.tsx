@@ -7,6 +7,11 @@ import {
   Platform,
   Animated,
   Dimensions,
+  Button,
+  FlatList,
+  Modal,
+  TextInput,
+  TouchableWithoutFeedback,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -16,10 +21,21 @@ import { db } from "../FirebaseConfig";
 import { Report } from "../(tabs)/data/reports";
 
 import "firebase/database";
-import { collection, getDocs } from "@react-native-firebase/firestore";
+import { addDoc, collection, getDocs } from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { doc, updateDoc } from "@react-native-firebase/firestore";
+
+const database = db;
+
 export default function ValidateReports({ navigation }: { navigation: any }) {
+  const [isSortedAsc, setIsSortedAsc] = useState(true);
+  const [currentStatusSort, setCurrentStatusSort] = useState<
+    "PENDING" | "VALID" | "PENALIZED"
+  >("PENDING");
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false); // State for category modal visibility
+  const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
   const handleTitlePress = (report: Report) => {
     console.log("Navigating to details page for report:", report); // Debugging log
     navigation.navigate("ReportDetails", {
@@ -42,9 +58,48 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
         )
       );
 
-      const reportRef = doc(db, "reports", reportId);
-      await updateDoc(reportRef, { status: newStatus });
-      console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
+      const report = reports.find((r) => r.id === reportId);
+      if (report) {
+        const reportRef = doc(db, "reports", reportId);
+        await updateDoc(reportRef, { status: newStatus });
+        console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
+
+        if (newStatus === "VALID") {
+          try {
+            const newCrime = {
+              ...report,
+              status: "VALID",
+            };
+            console.log(newCrime);
+            const crimeRef = collection(database, "crimes");
+            await addDoc(crimeRef, newCrime);
+            console.log(
+              `Report ${report.id} transferred to incidents from ${report}`
+            );
+            setReports((prevReports) =>
+              prevReports.filter((r) => r.id !== reportId)
+            );
+
+            // Re-sort the reports based on the new status
+            setFilteredReports((prevReports) => {
+              const sortedReports = [...prevReports].sort((a, b) => {
+                const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+                return (
+                  statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
+                );
+              });
+              return sortedReports;
+            });
+            console.log(`Report ${report.id} removed from reports.`);
+          } catch (error) {
+            console.error("Error transferring report:", error);
+          }
+        }
+      }
+
+      // const reportRef = doc(db, "reports", reportId);
+      // await updateDoc(reportRef, { status: newStatus });
+      // console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -82,6 +137,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
           };
         });
         setReports(reportList);
+        setFilteredReports(reportList);
       } catch (error) {
         console.error("Error fetching reports:", error);
       }
@@ -127,6 +183,105 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     }).start();
     setIsAlignedRight(!isAlignedRight);
     setSidebarVisible(!isSidebarVisible);
+  };
+
+  // Handle search query change
+  const handleSearch = (query: string) => {
+    setSearchQuery(query); // Update search query state
+    filterReports(query, selectedCategory); // Re-filter reports based on query and selected category
+  };
+
+  // Filter reports based on search query and selected category
+  const filterReports = (searchQuery: string, category: string | null) => {
+    let filtered = reports; // Start with all reports
+
+    // Apply category filter if a category is selected
+    if (category) {
+      filtered = filtered.filter((report) => report.category === category);
+    }
+
+    // Apply search query filter if a query is provided
+    if (searchQuery) {
+      filtered = filtered.filter((report) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          report.title.toLowerCase().includes(query) ||
+          report.location.toLowerCase().includes(query) ||
+          report.category.toLowerCase().includes(query) ||
+          report.date.toLowerCase().includes(query) ||
+          report.status.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    setFilteredReports(filtered); // Update the filtered reports state
+  };
+
+  // Handle category selection from the modal
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category); // Set the selected category
+    setCategoryModalVisible(false); // Close the modal
+    filterReports(searchQuery, category); // Apply the category filter along with the current search query
+  };
+
+  // Clear category filter
+  const handleClearFilter = () => {
+    setSearchQuery(""); // Clear search query
+    setSelectedCategory(null); // Clear selected category
+    setFilteredReports(reports); // Show all reports again
+  };
+
+  // Get unique crime categories from reports
+  const crimeCategories = Array.from(
+    new Set(reports.map((report) => report.category))
+  );
+
+  // Sort reports by date (ascending/descending)
+  const sortReportsByDate = () => {
+    setFilteredReports((prevReports) => {
+      const sortedReports = [...prevReports];
+      sortedReports.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return isSortedAsc
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
+      });
+      return sortedReports;
+    });
+    setIsSortedAsc((prev) => !prev); // Toggle sorting order
+  };
+
+  // Sort reports alphabetically by title
+  const sortReportsByAlphabet = () => {
+    setFilteredReports((prevReports) => {
+      const sortedReports = [...prevReports].sort((a, b) => {
+        return a.title.localeCompare(b.title); // Sort by title alphabetically
+      });
+      return sortedReports;
+    });
+  };
+
+  const sortReportsByStatus = () => {
+    // Cycle through status types
+    const nextStatus =
+      currentStatusSort === "PENDING"
+        ? "VALID"
+        : currentStatusSort === "VALID"
+          ? "PENALIZED"
+          : "PENDING";
+
+    setCurrentStatusSort(nextStatus); // Update the state to the next status
+
+    // Sort the reports based on the new status
+    setFilteredReports((prevReports) => {
+      const sortedReports = [...prevReports].sort((a, b) => {
+        const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+        // Sort reports by the status order
+        return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+      });
+      return sortedReports;
+    });
   };
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
@@ -249,7 +404,101 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             { transform: [{ translateX: contentPosition }] },
           ]}
         >
-          <Text style={webstyles.headerText}>Listed Reports</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 10,
+            }}
+          >
+            <Text style={[webstyles.headerText, { marginRight: 10 }]}>
+              Listed Reports
+            </Text>
+            <TextInput
+              style={{
+                width: 200,
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                padding: 8,
+              }}
+              placeholder="Search reports..."
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+          </View>
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginTop: 10,
+              paddingHorizontal: 25,
+            }}
+          >
+            <TouchableOpacity onPress={sortReportsByDate}>
+              <Text style={webstyles.sortButtonText}>
+                {isSortedAsc
+                  ? "Sort by Date (Latest)"
+                  : "Sort by Date (Earliest)"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={sortReportsByAlphabet}>
+              <Text style={webstyles.sortButtonText}>Sort by Alphabet</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
+              <Text style={webstyles.sortButtonText}>
+                Sort by Crime Category
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={sortReportsByStatus}>
+              <Text style={webstyles.sortButtonText}>
+                Sort by Report Status ({currentStatusSort})
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Category Modal */}
+          <Modal
+            visible={isCategoryModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setCategoryModalVisible(false)}
+          >
+            {/* TouchableWithoutFeedback to close the modal when clicking outside */}
+            <TouchableWithoutFeedback
+              onPress={() => setCategoryModalVisible(false)}
+            >
+              <View style={webstyles.modalContainer}>
+                <View style={webstyles.modalContent}>
+                  <Text style={webstyles.modalHeader}>
+                    Select a Crime Category
+                  </Text>
+                  <FlatList
+                    data={crimeCategories}
+                    keyExtractor={(item) => item}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={webstyles.modalOption}
+                        onPress={() => handleCategorySelect(item)}
+                      >
+                        <Text style={webstyles.modalOptionText}>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                  <Button
+                    title="Clear Filter"
+                    onPress={handleClearFilter}
+                    color="#dc3545"
+                  />
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
 
           <ScrollView
             contentContainerStyle={[
@@ -257,8 +506,8 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
               isAlignedRight && { width: "75%" },
             ]}
           >
-            {reports.length > 0 ? (
-              reports.map((report) => (
+            {filteredReports.length > 0 ? (
+              filteredReports.map((report) => (
                 <View
                   key={report.id}
                   style={{
@@ -288,7 +537,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                     <Text
                       style={{ color: "#115272", fontSize: 14, marginLeft: 10 }}
                     >
-                      {report.time}
+                      {report.time} &nbsp; {report.date}
                     </Text>
                   </View>
 
@@ -370,7 +619,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                           textAlign: "right",
                         }}
                       >
-                        {report.status === "VALID" ? "Validated" : "Penalized"}
+                        {report.status === "VALID" ? "Valid" : "Penalized"}
                       </Text>
                     )}
                   </View>
