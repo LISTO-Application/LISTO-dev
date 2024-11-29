@@ -39,6 +39,7 @@ import { AuthContext } from "../AuthContext";
 import SideBar from "@/components/SideBar";
 import ImageViewer from "./ImageViewer";
 import DropDownPicker from "react-native-dropdown-picker";
+import ClearFilter from "@/components/ClearFilter";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -463,7 +464,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           sortReportsByAlphabetDesc();
           break;
         case "status":
-          sortReportsByStatus();
+          sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
+          break;
+        case "category":
+          setCategoryModalVisible(true); // Show category modal
           break;
         default:
           break;
@@ -547,106 +551,70 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               style={[
                 {
                   alignSelf: "flex-end",
-                  paddingRight: 20,
-                  width: "18%",
+                  paddingRight: 40,
+                  width: "25%",
+                  flexDirection: "row",
+                  gap: 20,
                 },
                 isAlignedRight && {
                   left: -450,
                 },
               ]}
             >
-              <DropDownPicker
-                multiple={false}
-                open={open}
-                value={value}
-                items={items}
-                setOpen={setOpen}
-                setItems={setItems}
-                setValue={setValue}
-                onChangeValue={handleDropDownChange}
-                placeholder="Select a filter"
-              />
+              <ClearFilter handleClearFilter={handleClearFilter} />
+              <View style={{ width: "75%" }}>
+                <DropDownPicker
+                  multiple={false}
+                  open={open}
+                  value={value}
+                  items={items}
+                  setOpen={setOpen}
+                  setItems={setItems}
+                  setValue={setValue}
+                  onChangeValue={handleDropDownChange}
+                  placeholder="Select a filter"
+                />
+              </View>
             </View>
           </View>
 
+
           {/* Crime Category Modal */}
           <Modal
-  visible={isCategoryModalVisible}
-  animationType="slide"
-  transparent={true}
-  onRequestClose={() => setCategoryModalVisible(false)} // Close modal on back button press
->
-  {/* Close modal when tapping outside */}
-  <TouchableWithoutFeedback onPress={() => setCategoryModalVisible(false)}>
-    <View style={[webstyles.modalContainer, { height: "100%" }]}>
-      <TouchableWithoutFeedback>
-        <View style={webstyles.modalContent}>
-          <Text style={webstyles.modalHeader}>Select A Crime Category</Text>
-
-          {/* List of Crime Categories */}
-          <FlatList
-  data={crimeCategories}
-  keyExtractor={(item) => item}
-  renderItem={({ item }) => {
-    const isSelected = item === selectedCategory; // Check if this category is selected
-    return (
-      <TouchableOpacity
-        style={[
-          webstyles.modalOption,
-          isSelected && { backgroundColor: "#d3d3d3" }, // Highlight selected category
-        ]}
-        onPress={() => handleCategorySelect(item)} // Handle category selection
-      >
-        <Text
-          style={[
-            webstyles.modalOptionText,
-            isSelected && { fontWeight: "bold", color: "#115272" }, // Bold text and different color for selected category
-          ]}
-        >
-          {item.charAt(0).toUpperCase() + item.slice(1)}
-        </Text>
-        
-        
-      </TouchableOpacity>
-    );
-  }}
-/>
-
-          {/* Clear Filter Button */}
-          <Pressable
-            onPress={handleClearFilter}
-            style={{
-              height: 30,
-              width: "50%",
-              alignSelf: "center",
-            }}
+            visible={isCategoryModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setCategoryModalVisible(false)}
           >
-            <View
-              style={{
-                backgroundColor: "#dc3545",
-                width: "100%",
-                flex: 1,
-                justifyContent: "center",
-                height: "100%",
-                borderRadius: 50,
-              }}
+            {/* TouchableWithoutFeedback to close the modal when clicking outside */}
+            <TouchableWithoutFeedback
+              onPress={() => setCategoryModalVisible(false)}
             >
-              <Text
-                style={{
-                  alignSelf: "center",
-                  color: "#fff",
-                  fontWeight: "bold",
-                }}
-              >
-                Clear Filter
-              </Text>
-            </View>
-          </Pressable>
-        </View>
-      </TouchableWithoutFeedback>
-    </View>
-  </TouchableWithoutFeedback>
-</Modal>
+              <View style={[webstyles.modalContainer, { height: "100%" }]}>
+                <View style={webstyles.modalContent}>
+                  <Text style={webstyles.modalHeader}>
+                    Select A Crime Category
+                  </Text>
+                  <FlatList
+                    data={crimeCategories}
+                    keyExtractor={(item) => item}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={webstyles.modalOption}
+                        onPress={() => handleCategorySelect(item)}
+                      >
+                        <Text style={webstyles.modalOptionText}>
+                          {item.charAt(0).toUpperCase() + item.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+
+                  {/* Clear Filter Component */}
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
 
           {/* Reports List */}
           <ScrollView

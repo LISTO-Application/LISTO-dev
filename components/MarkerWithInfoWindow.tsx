@@ -56,34 +56,6 @@ export const MarkerWithInfoWindow = ({
     console.warn(error);
   }
 
-  // try {
-  //   useEffect(() => {
-  //     const today = dayjs(new Date()).month() + 1;
-  //     let filteredMarkers = allMarkers.filter((marker: any) => {
-  //       const markerMonth = dayjs(marker.date).month() + 1;
-  //       return markerMonth === today;
-  //     });
-
-  //     setMarkers(filteredMarkers);
-  //   }, [allMarkers, selectedDate]);
-  // } catch (error) {
-  //   console.error(error);
-  // }
-
-  // try {
-  //   useEffect(() => {
-  //     markers.forEach((marker) => {
-  //       console.log("Filtered markers: ", markers);
-  //       // console.log("Selected Date: ", selectedDate.format("MM-DD-YYYY"));
-  //       console.log("Marker Date:", dayjs(marker.date).format("MM-DD-YYYY"));
-
-  //       console.log("Crime type:", marker.crime);
-  //     });
-  //   }, [markers, selectedDate]);
-  // } catch (error) {
-  //   console.error(error);
-  // }
-
   try {
     useEffect(() => {
       filterMarkers();
