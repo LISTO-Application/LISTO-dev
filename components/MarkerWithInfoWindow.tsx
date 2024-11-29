@@ -177,7 +177,7 @@ export const MarkerWithInfoWindow = ({
             onClick={() => handleMarkerClick(marker)}
             style={markerStyle}
           >
-            <Pin background={"red"} borderColor={"#115272"} glyphColor={"blue"}>
+            <Pin background={"red"} glyphColor={"blue"} >
               {crimeTypeImage ? (
                 <Image
                   source={crimeTypeImage}
@@ -192,15 +192,19 @@ export const MarkerWithInfoWindow = ({
       })}
 
       {activeMarkerId && markerRefs.current[activeMarkerId] && (
-        <InfoWindow
-          anchor={markerRefs.current[activeMarkerId].current}
-          onClose={() => setActiveMarkerId(null)}
-        >
-          <h2>{markerName}</h2>
-          <p>{markerDetails}</p>
-          <p>{markerDate}</p>
-          <p>{markerCrime}</p>
-        </InfoWindow>
+       <InfoWindow
+       anchor={markerRefs.current[activeMarkerId].current}
+       onClose={() => setActiveMarkerId(null)}
+     >
+       <div className="custom-info-window">
+         <h2>{markerName}</h2>
+         <div>
+           <p><strong>Details:</strong> {markerDetails}</p>
+           <p><strong>Date:</strong> {markerDate}</p>
+           <p><strong>Crime Type:</strong> {markerCrime}</p>
+         </div>
+       </div>
+     </InfoWindow>
       )}
     </>
   );
