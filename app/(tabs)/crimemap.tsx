@@ -548,7 +548,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     const geocodeAddress = async (
       address: string
     ): Promise<GeoPoint | string | null | undefined> => {
-      if (!address) return null;
+      if (!address || address.trim() === "") return null;
       const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
       const bounds = {
         northeast: "14.7741,121.0947",
@@ -579,7 +579,10 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
             southwest: { lat: swLat, lng: swLng },
           });
           console.log(data.results[0].geometry.bounds);
-          return new firebase.firestore.GeoPoint(lat, lng);
+
+          if (isWithinBounds) {
+            return new firebase.firestore.GeoPoint(lat, lng);
+          }
         } else {
           console.error("Geocoding error:", data.status);
           return null;
@@ -598,10 +601,15 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
           querySnapshot.docs.map(async (doc) => {
             const locationString = doc.data().location;
             const geoPoint = await geocodeAddress(locationString);
+
+            if (!geoPoint) {
+              console.warn("Skipping invalid location:", locationString);
+              return null;
+            }
             return {
               id: doc.id,
               title: doc.data().title,
-              location: geoPoint || doc.data().location,
+              location: geoPoint,
               date: doc.data().date,
               details: doc.data().additionalInfo,
               crime: doc.data().category,
@@ -610,9 +618,11 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
           })
         );
 
+        const validCrimes = crimeList.filter((crime) => crime !== null);
+        console.log("Valid Crimes: ", validCrimes);
         console.log("markers", crimeList);
-        setMarkers(crimeList);
-        setAllMarkers(crimeList);
+        setMarkers(validCrimes);
+        setAllMarkers(validCrimes);
       } catch (error) {
         console.error("Error fetching reports:", error);
       }
