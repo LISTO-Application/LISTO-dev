@@ -47,7 +47,6 @@ export default function ValidateReportCard({
           )}
         </TouchableOpacity>
         <View style={{ flexDirection: "column", alignSelf: "center" }}>
-          {" "}
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <TouchableOpacity onPress={() => handleTitlePress(report)}>
               <Text

@@ -543,56 +543,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
 
     // console.log("markers", pins);
 
-    //GEOCODING
-
-    const geocodeAddress = async (
-      address: string
-    ): Promise<GeoPoint | string | null | undefined> => {
-      if (!address || address.trim() === "") return null;
-      const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
-      const bounds = {
-        northeast: "14.7741,121.0947",
-        southwest: "14.6082,121.0244",
-      };
-      const region = "PH";
-
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        address
-      )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`;
-
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data.status === "OK") {
-          console.log(data.results[0]);
-          const { lat, lng } = data.results[0].geometry.location;
-          console.log("Geocoded location:", lat, lng);
-
-          const [neLat, neLng] = bounds.northeast.split(",").map(Number);
-          const [swLat, swLng] = bounds.southwest.split(",").map(Number);
-          console.log(bounds);
-          const isWithinBounds =
-            lat <= neLat && lat >= swLat && lng <= neLng && lng >= swLng;
-          console.log("Within the bounds:", isWithinBounds);
-          console.log("Parsed bounds:", {
-            northeast: { lat: neLat, lng: neLng },
-            southwest: { lat: swLat, lng: swLng },
-          });
-          console.log(data.results[0].geometry.bounds);
-
-          if (isWithinBounds) {
-            return new firebase.firestore.GeoPoint(lat, lng);
-          }
-        } else {
-          console.error("Geocoding error:", data.status);
-          return null;
-        }
-      } catch (error) {
-        console.error("Fetch error:", error);
-        return null;
-      }
-    };
-
     //Fetching the Data
     const fetchCrimes = async () => {
       try {

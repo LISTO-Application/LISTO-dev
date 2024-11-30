@@ -47,7 +47,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const [currentStatusSort, setCurrentStatusSort] = useState<
     "PENDING" | "VALID" | "PENALIZED"
   >("PENDING");
-  const [isSortedAsc, setIsSortedAsc] = useState(true);
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
+  const [isSortedAsc, setIsSortedAsc] = useState(true); // State for sorting direction
+  const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
   const fetchReports = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "reports"));
@@ -60,6 +63,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           category: doc.data().category || "Unknown",
           title: doc.data().title || "Untitled",
           additionalInfo: doc.data().additionalInfo || "Unknown Report",
+          coordinate: doc.data().coordinate,
           location: doc.data().location || "Unknown Location",
           name: doc.data().name || "Anonymous",
           date: doc.data().date || [
@@ -87,17 +91,40 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       });
 
       setReports(sortedReports); // Update the state with sorted reports
+      setFilteredReports(sortedReports);
     } catch (error) {
       console.error("Error fetching reports:", error);
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchReports();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   const [currentPage, setCurrentPage] = useState(1);
-  const reportsPerPage = 10;
+  const reportsPerPage = 10; // Adjust this number based on how many reports per page
+
   // Calculate total pages
-  const totalPages = Math.ceil(reports.length / reportsPerPage);
-  // Get the current reports based on the page
-  const currentReports = reports.slice(
+  const totalPages = Math.ceil(filteredReports.length / reportsPerPage);
+
+  // Get the reports for the current page
+
+  // Pagination functions
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  const currentReports = filteredReports.slice(
     (currentPage - 1) * reportsPerPage,
     currentPage * reportsPerPage
   );
@@ -105,7 +132,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const handleDeleteReport = async (reportId: any) => {
     try {
       await deleteDoc(doc(db, "reports", reportId));
-      setReports((prevReports) => prevReports.filter((r) => r.id !== reportId));
+      setFilteredReports((prevReports) =>
+        prevReports.filter((r) => r.id !== reportId)
+      );
       Alert.alert("Report deleted successfully");
     } catch (error) {
       console.error("Error deleting report: ", error);
@@ -241,49 +270,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       </View>
     );
   } else if (Platform.OS === "web") {
-    const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
-    const [reports, setReports] = useState<Report[]>([]);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(
-      null
-    ); // State for selected category filter
-    const [isCategoryModalVisible, setCategoryModalVisible] = useState(false); // State for category modal visibility
-    const [isSortedAsc, setIsSortedAsc] = useState(true); // State for sorting direction
-    const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
-
-    useEffect(() => {
-      const fetchReports = async () => {
-        try {
-          const querySnapshot = await getDocs(collection(db, "reports"));
-          const reportList = querySnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              icon: data.icon || "",
-              category: data.category || "Unknown",
-              title: data.title || "Untitled",
-              additionalInfo: data.additionalInfo || "Unknown Report",
-              location: data.location || "Unknown Location",
-              name: data.name || "Anonymous",
-              date: data.date || new Date().toDateString(),
-              time: data.time || new Date().toTimeString(),
-              image: {
-                filename: data.image?.filename || "Unknown Filename",
-                uri: data.image?.uri || "Unknown Uri",
-              },
-              status: data.status || "PENDING",
-              timeStamp: data.timeStamp || new Date().toISOString(),
-            };
-          });
-          setReports(reportList);
-          setFilteredReports(reportList); // Initialize filteredReports with all reports initially
-        } catch (error) {
-          console.error("Error fetching reports:", error);
-        }
-      };
-
-      fetchReports();
-    }, []);
-
     // Handle search query change
     const handleSearch = (query: string) => {
       setSearchQuery(query); // Update search query state
@@ -348,6 +334,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         });
         return sortedReports;
       });
+      setIsSortedAsc((prev) => !prev); // Toggle sorting order
     };
 
     const sortReportsByDateDesc = () => {
@@ -404,30 +391,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         return sortedReports;
       });
     };
-    const [currentPage, setCurrentPage] = useState(1);
-    const reportsPerPage = 10; // Adjust this number based on how many reports per page
-
-    // Calculate total pages
-    const totalPages = Math.ceil(filteredReports.length / reportsPerPage);
-
-    // Get the reports for the current page
-
-    // Pagination functions
-    const handleNextPage = () => {
-      if (currentPage < totalPages) {
-        setCurrentPage(currentPage + 1);
-      }
-    };
-
-    const handlePreviousPage = () => {
-      if (currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
-    };
-    const currentReports = filteredReports.slice(
-      (currentPage - 1) * reportsPerPage,
-      currentPage * reportsPerPage
-    );
 
     //DropDown Sorter
     const [open, setOpen] = useState(false);
@@ -612,7 +575,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               isAlignedRight && { width: "75%" },
             ]}
           >
-            {currentReports.map((report) => {
+            {filteredReports.map((report) => {
               let iconSource;
               if (report.category === "carnapping") {
                 iconSource = require("../../assets/images/car-icon.png");
