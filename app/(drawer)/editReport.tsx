@@ -32,6 +32,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { add } from "date-fns";
 import DatePicker from "react-datepicker";
 import dayjs from "dayjs";
+import TitleCard from "@/components/TitleCard";
 
 function EditReport({ navigation }: { navigation: any }) {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -178,7 +179,7 @@ function EditReport({ navigation }: { navigation: any }) {
             { transform: [{ translateX: contentPosition }] },
           ]}
         >
-          <Text style={webstyles.headerText}>Edit Report</Text>
+          <TitleCard />
 
           <ScrollView
             contentContainerStyle={[

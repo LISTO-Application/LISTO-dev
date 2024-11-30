@@ -414,8 +414,14 @@ const webstyles = StyleSheet.create({
     color: "black",
     padding: 10,
   },
-  paginationText: {
+  paginationTextButton: {
     color: "white",
+    fontSize: 18, // Increased font size
+    fontWeight: "bold",
+    textAlign: "center", // Center-align the text
+  },
+  paginationText: {
+    color: "black",
     fontSize: 18, // Increased font size
     fontWeight: "bold",
     textAlign: "center", // Center-align the text
@@ -451,6 +457,9 @@ const webstyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "200",
     flex: 2 / 5,
+  },
+  disabledIcon: {
+    opacity: 0.5,
   },
 
   editIcon: {

@@ -39,7 +39,7 @@ export default function TabLayout() {
       <AuthProvider>
         <NavigationContainer independent={true}>
           <Drawer.Navigator
-            initialRouteName="Report Incident"
+            initialRouteName="Emergency"
             screenOptions={({ route, navigation }) =>
               DrawerScreenOptions({ route, navigation })
             }

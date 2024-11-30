@@ -12,7 +12,8 @@ export type CrimeType =
 
 export interface MarkerType {
   id: string;
-  location: GeoPoint;
+  location: string;
+  coordinate: GeoPoint;
   title: string;
   date: string;
   details: string | undefined;

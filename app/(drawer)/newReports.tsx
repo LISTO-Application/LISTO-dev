@@ -26,6 +26,8 @@ import {
   addDoc,
   firebase,
   GeoPoint,
+  setDoc,
+  doc,
 } from "@react-native-firebase/firestore";
 import { getIconName } from "../../assets/utils/getIconName";
 import { SideBar } from "@/components/SideBar";
@@ -42,6 +44,7 @@ import { Image, type ImageSource } from "expo-image";
 import storage from "@react-native-firebase/storage";
 import firestore from "@react-native-firebase/firestore";
 import { subDays, subYears } from "date-fns";
+import TitleCard from "@/components/TitleCard";
 
 const database = db;
 
@@ -357,7 +360,7 @@ export default function NewReports({
             },
           ]}
         >
-          <Text style={webstyles.headerText}>New Report</Text>
+          <TitleCard />
           <ScrollView
             contentContainerStyle={[
               webstyles.reportList,

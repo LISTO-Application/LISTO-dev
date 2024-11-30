@@ -549,17 +549,18 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
         const querySnapshot = await getDocs(collection(db, "crimes"));
         const crimeList: MarkerType[] = await Promise.all(
           querySnapshot.docs.map(async (doc) => {
-            const locationString = doc.data().location;
-            const geoPoint = await geocodeAddress(locationString);
+            const coordinate = doc.data().coordinate;
+            const location = doc.data().location;
 
-            if (!geoPoint) {
-              console.warn("Skipping invalid location:", locationString);
+            if (!coordinate) {
+              console.warn("Skipping invalid location:", location);
               return null;
             }
             return {
               id: doc.id,
               title: doc.data().title,
-              location: geoPoint,
+              location: doc.data().location,
+              coordinate: coordinate,
               date: doc.data().date,
               details: doc.data().additionalInfo,
               crime: doc.data().category,

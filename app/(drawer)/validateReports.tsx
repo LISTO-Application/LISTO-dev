@@ -21,28 +21,31 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 import { styles } from "@/styles/styles"; // For mobile styles
 import { db } from "../FirebaseConfig";
 import { Report } from "../(tabs)/data/reports";
-
 import "firebase/database";
-import { addDoc, collection, getDocs } from "@react-native-firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  getDocs,
+} from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { doc, updateDoc } from "@react-native-firebase/firestore";
 import DropDownPicker from "react-native-dropdown-picker";
 import ClearFilter from "@/components/ClearFilter";
 import ValidateReportCard from "@/components/ValidateReportCard";
+import PaginationReport from "@/components/PaginationReport";
+import TitleCard from "@/components/TitleCard";
+import SearchSort from "@/components/SearchSort";
 
 const database = db;
 
 export default function ValidateReports({ navigation }: { navigation: any }) {
-  const [isSortedAsc, setIsSortedAsc] = useState(true);
-  const [currentStatusSort, setCurrentStatusSort] = useState<
-    "PENDING" | "VALID" | "PENALIZED"
-  >("PENDING");
-  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
-  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false); // State for category modal visibility
-  const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const handleTitlePress = (report: Report) => {
-    console.log("Navigating to details page for report:", report); // Debugging log
+    console.log("Navigating to details page for report:", report);
     navigation.navigate("ReportDetails", {
       id: report.id,
       title: report.title,
@@ -62,55 +65,60 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
           report.id === reportId ? { ...report, status: newStatus } : report
         )
       );
-  
-      // Find the report being updated
+      setFilteredReports((prevReports) =>
+        prevReports.map((report) =>
+          report.id === reportId ? { ...report, status: newStatus } : report
+        )
+      );
+
       const report = reports.find((r) => r.id === reportId);
-      if (!report) {
-        console.warn(`Report with ID ${reportId} not found.`);
-        return;
-      }
-  
-      // Update the status in Firestore
-      const reportRef = doc(db, "reports", reportId);
-      await updateDoc(reportRef, { status: newStatus });
-      console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
-  
-      // Handle additional logic for "VALID" status
-      if (newStatus === "VALID") {
-        try {
-          // Create a new crime object for the "crimes" collection
-          const newCrime = {
-            ...report,
-            status: "VALID",
-          };
-  
-          // Add to "crimes" collection
-          const crimeRef = collection(database, "crimes");
-          await addDoc(crimeRef, newCrime);
-          console.log(`Report ${report.id} transferred to crimes collection.`);
-  
-          // Remove the report from the local state
-          setReports((prevReports) =>
-            prevReports.filter((r) => r.id !== reportId)
-          );
-  
-          // Update the filtered reports
-          setFilteredReports((prevFilteredReports) =>
-            prevFilteredReports.filter((r) => r.id !== reportId)
-          );
-          console.log(`Report ${report.id} removed from displayed reports.`);
-        } catch (error) {
-          console.error("Error transferring report to crimes collection:", error);
+      if (report) {
+        const reportRef = doc(db, "reports", reportId);
+        await updateDoc(reportRef, { status: newStatus });
+        console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
+
+        if (newStatus === "VALID") {
+          try {
+            const newCrime = {
+              ...report,
+              status: "VALID",
+            };
+            console.log(newCrime);
+            const crimeRef = collection(database, "crimes");
+            await addDoc(crimeRef, newCrime);
+            console.log(
+              `Report ${report.id} transferred to incidents from ${report}`
+            );
+          } catch (error) {
+            console.error("Error transferring report:", error);
+          }
         }
-      }
-      // Re-sort reports based on the new status
-      setFilteredReports((prevReports) => {
-        const sortedReports = [...prevReports].sort((a, b) => {
-          const statusOrder = ["PENDING", "VALID", "PENALIZED"];
-          return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        if (newStatus === "VALID" || newStatus === "PENALIZED") {
+          try {
+            await deleteDoc(doc(db, "reports", reportId));
+            setReports((prevReports) =>
+              prevReports.filter((r) => r.id !== reportId)
+            );
+            setFilteredReports((prevReports) =>
+              prevReports.filter((r) => r.id !== reportId)
+            );
+            console.log(`Report ${report.id} removed from reports.`);
+          } catch (error) {
+            alert(`Error deleting the report ${report.title}`);
+          }
+        }
+
+        // Re-sort the reports based on the new status
+        setFilteredReports((prevReports) => {
+          const sortedReports = [...prevReports].sort((a, b) => {
+            const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+            return (
+              statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
+            );
+          });
+          return sortedReports;
         });
-        return sortedReports;
-      });
+      }
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -130,6 +138,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             title: doc.data().title || "Untitled",
             additionalInfo: doc.data().additionalInfo || "Unknown Report",
             location: doc.data().location || "Unknown Location",
+            coordinate: doc.data().coordinate,
             name: doc.data().name || "Anonymous",
             date: doc.data().date || [
               "Unknown Date: ",
@@ -156,7 +165,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
     fetchReports();
   }, []);
-  
+
   const [reports, setReports] = useState<Report[]>([]);
 
   const getStatusStyle = (status: string) => {
@@ -171,6 +180,13 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
         return { backgroundColor: "#6c757d", color: "" };
     }
   };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const reportsPerPage = 10; // Adjust this number based on how many reports per page
+  const currentReports = filteredReports.slice(
+    (currentPage - 1) * reportsPerPage,
+    currentPage * reportsPerPage
+  );
 
   //Animation to Hide side bar
   const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
@@ -196,11 +212,10 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     setSidebarVisible(!isSidebarVisible);
   };
 
-  // Handle search query change
-  const handleSearch = (query: string) => {
-    setSearchQuery(query); // Update search query state
-    filterReports(query, selectedCategory); // Re-filter reports based on query and selected category
-  };
+  // Get unique crime categories from reports
+  const crimeCategories = Array.from(
+    new Set(reports.map((report) => report.category))
+  );
 
   // Filter reports based on search query and selected category
   const filterReports = (searchQuery: string, category: string | null) => {
@@ -208,150 +223,40 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
     // Apply category filter if a category is selected
     if (category) {
-      filtered = filtered.filter((report) => report.category === category);
+      filtered = filtered.filter(
+        (report: { category: string }) => report.category === category
+      );
     }
 
     // Apply search query filter if a query is provided
     if (searchQuery) {
-      filtered = filtered.filter((report) => {
-        const query = searchQuery.toLowerCase();
-        return (
-          report.title.toLowerCase().includes(query) ||
-          report.location.toLowerCase().includes(query) ||
-          report.category.toLowerCase().includes(query) ||
-          report.date.toLowerCase().includes(query) ||
-          report.status.toLowerCase().includes(query)
-        );
-      });
+      filtered = filtered.filter(
+        (report: {
+          title: string;
+          location: string;
+          category: string;
+          date: string;
+          status: string;
+        }) => {
+          const query = searchQuery.toLowerCase();
+          return (
+            report.title.toLowerCase().includes(query) ||
+            report.location.toLowerCase().includes(query) ||
+            report.category.toLowerCase().includes(query) ||
+            report.date.toLowerCase().includes(query) ||
+            report.status.toLowerCase().includes(query)
+          );
+        }
+      );
     }
 
     setFilteredReports(filtered); // Update the filtered reports state
   };
-
   // Handle category selection from the modal
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category); // Set the selected category
     setCategoryModalVisible(false); // Close the modal
     filterReports(searchQuery, category); // Apply the category filter along with the current search query
-  };
-
-  // Clear category filter
-  const handleClearFilter = () => {
-    setSearchQuery(""); // Clear search query
-    setSelectedCategory(null); // Clear selected category
-    setFilteredReports(reports); // Show all reports again
-  };
-
-  // Get unique crime categories from reports
-  const crimeCategories = Array.from(
-    new Set(reports.map((report) => report.category))
-  );
-
-  // Sort reports by date (ascending/descending)
-  const sortReportsByDateAsc = () => {
-    setFilteredReports((prevReports) => {
-      const sortedReports = [...prevReports];
-      sortedReports.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateA.getTime() - dateB.getTime();
-      });
-      return sortedReports;
-    });
-    setIsSortedAsc((prev) => !prev); // Toggle sorting order
-  };
-
-  const sortReportsByDateDesc = () => {
-    setFilteredReports((prevReports) => {
-      const sortedReports = [...prevReports];
-      sortedReports.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateB.getTime() - dateA.getTime();
-      });
-      return sortedReports;
-    });
-    setIsSortedAsc((prev) => !prev); // Toggle sorting order
-  };
-
-  // Sort reports alphabetically by title
-  const sortReportsByAlphabetAsc = () => {
-    setFilteredReports((prevReports) => {
-      const sortedReports = [...prevReports].sort((a, b) => {
-        return a.title.localeCompare(b.title);
-      });
-      return sortedReports;
-    });
-  };
-
-  // Sort reports alphabetically by title
-  const sortReportsByAlphabetDesc = () => {
-    setFilteredReports((prevReports) => {
-      const sortedReports = [...prevReports].sort((a, b) => {
-        return b.title.localeCompare(a.title);
-      });
-      return sortedReports;
-    });
-  };
-
-  const sortReportsByStatus = () => {
-    // Cycle through status types
-    const nextStatus =
-      currentStatusSort === "PENDING"
-        ? "VALID"
-        : currentStatusSort === "VALID"
-          ? "PENALIZED"
-          : "PENDING";
-
-    setCurrentStatusSort(nextStatus); // Update the state to the next status
-
-    // Sort the reports based on the new status
-    setFilteredReports((prevReports) => {
-      const sortedReports = [...prevReports].sort((a, b) => {
-        const statusOrder = ["PENDING", "VALID", "PENALIZED"];
-        // Sort reports by the status order
-        return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
-      });
-      return sortedReports;
-    });
-  };
-
-  //DropDown Sorter
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(null);
-  const [items, setItems] = useState([
-    { label: "Sort by Date (Earliest)", value: "date-asc" },
-    { label: "Sort by Date (Latest)", value: "date-desc" },
-    { label: "Sort by Alphabet (A-Z)", value: "alphabet-asc" },
-    { label: "Sort by Alphabet (Z-A)", value: "alphabet-desc" },
-    { label: "Sort by Crime Category", value: "category" },
-    { label: "Sort by Status", value: "status" },
-  ]);
-
-  const handleDropDownChange = (selectedValue: any) => {
-    switch (selectedValue) {
-      case "date-asc":
-        sortReportsByDateAsc();
-        break;
-      case "date-desc":
-        sortReportsByDateDesc();
-        break;
-      case "alphabet-asc":
-        sortReportsByAlphabetAsc();
-        break;
-      case "alphabet-desc":
-        sortReportsByAlphabetDesc();
-        break;
-      case "status":
-        sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
-        break;
-      case "category":
-        setCategoryModalVisible(true); // Show category modal
-        break;
-      default:
-        break;
-    }
-    console.log(selectedValue);
   };
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
@@ -365,11 +270,11 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
           >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerText}>Listed Reports (ADMINS)</Text>
+          <Text style={styles.headerText}>Validate Reports (ADMINS)</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          {reports.map((report) => (
+          {currentReports.map((report) => (
             <View key={report.id}>
               {/* Report content */}
               <View style={styles.reportContainer}>
@@ -454,7 +359,6 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     return (
       <View style={webstyles.container}>
         <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
-        {/* Toggle Button */}
         <TouchableOpacity
           onPress={toggleSideBar}
           style={[
@@ -474,80 +378,14 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             { transform: [{ translateX: contentPosition }] },
           ]}
         >
-          {/* Header Component */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 10,
-              paddingLeft: 20,
-            }}
-          >
-            <Text style={[webstyles.headerText, { marginRight: 10 }]}>
-              Listed Reports
-            </Text>
-          </View>
-          {/* Search and Sort Component */}
-          <View
-            style={[
-              {
-                zIndex: 1,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                paddingHorizontal: 20,
-              },
-            ]}
-          >
-            <View style={{ flexDirection: "row" }}>
-              <TextInput
-                placeholder="Search reports..."
-                value={searchQuery}
-                onChangeText={handleSearch}
-                style={{
-                  width: 200,
-                  borderWidth: 1,
-                  borderColor: "#000",
-                  borderRadius: 8,
-                  padding: 8,
-                }}
-              />
-              <View style={{ alignSelf: "center", left: -40 }}>
-                <Ionicons name={"search-outline"} size={24} />
-              </View>
-            </View>
-            <View
-              style={[
-                {
-                  alignSelf: "flex-end",
-                  paddingRight: 40,
-                  width: "25%",
-                  flexDirection: "row",
-                  gap: 20,
-                },
-                isAlignedRight && {
-                  left: -450,
-                },
-              ]}
-            >
-              <ClearFilter handleClearFilter={handleClearFilter} />
-              <View style={{ width: "75%" }}>
-                <DropDownPicker
-                  multiple={false}
-                  open={open}
-                  value={value}
-                  items={items}
-                  setOpen={setOpen}
-                  setItems={setItems}
-                  setValue={setValue}
-                  onChangeValue={handleDropDownChange}
-                  placeholder="Select a filter"
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* Category Modal */}
+          <TitleCard />
+          <SearchSort
+            reports={reports}
+            setCategoryModalVisible={setCategoryModalVisible}
+            setFilteredReports={setFilteredReports}
+            isAlignedRight={isAlignedRight}
+            filterReports={filterReports}
+          />
           <Modal
             visible={isCategoryModalVisible}
             animationType="slide"
@@ -575,24 +413,18 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                       </TouchableOpacity>
                     )}
                   />
-                  <Button
-                    title="Clear Filter"
-                    onPress={handleClearFilter}
-                    color="#dc3545"
-                  />
                 </View>
               </View>
             </TouchableWithoutFeedback>
           </Modal>
-
           <ScrollView
             contentContainerStyle={[
               webstyles.reportList,
               isAlignedRight && { width: "75%" },
             ]}
           >
-            {filteredReports.length > 0 ? (
-              filteredReports.map((report) => (
+            {currentReports.length > 0 ? (
+              currentReports.map((report) => (
                 <View
                   key={report.id}
                   style={{
@@ -619,6 +451,13 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
               </Text>
             )}
           </ScrollView>
+          <PaginationReport
+            filteredReports={filteredReports}
+            reportsPerPage={reportsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            isAlignedRight={isAlignedRight}
+          />
         </Animated.View>
       </View>
     );
