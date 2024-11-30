@@ -307,7 +307,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     // Handle category selection from the modal
     const handleCategorySelect = (category: string) => {
       setSelectedCategory(category); // Set the selected category
-      setCategoryModalVisible(false); // Close the modal
+       // Close the modal
       filterReports(searchQuery, category); // Apply the category filter along with the current search query
     };
 
@@ -405,6 +405,14 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     ]);
 
     const handleDropDownChange = (selectedValue: any) => {
+      // Show the category modal directly for "Sort by Crime Category"
+      if (selectedValue === "category") {
+        setValue(null); // Reset the dropdown value to allow reselection
+        setCategoryModalVisible(true); // Show the modal
+        return;
+      }
+    
+      // Perform sorting logic based on the selected value
       switch (selectedValue) {
         case "date-asc":
           sortReportsByDateAsc();
@@ -427,7 +435,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         default:
           break;
       }
-      console.log(selectedValue);
+    
+      setValue(selectedValue); // Update the selected value in dropdown
+      console.log("Selected value:", selectedValue);
     };
 
     return (
@@ -530,6 +540,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               </View>
             </View>
           </View>
+
 
           {/* Crime Category Modal */}
           <Modal
