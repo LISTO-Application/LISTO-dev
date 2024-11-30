@@ -24,7 +24,7 @@ const RootReports = () => {
         options={{ headerShown: false, title: "Create Reports" }}
       />
       <Stack.Screen
-        name="editReports"
+        name="EditReports"
         component={editReport}
         options={{ headerShown: false, title: "Edit Reports" }}
       />

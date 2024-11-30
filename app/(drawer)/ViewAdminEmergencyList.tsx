@@ -7,54 +7,76 @@ import {
   Platform,
   Animated,
   Dimensions,
+  FlatList,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { db } from "../FirebaseConfig";
-import { Timestamp } from "@react-native-firebase/firestore";
+import { GeoPoint, Timestamp } from "@react-native-firebase/firestore";
 import "firebase/database";
 import { collection, getDocs } from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { styles } from "@/styles/styles";
-interface Incident {
-  coordinates: { _latitude: number; _longitude: number };
-  date: Timestamp | string;
-  type: string;
-}
+import TitleCard from "@/components/TitleCard";
+import SearchSort from "@/components/SearchSort";
+import { Report } from "../(tabs)/data/reports";
+import PaginationReport from "@/components/PaginationReport";
 
 export default function ViewAdminEmergencyList({
   navigation,
 }: {
   navigation: any;
 }) {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [crimes, setCrimes] = useState<Report[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [filteredReports, setFilteredReports] = useState<Report[]>([]);
 
   useEffect(() => {
     const fetchIncidents = async () => {
       try {
         // Fetch the incidents collection from Firestore
-        const incidentsSnapshot = await getDocs(collection(db, "incidents"));
+        const crimesSnapshot = await getDocs(collection(db, "crimes"));
 
-        console.log("Fetched Incidents Snapshot:", incidentsSnapshot); // Debugging log
+        console.log("Fetched Incidents Snapshot:", crimesSnapshot); // Debugging log
 
-        if (incidentsSnapshot.empty) {
+        if (crimesSnapshot.empty) {
           console.log("No incidents found in Firestore.");
           return; // No incidents, so return early
         }
+        const crimesArray: Report[] = crimesSnapshot.docs.map((doc) => {
+          const imageData = doc.data().image || {};
 
-        // Map over the fetched documents and extract data
-        const incidentsArray = incidentsSnapshot.docs.map((doc) => ({
-          coordinates: doc.data().coordinates || {
-            _latitude: 0,
-            _longitude: 0,
-          }, // Fallback if coordinates are not available
-          date: doc.data().date || "No date", // Add fallback value
-          type: doc.data().type || "No type", // Add fallback value
-        }));
+          return {
+            id: doc.id,
+            icon: doc.data().icon,
+            name: doc.data().name,
+            title: doc.data().title,
+            status: doc.data().status || "PENDING",
+            location: doc.data().location,
+            coordinate: doc.data().coordinate || {
+              _latitude: 0,
+              _longitude: 0,
+            }, // Fallback if coordinates are not available
+            image: {
+              filename: imageData.filename || "Unknown Filename",
+              uri: imageData.uri || "Unknown Uri",
+            },
+            date: doc.data().date || "No date",
+            time: doc.data().time,
+            category: doc.data().category || "No type",
+            additionalInfo: doc.data().additionalInfo || "No info",
+            timeStamp: doc.data().timeStamp,
+          };
+        });
 
-        console.log("Mapped Incidents:", incidentsArray); // Debugging log
-        setIncidents(incidentsArray); // Update state with incidents
+        console.log("Mapped Incidents:", crimesArray); // Debugging log
+        setCrimes(crimesArray); // Update state with incidents
+        setFilteredReports(crimesArray);
       } catch (error) {
         console.error("Error fetching incidents:", error);
       }
@@ -63,19 +85,14 @@ export default function ViewAdminEmergencyList({
     fetchIncidents(); // Fetch incidents when the component mounts
   }, []);
 
-  // Helper function to format Firebase Timestamp to a string
   const formatDate = (timestamp: Timestamp | string): string => {
     if (typeof timestamp === "string") return timestamp; // If it's already a string
     const date = timestamp.toDate(); // Convert Firebase Timestamp to JavaScript Date
     return date.toLocaleString(); // Format it as a readable string
   };
 
-  // Helper function to format coordinates (latitude, longitude) into a string
-  const formatCoordinates = (coordinates: {
-    _latitude: number;
-    _longitude: number;
-  }): string => {
-    return `Latitude: ${coordinates._latitude}, Longitude: ${coordinates._longitude}`;
+  const formatCoordinates = (coordinates: GeoPoint): string => {
+    return `Latitude: ${coordinates.latitude}, Longitude: ${coordinates.longitude}`;
   };
 
   const getStatusStyle = (status: string) => {
@@ -115,6 +132,49 @@ export default function ViewAdminEmergencyList({
     setSidebarVisible(!isSidebarVisible);
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const reportsPerPage = 10; // Adjust this number based on how many reports per page
+  const currentReports = filteredReports.slice(
+    (currentPage - 1) * reportsPerPage,
+    currentPage * reportsPerPage
+  );
+  // Get unique crime categories from reports
+  const crimeCategories = Array.from(
+    new Set(crimes.map((report) => report.category))
+  );
+
+  // Filter reports based on search query and selected category
+  const filterReports = (searchQuery: string, category: string | null) => {
+    let filtered = crimes; // Start with all reports
+
+    // Apply category filter if a category is selected
+    if (category) {
+      filtered = filtered.filter(
+        (report: { category: string }) => report.category === category
+      );
+    }
+
+    // Apply search query filter if a query is provided
+    if (searchQuery) {
+      filtered = filtered.filter((report) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          report.title.toLowerCase().includes(query) ||
+          report.category.toLowerCase().includes(query) ||
+          report.status.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    setFilteredReports(filtered); // Update the filtered reports state
+  };
+  // Handle category selection from the modal
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category); // Set the selected category
+    setCategoryModalVisible(false); // Close the modal
+    filterReports(searchQuery, category); // Apply the category filter along with the current search query
+  };
+
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
       <View style={webstyles.mainContainer}>
@@ -130,7 +190,7 @@ export default function ViewAdminEmergencyList({
         </View>
 
         <ScrollView contentContainerStyle={webstyles.scrollViewContent}>
-          {reports.map((report) => (
+          {crimes.map((report) => (
             <View key={report.id}>
               {/* Report content */}
               <View style={webstyles.reportContainer}>
@@ -229,16 +289,53 @@ export default function ViewAdminEmergencyList({
             { transform: [{ translateX: contentPosition }] },
           ]}
         >
-          <Text style={webstyles.headerText}>Listed Distress Messeges</Text>
-
+          <TitleCard />
+          <SearchSort
+            reports={crimes}
+            setCategoryModalVisible={setCategoryModalVisible}
+            setFilteredReports={setFilteredReports}
+            isAlignedRight={isAlignedRight}
+            filterReports={filterReports}
+          />
+          <Modal
+            visible={isCategoryModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setCategoryModalVisible(false)}
+          >
+            {/* TouchableWithoutFeedback to close the modal when clicking outside */}
+            <TouchableWithoutFeedback
+              onPress={() => setCategoryModalVisible(false)}
+            >
+              <View style={webstyles.modalContainer}>
+                <View style={webstyles.modalContent}>
+                  <Text style={webstyles.modalHeader}>
+                    Select a Crime Category
+                  </Text>
+                  <FlatList
+                    data={crimeCategories}
+                    keyExtractor={(item) => item}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={webstyles.modalOption}
+                        onPress={() => handleCategorySelect(item)}
+                      >
+                        <Text style={webstyles.modalOptionText}>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
           <ScrollView
             contentContainerStyle={[
               webstyles.reportList,
               isAlignedRight && { width: "75%" },
             ]}
           >
-            {incidents.length > 0 ? (
-              incidents.map((incident, index) => (
+            {currentReports.length > 0 ? (
+              currentReports.map((incident, index) => (
                 <View
                   key={index}
                   style={{
@@ -261,7 +358,8 @@ export default function ViewAdminEmergencyList({
                         color: "#115272",
                       }}
                     >
-                      {incident.type}
+                      {incident.category.charAt(0).toUpperCase() +
+                        incident.category.slice(1)}
                     </Text>
                     <Text
                       style={{ color: "#115272", fontSize: 14, marginLeft: 10 }}
@@ -272,7 +370,7 @@ export default function ViewAdminEmergencyList({
                   <Text
                     style={{ color: "#115272", fontSize: 14, marginTop: 10 }}
                   >
-                    {formatCoordinates(incident.coordinates)}
+                    {formatCoordinates(incident.coordinate)}
                   </Text>
                 </View>
               ))
@@ -282,6 +380,13 @@ export default function ViewAdminEmergencyList({
               </Text>
             )}
           </ScrollView>
+          <PaginationReport
+            filteredReports={filteredReports}
+            reportsPerPage={reportsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            isAlignedRight={isAlignedRight}
+          />
         </Animated.View>
       </View>
     );

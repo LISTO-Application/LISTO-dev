@@ -10,7 +10,12 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { db } from "../FirebaseConfig"; // Ensure this is importing from the correct file
-import { collection, query, where, getDocs } from "@react-native-firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+} from "@react-native-firebase/firestore";
 
 // TypeScript Types
 import { DrawerNavigationProp } from "@react-navigation/drawer";
@@ -45,7 +50,7 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
       try {
         const snapshot = await getDocs(q);
         setNewReportsCount(snapshot.size); // Set initial count
-        const titles: string[] = snapshot.docs.map(doc => doc.data().title); // Extract titles from the documents
+        const titles: string[] = snapshot.docs.map((doc) => doc.data().title); // Extract titles from the documents
         setReportTitles(titles); // Set the report titles
         console.log("Initial fetch: Number of PENDING reports:", snapshot.size); // Debugging line
       } catch (error) {
@@ -67,21 +72,18 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
 
   return (
     <View style={layoutStyles.headerContainer}>
-      {/* Menu Icon */}
       <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
         <MaterialIcons
           name="menu"
-          size={50}
+          size={35}
           color="#115272"
           style={layoutStyles.icon}
         />
       </TouchableOpacity>
-
-      {/* Bell Icon */}
       <TouchableOpacity onPress={openModal}>
         <MaterialIcons
           name="notifications"
-          size={50}
+          size={35}
           color="#115272"
           style={layoutStyles.icon}
         />
@@ -91,8 +93,6 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
           </View>
         )}
       </TouchableOpacity>
-
-      {/* Modal */}
       <Modal
         visible={modalVisible}
         animationType="fade"
@@ -106,7 +106,7 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
                 ? `${newReportsCount} reports still needs validation`
                 : "No new reports to validate"}
             </Text>
-<Text>Title of reports: </Text>
+            <Text>Title of reports: </Text>
             {/* List the titles of the reports */}
             {reportTitles.length > 0 && (
               <ScrollView style={styles.reportListContainer}>
@@ -132,16 +132,16 @@ const layoutStyles = StyleSheet.create({
     justifyContent: "space-between", // Push menu to the left and bell to the right
     alignItems: "center", // Center items vertically
     paddingHorizontal: 16,
-    paddingVertical: 50, // Reduced padding to make it thinner vertically
+    paddingVertical: 30, // Reduced padding to make it thinner vertically
     backgroundColor: "#115272", // Optional, can match the app theme
-    height: 50, // You can also explicitly set a height to make it smaller
+    height: 20, // You can also explicitly set a height to make it smaller
   },
   icon: {
     borderRadius: 15,
     borderStyle: "solid",
     borderWidth: 2,
-    width: 60, // Slightly larger size for better visibility
-    height: 60,
+    width: 40, // Slightly larger size for better visibility
+    height: 40,
     borderColor: "#115272",
     backgroundColor: "white",
     textAlign: "center", // Center icon horizontally

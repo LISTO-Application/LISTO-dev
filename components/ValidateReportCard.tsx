@@ -5,6 +5,7 @@ import {
   Image,
   TouchableOpacity,
   Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import React, { Component, useState } from "react";
 import { webstyles } from "@/styles/webstyles";
@@ -16,9 +17,13 @@ export default function ValidateReportCard({
 }: {
   report: any;
   handleTitlePress: any;
-  handleStatusChange: any;
+  handleStatusChange: (
+    reportId: string,
+    newStatus: "PENDING" | "VALID" | "PENALIZED"
+  ) => void;
 }) {
   const [isImageZoomVisible, setIsImageZoomVisible] = useState(false);
+
   return (
     <View
       style={{
@@ -47,7 +52,6 @@ export default function ValidateReportCard({
           )}
         </TouchableOpacity>
         <View style={{ flexDirection: "column", alignSelf: "center" }}>
-          {" "}
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <TouchableOpacity onPress={() => handleTitlePress(report)}>
               <Text
@@ -72,7 +76,7 @@ export default function ValidateReportCard({
           </View>
           {/* Report Category */}
           <Text style={{ color: "#115272", marginTop: 5 }}>
-            {`Category: ${report.category}`}
+            {`Category: ${report.category.charAt(0).toUpperCase() + report.category.slice(1)}`}
           </Text>
           {/* Report Location */}
           <Text style={{ color: "#115272", marginTop: 5 }}>
@@ -157,27 +161,41 @@ export default function ValidateReportCard({
         transparent={true}
         onRequestClose={() => setIsImageZoomVisible(false)}
       >
-        <View style={webstyles.modalContainer}>
-          <View style={webstyles.modalContent}>
-            {report.image ? (
-              <View style={style.imageContainer}>
-                <Image
-                  source={{ uri: report.image.uri }}
-                  style={style.image}
-                  resizeMode="cover"
-                />
-              </View>
-            ) : (
-              <View style={style.imageContainer}>
-                <Image
-                  source={require("@/assets/images/question.png")}
-                  style={style.image}
-                  resizeMode="cover"
-                />
-              </View>
-            )}
+        <TouchableWithoutFeedback onPress={() => setIsImageZoomVisible(false)}>
+          <View style={webstyles.modalContainer}>
+            <View
+              style={{
+                width: "80%",
+                padding: 20,
+                borderRadius: 10,
+                elevation: 5, // For shadow effect on Android
+                shadowColor: "#000", // iOS shadow
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                alignItems: "center",
+              }}
+            >
+              {report.image ? (
+                <View style={{ width: 500, height: 500 }}>
+                  <Image
+                    source={{ uri: report.image.uri }}
+                    style={style.image}
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : (
+                <View style={style.imageContainer}>
+                  <Image
+                    source={require("@/assets/images/question.png")}
+                    style={style.image}
+                    resizeMode="cover"
+                  />
+                </View>
+              )}
+            </View>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );

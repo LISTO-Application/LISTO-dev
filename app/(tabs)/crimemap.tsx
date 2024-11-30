@@ -543,73 +543,24 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
 
     // console.log("markers", pins);
 
-    //GEOCODING
-
-    const geocodeAddress = async (
-      address: string
-    ): Promise<GeoPoint | string | null | undefined> => {
-      if (!address || address.trim() === "") return null;
-      const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
-      const bounds = {
-        northeast: "14.7741,121.0947",
-        southwest: "14.6082,121.0244",
-      };
-      const region = "PH";
-
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        address
-      )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`;
-
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data.status === "OK") {
-          console.log(data.results[0]);
-          const { lat, lng } = data.results[0].geometry.location;
-          console.log("Geocoded location:", lat, lng);
-
-          const [neLat, neLng] = bounds.northeast.split(",").map(Number);
-          const [swLat, swLng] = bounds.southwest.split(",").map(Number);
-          console.log(bounds);
-          const isWithinBounds =
-            lat <= neLat && lat >= swLat && lng <= neLng && lng >= swLng;
-          console.log("Within the bounds:", isWithinBounds);
-          console.log("Parsed bounds:", {
-            northeast: { lat: neLat, lng: neLng },
-            southwest: { lat: swLat, lng: swLng },
-          });
-          console.log(data.results[0].geometry.bounds);
-
-          if (isWithinBounds) {
-            return new firebase.firestore.GeoPoint(lat, lng);
-          }
-        } else {
-          console.error("Geocoding error:", data.status);
-          return null;
-        }
-      } catch (error) {
-        console.error("Fetch error:", error);
-        return null;
-      }
-    };
-
     //Fetching the Data
     const fetchCrimes = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "crimes"));
         const crimeList: MarkerType[] = await Promise.all(
           querySnapshot.docs.map(async (doc) => {
-            const locationString = doc.data().location;
-            const geoPoint = await geocodeAddress(locationString);
+            const coordinate = doc.data().coordinate;
+            const location = doc.data().location;
 
-            if (!geoPoint) {
-              console.warn("Skipping invalid location:", locationString);
+            if (!coordinate) {
+              console.warn("Skipping invalid location:", location);
               return null;
             }
             return {
               id: doc.id,
               title: doc.data().title,
-              location: geoPoint,
+              location: doc.data().location,
+              coordinate: coordinate,
               date: doc.data().date,
               details: doc.data().additionalInfo,
               crime: doc.data().category,

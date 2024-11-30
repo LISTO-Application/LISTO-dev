@@ -9,6 +9,7 @@ import {
   Animated,
   Dimensions,
   Pressable,
+  Alert,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -20,7 +21,14 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 import { useRoute } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
 import { db, str } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
-import { collection, addDoc } from "@react-native-firebase/firestore";
+import {
+  collection,
+  addDoc,
+  firebase,
+  GeoPoint,
+  setDoc,
+  doc,
+} from "@react-native-firebase/firestore";
 import { getIconName } from "../../assets/utils/getIconName";
 import { SideBar } from "@/components/SideBar";
 import { crimeImages, CrimeType } from "../(tabs)/data/marker";
@@ -36,33 +44,9 @@ import { Image, type ImageSource } from "expo-image";
 import storage from "@react-native-firebase/storage";
 import firestore from "@react-native-firebase/firestore";
 import { subDays, subYears } from "date-fns";
+import TitleCard from "@/components/TitleCard";
 
 const database = db;
-
-const compressImage = async (uri: any) => {
-  const result = await ImageManipulator.manipulateAsync(
-    uri,
-    [{ resize: { width: 800 } }],
-    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-  );
-  return result.uri;
-};
-
-const uploadImageToFirebase = async (
-  filename: any,
-  uri: string | URL | Request
-) => {
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  const ref = storage().ref().child(`images/${filename}`);
-  await ref.put(blob);
-  const downloadURL = await ref.getDownloadURL();
-  return downloadURL;
-};
-
-const saveImageToFirestore = async (uri: any) => {
-  await firestore().collection("reports").add({});
-};
 
 export interface DropdownCrimeTypes {
   label: string;
@@ -140,6 +124,57 @@ export default function NewReports({
     setSelectedValue(item?.value); // Update the selected value
     setIsDropdownVisible(false); // Close the dropdown
   };
+
+  //GEOCODING
+
+  const geocodeAddress = async (
+    address: string
+  ): Promise<GeoPoint | string | null | undefined> => {
+    if (!address || address.trim() === "") return null;
+    const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
+    const bounds = {
+      northeast: "14.7741,121.0947",
+      southwest: "14.6082,121.0244",
+    };
+    const region = "PH";
+
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+      address
+    )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.status === "OK") {
+        console.log(data.results[0]);
+        const { lat, lng } = data.results[0].geometry.location;
+        console.log("Geocoded location:", lat, lng);
+
+        const [neLat, neLng] = bounds.northeast.split(",").map(Number);
+        const [swLat, swLng] = bounds.southwest.split(",").map(Number);
+        console.log(bounds);
+        const isWithinBounds =
+          lat <= neLat && lat >= swLat && lng <= neLng && lng >= swLng;
+        console.log("Within the bounds:", isWithinBounds);
+        console.log("Parsed bounds:", {
+          northeast: { lat: neLat, lng: neLng },
+          southwest: { lat: swLat, lng: swLng },
+        });
+        console.log(data.results[0].geometry.bounds);
+
+        if (isWithinBounds) {
+          return new firebase.firestore.GeoPoint(lat, lng);
+        }
+      } else {
+        console.error("Geocoding error:", data.status);
+        return null;
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     let resizedImage = null;
     if (selectedImage) {
@@ -155,6 +190,16 @@ export default function NewReports({
         return;
       }
     }
+
+    const locationString = location;
+    const geoPoint = await geocodeAddress(locationString);
+
+    if (!geoPoint) {
+      console.warn("Skipping invalid location:", locationString);
+      alert(`Does not accept locations beyond Quezon City: ${locationString}`);
+      return;
+    }
+
     const newReport = {
       id: uuidv4(),
       icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
@@ -163,6 +208,7 @@ export default function NewReports({
       category: selectedValue.toLowerCase(),
       title: title || "Untitled Report",
       location: location,
+      coordinate: geoPoint,
       additionalInfo: additionalInfo || "Undescribed Report",
       date: date || ["Unknown Date: ", new Date().toDateString()],
       time: time || ["Unknown Time: ", new Date().toTimeString()],
@@ -195,7 +241,6 @@ export default function NewReports({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState(crimeType);
-  console.log(value);
   //Date
   const [startDate, setStartDate] = useState<Date | null>(new Date());
 
@@ -293,14 +338,12 @@ export default function NewReports({
   if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        {/* Sidebar */}
         <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
-        {/* Toggle Button */}
         <TouchableOpacity
           onPress={toggleSideBar}
           style={[
             webstyles.toggleButton,
-            { left: isSidebarVisible ? sidebarWidth : 10 }, // Adjust toggle button position
+            { left: isSidebarVisible ? sidebarWidth : 10 },
           ]}
         >
           <Ionicons
@@ -317,14 +360,13 @@ export default function NewReports({
             },
           ]}
         >
-          <Text style={webstyles.headerText}>New Report</Text>
+          <TitleCard />
           <ScrollView
             contentContainerStyle={[
               webstyles.reportList,
               isAlignedRight && { width: "75%" },
             ]}
           >
-            {/* Report Details */}
             <Text>Reporter's Username:</Text>
             <TextInput
               style={webstyles.inputField}
@@ -332,7 +374,6 @@ export default function NewReports({
               editable={true}
               aria-disabled
             />
-
             <Text>Subject:</Text>
             <TextInput
               style={webstyles.inputField}
@@ -341,7 +382,6 @@ export default function NewReports({
               placeholder="Title (e.g: 'Murder at XX street' "
               placeholderTextColor={"#8c8c8c"}
             />
-
             <Text>Select Crime Type:</Text>
             <DropDownPicker
               open={open}
@@ -358,7 +398,6 @@ export default function NewReports({
                 handleSelect(selectedItem);
               }}
             />
-
             <Text>Location:</Text>
             <TextInput
               style={webstyles.inputField}
@@ -367,7 +406,6 @@ export default function NewReports({
               placeholder="House/Building No. Street Name , Subdivision/Village, Barangay, Nearest Landmark (e.g: 14 Faustino, Holy Spirit Drive, etc)"
               placeholderTextColor={"#8c8c8c"}
             />
-
             <Text>Date and Time Happened:</Text>
             <View
               style={{
@@ -401,7 +439,6 @@ export default function NewReports({
                 inline
               />
             </View>
-
             <Text>Additional Information:</Text>
             <TextInput
               style={webstyles.textArea}
@@ -414,11 +451,9 @@ export default function NewReports({
               }
               placeholderTextColor={"#8c8c8c"}
             />
-
             <Text>Image Upload:</Text>
             <Text>{imageFilename}</Text>
             <View style={webstyles.footerContainer}>
-              {" "}
               <Button
                 theme="primary"
                 label="Choose a photo"
@@ -434,8 +469,6 @@ export default function NewReports({
                 />
               </View>
             </View>
-
-            {/* Buttons */}
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}

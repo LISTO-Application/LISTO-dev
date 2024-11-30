@@ -40,6 +40,9 @@ import SideBar from "@/components/SideBar";
 import ImageViewer from "./ImageViewer";
 import DropDownPicker from "react-native-dropdown-picker";
 import ClearFilter from "@/components/ClearFilter";
+import PaginationReport from "@/components/PaginationReport";
+import TitleCard from "@/components/TitleCard";
+import SearchSort from "@/components/SearchSort";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -47,7 +50,12 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const [currentStatusSort, setCurrentStatusSort] = useState<
     "PENDING" | "VALID" | "PENALIZED"
   >("PENDING");
-  const [isSortedAsc, setIsSortedAsc] = useState(true);
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
+  const [isSortedAsc, setIsSortedAsc] = useState(true); // State for sorting direction
+  const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
+
+  //FETCH REPROTS
   const fetchReports = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "reports"));
@@ -60,6 +68,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           category: doc.data().category || "Unknown",
           title: doc.data().title || "Untitled",
           additionalInfo: doc.data().additionalInfo || "Unknown Report",
+          coordinate: doc.data().coordinate,
           location: doc.data().location || "Unknown Location",
           name: doc.data().name || "Anonymous",
           date: doc.data().date || [
@@ -87,42 +96,49 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       });
 
       setReports(sortedReports); // Update the state with sorted reports
+      setFilteredReports(sortedReports);
     } catch (error) {
       console.error("Error fetching reports:", error);
     }
   };
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchReports();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
+  //PAGINATIONS
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10;
-  // Calculate total pages
-  const totalPages = Math.ceil(reports.length / reportsPerPage);
-  // Get the current reports based on the page
-  const currentReports = reports.slice(
+  const currentReports = filteredReports.slice(
     (currentPage - 1) * reportsPerPage,
     currentPage * reportsPerPage
   );
 
+  //HANDLERS
   const handleDeleteReport = async (reportId: any) => {
     try {
       await deleteDoc(doc(db, "reports", reportId));
-      setReports((prevReports) => prevReports.filter((r) => r.id !== reportId));
+      setFilteredReports((prevReports) =>
+        prevReports.filter((r) => r.id !== reportId)
+      );
       Alert.alert("Report deleted successfully");
     } catch (error) {
       console.error("Error deleting report: ", error);
     }
   };
-  // Edit report handler (redirect to editReport.tsx with report ID)
   const handleEditReport = (report: Report) => {
     // Redirect to the report edit page with the report ID in the query
-    navigation.navigate("editReports", { report });
+    navigation.navigate("EditReports", { report });
   };
-
-  // Submit report handler (redirect to new report form)
   const handleSubmitReport = () => {
-    // Redirect to the page where the user can fill in new report details
-    navigation.navigate("newReports"); // Adjust this path based on your routing setup
+    navigation.navigate("newReports");
   };
-
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    filterReports(query, selectedCategory);
+  };
   reports.forEach((report) => {
     const image = report.image;
     console.log(image.uri);
@@ -135,7 +151,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const sideBarPosition = useRef(new Animated.Value(-sidebarWidth)).current;
   const contentPosition = useRef(new Animated.Value(0)).current;
   const [isAlignedRight, setIsAlignedRight] = useState(false);
-
   const toggleSideBar = () => {
     Animated.timing(sideBarPosition, {
       toValue: isSidebarVisible ? -sidebarWidth : 0,
@@ -152,6 +167,36 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     setSidebarVisible(!isSidebarVisible);
   };
 
+  //Filter and Sorts
+  const filterReports = (searchQuery: string, category: string | null) => {
+    let filtered = reports;
+    if (category) {
+      filtered = filtered.filter((report) => report.category === category);
+    }
+    if (searchQuery) {
+      filtered = filtered.filter((report) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          report.title.toLowerCase().includes(query) ||
+          report.location.toLowerCase().includes(query) ||
+          report.category.toLowerCase().includes(query) ||
+          report.date.toLowerCase().includes(query) ||
+          report.status.toLowerCase().includes(query) ||
+          report.additionalInfo.toLowerCase().includes(query) ||
+          report.date.includes(query)
+        );
+      });
+    }
+    setFilteredReports(filtered);
+  };
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category); // Set the selected category
+    // Close the modal
+    filterReports(searchQuery, category); // Apply the category filter along with the current search query
+  };
+  const crimeCategories = Array.from(
+    new Set(reports.map((report) => report.category))
+  );
   // Render for Android and iOS
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
@@ -203,25 +248,13 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           ))}
 
           {/* Pagination Controls */}
-          <View style={styles.paginationContainer}>
-            <TouchableOpacity
-              disabled={currentPage === 1}
-              onPress={() => setCurrentPage(currentPage - 1)}
-              style={styles.paginationButton}
-            >
-              <Text style={styles.paginationText}>Previous</Text>
-            </TouchableOpacity>
-            <Text style={styles.paginationText}>
-              Page {currentPage} of {totalPages}
-            </Text>
-            <TouchableOpacity
-              disabled={currentPage === totalPages}
-              onPress={() => setCurrentPage(currentPage + 1)}
-              style={styles.paginationButton}
-            >
-              <Text style={styles.paginationText}>Next</Text>
-            </TouchableOpacity>
-          </View>
+          <PaginationReport
+            filteredReports={filteredReports}
+            reportsPerPage={reportsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            isAlignedRight={isAlignedRight}
+          />
 
           {/* Submit & Cancel Buttons */}
           <View style={styles.buttonContainer}>
@@ -241,246 +274,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       </View>
     );
   } else if (Platform.OS === "web") {
-    const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
-    const [reports, setReports] = useState<Report[]>([]);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(
-      null
-    ); // State for selected category filter
-    const [isCategoryModalVisible, setCategoryModalVisible] = useState(false); // State for category modal visibility
-    const [isSortedAsc, setIsSortedAsc] = useState(true); // State for sorting direction
-    const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
-
-    useEffect(() => {
-      const fetchReports = async () => {
-        try {
-          const querySnapshot = await getDocs(collection(db, "reports"));
-          const reportList = querySnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              icon: data.icon || "",
-              category: data.category || "Unknown",
-              title: data.title || "Untitled",
-              additionalInfo: data.additionalInfo || "Unknown Report",
-              location: data.location || "Unknown Location",
-              name: data.name || "Anonymous",
-              date: data.date || new Date().toDateString(),
-              time: data.time || new Date().toTimeString(),
-              image: {
-                filename: data.image?.filename || "Unknown Filename",
-                uri: data.image?.uri || "Unknown Uri",
-              },
-              status: data.status || "PENDING",
-              timeStamp: data.timeStamp || new Date().toISOString(),
-            };
-          });
-          setReports(reportList);
-          setFilteredReports(reportList); // Initialize filteredReports with all reports initially
-        } catch (error) {
-          console.error("Error fetching reports:", error);
-        }
-      };
-
-      fetchReports();
-    }, []);
-
-    // Handle search query change
-    const handleSearch = (query: string) => {
-      setSearchQuery(query); // Update search query state
-      filterReports(query, selectedCategory); // Re-filter reports based on query and selected category
-    };
-    const [isSortedAlphabetAsc, setIsSortedAlphabetAsc] = useState(true);
-    // Filter reports based on search query and selected category
-    const filterReports = (searchQuery: string, category: string | null) => {
-      let filtered = reports; // Start with all reports
-
-      // Apply category filter if a category is selected
-      if (category) {
-        filtered = filtered.filter((report) => report.category === category);
-      }
-
-      // Apply search query filter if a query is provided
-      if (searchQuery) {
-        filtered = filtered.filter((report) => {
-          const query = searchQuery.toLowerCase();
-          return (
-            report.title.toLowerCase().includes(query) ||
-            report.location.toLowerCase().includes(query) ||
-            report.category.toLowerCase().includes(query) ||
-            report.date.toLowerCase().includes(query) ||
-            report.status.toLowerCase().includes(query) ||
-            report.additionalInfo.toLowerCase().includes(query) ||
-            report.date.includes(query)
-          );
-        });
-      }
-
-      setFilteredReports(filtered); // Update the filtered reports state
-    };
-
-    // Handle category selection from the modal
-    const handleCategorySelect = (category: string) => {
-      setSelectedCategory(category); // Set the selected category
-       // Close the modal
-      filterReports(searchQuery, category); // Apply the category filter along with the current search query
-    };
-
-    // Clear category filter
-    const handleClearFilter = () => {
-      setSearchQuery(""); // Clear search query
-      setSelectedCategory(null); // Clear selected category
-      setFilteredReports(reports); // Show all reports again
-    };
-
-    // Get unique crime categories from reports
-    const crimeCategories = Array.from(
-      new Set(reports.map((report) => report.category))
-    );
-
-    // Sort reports by date (ascending/descending)
-    const sortReportsByDateAsc = () => {
-      setFilteredReports((prevReports) => {
-        const sortedReports = [...prevReports];
-        sortedReports.sort((a, b) => {
-          const dateA = new Date(a.date);
-          const dateB = new Date(b.date);
-          return dateA.getTime() - dateB.getTime();
-        });
-        return sortedReports;
-      });
-    };
-
-    const sortReportsByDateDesc = () => {
-      setFilteredReports((prevReports) => {
-        const sortedReports = [...prevReports];
-        sortedReports.sort((a, b) => {
-          const dateA = new Date(a.date);
-          const dateB = new Date(b.date);
-          return dateB.getTime() - dateA.getTime();
-        });
-
-        return sortedReports;
-      });
-      setIsSortedAsc((prev) => !prev); // Toggle sorting order
-    };
-    // Sort reports alphabetically by title
-    const sortReportsByAlphabetDesc = () => {
-      setFilteredReports((prevReports) => {
-        const sortedReports = [...prevReports].sort((a, b) => {
-          return b.title.localeCompare(a.title); // Sort Z to A
-        });
-        return sortedReports;
-      });
-      setIsSortedAlphabetAsc((prev) => !prev); // Toggle the sorting order
-    };
-    const sortReportsByAlphabetAsc = () => {
-      setFilteredReports((prevReports) => {
-        const sortedReports = [...prevReports].sort((a, b) => {
-          return a.title.localeCompare(b.title); // Sort A to Z
-        });
-        return sortedReports;
-      });
-      setIsSortedAlphabetAsc((prev) => !prev); // Toggle the sorting order
-    };
-
-    const sortReportsByStatus = () => {
-      // Cycle through status types
-      const nextStatus =
-        currentStatusSort === "PENDING"
-          ? "VALID"
-          : currentStatusSort === "VALID"
-            ? "PENALIZED"
-            : "PENDING";
-
-      setCurrentStatusSort(nextStatus); // Update the state to the next status
-
-      // Sort the reports based on the new status
-      setFilteredReports((prevReports) => {
-        const sortedReports = [...prevReports].sort((a, b) => {
-          const statusOrder = ["PENDING", "VALID", "PENALIZED"];
-          // Sort reports by the status order
-          return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
-        });
-        return sortedReports;
-      });
-    };
-    const [currentPage, setCurrentPage] = useState(1);
-    const reportsPerPage = 10; // Adjust this number based on how many reports per page
-
-    // Calculate total pages
-    const totalPages = Math.ceil(filteredReports.length / reportsPerPage);
-
-    // Get the reports for the current page
-
-    // Pagination functions
-    const handleNextPage = () => {
-      if (currentPage < totalPages) {
-        setCurrentPage(currentPage + 1);
-      }
-    };
-
-    const handlePreviousPage = () => {
-      if (currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
-    };
-    const currentReports = filteredReports.slice(
-      (currentPage - 1) * reportsPerPage,
-      currentPage * reportsPerPage
-    );
-
-    //DropDown Sorter
-    const [open, setOpen] = useState(false);
-    const [value, setValue] = useState(null);
-    const [items, setItems] = useState([
-      { label: "Sort by Date (Earliest)", value: "date-asc" },
-      { label: "Sort by Date (Latest)", value: "date-desc" },
-      { label: "Sort by Alphabet (A-Z)", value: "alphabet-asc" },
-      { label: "Sort by Alphabet (Z-A)", value: "alphabet-desc" },
-      { label: "Sort by Crime Category", value: "category" },
-      { label: "Sort by Status", value: "status" },
-    ]);
-
-    const handleDropDownChange = (selectedValue: any) => {
-      // Show the category modal directly for "Sort by Crime Category"
-      if (selectedValue === "category") {
-        setValue(null); // Reset the dropdown value to allow reselection
-        setCategoryModalVisible(true); // Show the modal
-        return;
-      }
-    
-      // Perform sorting logic based on the selected value
-      switch (selectedValue) {
-        case "date-asc":
-          sortReportsByDateAsc();
-          break;
-        case "date-desc":
-          sortReportsByDateDesc();
-          break;
-        case "alphabet-asc":
-          sortReportsByAlphabetAsc();
-          break;
-        case "alphabet-desc":
-          sortReportsByAlphabetDesc();
-          break;
-        case "status":
-          sortReportsByStatus(); // Call the sort function when "Sort by Status" is selected
-          break;
-        case "category":
-          setCategoryModalVisible(true); // Show category modal
-          break;
-        default:
-          break;
-      }
-    
-      setValue(selectedValue); // Update the selected value in dropdown
-      console.log("Selected value:", selectedValue);
-    };
-
     return (
       <View style={webstyles.container}>
         <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
-        {/* Toggle Button */}
         <TouchableOpacity
           onPress={toggleSideBar}
           style={[
@@ -494,8 +290,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             color={"#333"}
           />
         </TouchableOpacity>
-
-        {/* Main Content */}
         <Animated.View
           style={[
             webstyles.mainContainer,
@@ -504,89 +298,20 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             },
           ]}
         >
-          {/* Header Component */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "flex-start", // Makes sure the header and search bar are spaced
-              marginBottom: 10, // Space between this row and the rest of the content
-              paddingLeft: 20,
-            }}
-          >
-            <Text style={[webstyles.headerText, { marginRight: 10 }]}>
-              Reports
-            </Text>
-          </View>
-
-          {/* Search and Sort Component */}
-          <View
-            style={[
-              {
-                zIndex: 1,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                paddingHorizontal: 20,
-              },
-            ]}
-          >
-            <View style={{ flexDirection: "row" }}>
-              <TextInput
-                style={{
-                  width: 300, // Set a fixed width for the search bar
-                  borderWidth: 1,
-                  borderColor: "black",
-                  borderRadius: 8,
-                  padding: 10,
-                }}
-                placeholder="Search reports..."
-                value={searchQuery}
-                onChangeText={handleSearch}
-              />
-              <View style={{ alignSelf: "center", left: -40 }}>
-                <Ionicons name={"search-outline"} size={24} />
-              </View>
-            </View>
-            <View
-              style={[
-                {
-                  alignSelf: "flex-end",
-                  paddingRight: 40,
-                  width: "25%",
-                  flexDirection: "row",
-                  gap: 20,
-                },
-                isAlignedRight && {
-                  left: -450,
-                },
-              ]}
-            >
-              <ClearFilter handleClearFilter={handleClearFilter} />
-              <View style={{ width: "75%" }}>
-                <DropDownPicker
-                  multiple={false}
-                  open={open}
-                  value={value}
-                  items={items}
-                  setOpen={setOpen}
-                  setItems={setItems}
-                  setValue={setValue}
-                  onChangeValue={handleDropDownChange}
-                  placeholder="Select a filter"
-                />
-              </View>
-            </View>
-          </View>
-
-
-          {/* Crime Category Modal */}
+          <TitleCard />
+          <SearchSort
+            reports={reports}
+            setCategoryModalVisible={setCategoryModalVisible}
+            setFilteredReports={setFilteredReports}
+            isAlignedRight={isAlignedRight}
+            filterReports={filterReports}
+          />
           <Modal
             visible={isCategoryModalVisible}
             animationType="slide"
             transparent={true}
             onRequestClose={() => setCategoryModalVisible(false)}
           >
-            {/* TouchableWithoutFeedback to close the modal when clicking outside */}
             <TouchableWithoutFeedback
               onPress={() => setCategoryModalVisible(false)}
             >
@@ -609,14 +334,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                       </TouchableOpacity>
                     )}
                   />
-
-                  {/* Clear Filter Component */}
                 </View>
               </View>
             </TouchableWithoutFeedback>
           </Modal>
-
-          {/* Reports List */}
           <ScrollView
             contentContainerStyle={[
               webstyles.reportList,
@@ -642,7 +363,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               } else {
                 iconSource = require("../../assets/images/question-mark.png");
               }
-
               return (
                 <View key={report.id} style={webstyles.reportContainer}>
                   <Image source={iconSource} style={webstyles.reportIcon} />
@@ -679,12 +399,49 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                       <Text style={webstyles.reportInfo}></Text>
                     </View>
                   </View>
+                  <View
+                    style={[
+                      {
+                        borderWidth: 2,
+                        borderRadius: 10,
+                        borderColor: "black",
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        { borderWidth: 5, borderRadius: 10 },
+                        report.status === "VALID"
+                          ? { borderColor: "green" }
+                          : report.status === "PENALIZED"
+                            ? { borderColor: "red" }
+                            : report.status === "PENDING"
+                              ? { borderColor: "yellow" }
+                              : null,
+                      ]}
+                    ></View>
+                  </View>
                   <View style={webstyles.reportActions}>
                     <TouchableOpacity
-                      style={webstyles.editIcon}
-                      onPress={() => handleEditReport(report)}
+                      style={[
+                        webstyles.editIcon,
+                        report.status === "VALID" && webstyles.disabledIcon,
+                      ]}
+                      onPress={() =>
+                        report.status !== "VALID" && handleEditReport(report)
+                      }
+                      disabled={report.status === "VALID"}
                     >
-                      <Ionicons name="create-outline" size={30} color="white" />
+                      <Ionicons
+                        name="create-outline"
+                        size={30}
+                        color={report.status !== "PENDING" ? "gray" : "white"}
+                        style={
+                          report.status !== "PENDING" && {
+                            textDecorationLine: "line-through",
+                          }
+                        }
+                      />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={webstyles.editIcon}
@@ -702,32 +459,13 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               );
             })}
           </ScrollView>
-
-          {/* Pagination Controls */}
-          <View
-            style={[
-              webstyles.paginationContainer,
-              isAlignedRight && { width: "75%" },
-            ]}
-          >
-            <TouchableOpacity
-              disabled={currentPage === 1}
-              onPress={handlePreviousPage}
-              style={webstyles.paginationButton}
-            >
-              <Text style={webstyles.paginationText}>Previous</Text>
-            </TouchableOpacity>
-            <Text style={webstyles.paginationText}>
-              Page {currentPage} of {totalPages}
-            </Text>
-            <TouchableOpacity
-              disabled={currentPage === totalPages}
-              onPress={handleNextPage}
-              style={webstyles.paginationButton}
-            >
-              <Text style={webstyles.paginationText}>Next</Text>
-            </TouchableOpacity>
-          </View>
+          <PaginationReport
+            filteredReports={filteredReports}
+            reportsPerPage={reportsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            isAlignedRight={isAlignedRight}
+          />
         </Animated.View>
         <TouchableOpacity
           style={webstyles.fab}
