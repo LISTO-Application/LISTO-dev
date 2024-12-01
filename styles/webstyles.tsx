@@ -303,6 +303,27 @@ const webstyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+ 
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 10,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
   statusBadge: {
     paddingVertical: 8, // Increase vertical padding
     paddingHorizontal: 12, // Increase horizontal padding
