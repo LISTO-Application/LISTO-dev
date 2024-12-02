@@ -98,7 +98,6 @@ import Geocoder from "react-native-geocoding";
 import * as Location from "expo-location";
 import { db } from "../FirebaseConfig";
 import { ReactNativeFirebase } from "@react-native-firebase/app";
-import WebCrime from "@/components/WebCrime";
 import { FeatureCollection, Point } from "geojson";
 import {
   EarthquakesGeojson,
@@ -106,6 +105,10 @@ import {
 } from "@/constants/earthquakes";
 import { ModeType } from "react-native-ui-datepicker";
 import WebHeatmap from "@/components/WebHeatmap";
+import {
+  loadMarkersFromFirestore,
+  MarkersCollection,
+} from "@/constants/markers";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -522,9 +525,11 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     const [isAddingMarker, setIsAddingMarker] = useState(false);
     //Heatmap
     const [radius, setRadius] = useState(25);
-    const [opacity, setOpacity] = useState(0.8);
+    const [opacity, setOpacity] = useState(1);
     const [earthquakesGeojson, setEarthquakesGeojson] =
       useState<EarthquakesGeojson>({ type: "FeatureCollection", features: [] });
+    const [markersCollection, setMarkersCollection] =
+      useState<MarkersCollection>([]);
     //Handlers
     const closeError = () => {
       setShowError(false);
@@ -598,6 +603,10 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
       loadEarthquakeGeojson().then((data) => setEarthquakesGeojson(data));
     }, []);
 
+    useEffect(() => {
+      loadMarkersFromFirestore().then((data) => setMarkersCollection(data));
+    }, []);
+
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -615,24 +624,23 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               style={style.map}
               defaultCenter={position}
               disableDoubleClickZoom={true}
-              defaultZoom={3}
+              defaultZoom={15}
               gestureHandling={"greedy"}
-              mapId={isHeatmapVisible ? "e34d889a373119e6" : "5cc51025f805d25d"}
+              mapId={isHeatmapVisible ? "7a9e2ebecd32a903" : "5cc51025f805d25d"}
               mapTypeControl={true}
               streetViewControl={false}
               mapTypeId="roadmap"
               scrollwheel={true}
               disableDefaultUI={false}
-              maxZoom={18}
-              minZoom={14}
             >
               {isHeatmapVisible && (
                 <WebHeatmap
-                  geojson={earthquakesGeojson}
+                  geojson={markersCollection}
                   radius={radius}
                   opacity={opacity}
                 />
               )}
+
               <MarkerWithInfoWindow
                 markers={pins}
                 selectedDate={selectedDate}
@@ -732,7 +740,9 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               alignItems: "center",
               backgroundColor: "#fff", // Center icon within circle
             }}
-            onPress={() => navigation.navigate("NewReports")} // Navigate to NewReports screen
+            onPress={() =>
+              navigation.navigate("Reports", { screen: "NewReports" })
+            } // Navigate to NewReports screen
           >
             <Ionicons
               name="megaphone" // Ionicons megaphone icon

@@ -181,7 +181,9 @@ export const MarkerWithInfoWindow = ({
           onClose={() => setActiveMarkerId(null)}
         >
           <div className="custom-info-window">
-            <h2>{markerName}</h2>
+            <h2>
+              {markerCrime?.charAt(0).toUpperCase() + markerCrime?.slice(1)}
+            </h2>
             <div>
               <p>
                 <strong>Details:</strong> {markerDetails}
