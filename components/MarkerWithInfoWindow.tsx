@@ -53,20 +53,21 @@ export const MarkerWithInfoWindow = ({
 
   try {
     useEffect(() => {
-      filterMarkers();
+      filterMarkers(selectedDate);
     }, [selectedCrimeFilters, selectedDate, allMarkers]);
 
-    const filterMarkers = () => {
+    const filterMarkers = (date: any) => {
       let filteredMarkers = allMarkers;
 
       if (selectedDate) {
-        const selectedMonth = dayjs(selectedDate).month() + 1;
+        const selectedMonth = dayjs(date).month() + 1;
+        const selectedYear = dayjs(date).year();
         filteredMarkers = filteredMarkers.filter((marker: any) => {
           const markerMonth = dayjs(marker.date).month() + 1;
-          return markerMonth === selectedMonth;
+          const markerYear = dayjs(marker.date).year();
+          return markerMonth === selectedMonth && markerYear === selectedYear;
         });
       }
-      console.log("All Markers:", allMarkers);
       console.log(
         "Selected Month:",
         selectedDate ? dayjs(selectedDate).month() + 1 : "None"
@@ -77,27 +78,16 @@ export const MarkerWithInfoWindow = ({
       );
       console.log("Filtered Markers:", filteredMarkers);
       if (selectedCrimeFilters.length > 0) {
-        const filteredMarkers = markers.filter((marker: any) =>
+        const filteredCrimeMarkers = markers.filter((marker: any) =>
           selectedCrimeFilters.some((filter) => filter.label === marker.crime)
         );
         // console.log("TempItems", tempItems);
-        setFilteredCrimeItems(filteredMarkers);
+        setFilteredCrimeItems(filteredCrimeMarkers);
         // setMarkers(tempItems.flat());
       } else {
-        setFilteredCrimeItems([]);
+        setFilteredCrimeItems(filteredMarkers);
       }
     };
-    // Example: Initialize allMarkers and markers
-    // useEffect(() => {
-    //   // Assuming fetchMarkers() fetches the original marker data
-    //   const fetchMarkers = async () => {
-    //     const data = await getMarkerData(); // Replace with your actual data fetching logic
-    //     setAllMarkers(data);
-    //     setMarkers(data); // Initially, markers are the same as allMarkers
-    //   };
-
-    //   fetchMarkers();
-    // }, []);
   } catch (error) {}
 
   const handleMarkerClick = (marker: MarkerType) => {
@@ -109,8 +99,7 @@ export const MarkerWithInfoWindow = ({
   };
 
   //To display them
-  const displayMarkers =
-    filteredCrimeItems.length > 0 ? filteredCrimeItems : markers;
+  const displayMarkers = filteredCrimeItems;
 
   return (
     <>
@@ -192,7 +181,9 @@ export const MarkerWithInfoWindow = ({
           onClose={() => setActiveMarkerId(null)}
         >
           <div className="custom-info-window">
-            <h2>{markerName}</h2>
+            <h2>
+              {markerCrime?.charAt(0).toUpperCase() + markerCrime?.slice(1)}
+            </h2>
             <div>
               <p>
                 <strong>Details:</strong> {markerDetails}

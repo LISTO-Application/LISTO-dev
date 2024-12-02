@@ -13,7 +13,7 @@ const FilterHeatMap = ({
     <Pressable
       style={{
         position: "absolute",
-        top: 180,
+        top: 250,
         right: 20,
       }}
       onPress={toggleHeatmap}

@@ -45,7 +45,7 @@ import storage from "@react-native-firebase/storage";
 import firestore from "@react-native-firebase/firestore";
 import { subDays, subYears } from "date-fns";
 import TitleCard from "@/components/TitleCard";
-
+import { Asset } from "expo-asset";
 const database = db;
 
 export interface DropdownCrimeTypes {
@@ -199,7 +199,9 @@ export default function NewReports({
       alert(`Does not accept locations beyond Quezon City: ${locationString}`);
       return;
     }
-
+    const defaultImage = require("../../assets/images/default-image.jpg");
+    const defaultURI = Asset.fromModule(defaultImage).uri;
+    console.log(defaultURI);
     const newReport = {
       id: uuidv4(),
       icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
@@ -214,7 +216,7 @@ export default function NewReports({
       time: time || ["Unknown Time: ", new Date().toTimeString()],
       image: resizedImage
         ? { filename: imageFilename, uri: resizedImage.uri }
-        : undefined,
+        : { filename: "Untitled Image", uri: defaultURI },
       // imageUrl,
       // selectedImage && imageFilename
       //   ? { filename: imageFilename, uri: selectedImage }

@@ -28,7 +28,14 @@ import {
   useAdvancedMarkerRef,
 } from "@vis.gl/react-google-maps";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useMemo, useCallback, useRef, useState, useEffect } from "react";
+import {
+  useMemo,
+  useCallback,
+  useRef,
+  useState,
+  useEffect,
+  Children,
+} from "react";
 import { Calendar, CalendarUtils } from "react-native-calendars";
 
 //Expo Imports
@@ -67,7 +74,6 @@ import { Ionicons } from "@expo/vector-icons";
 import FilterHeatMap from "@/components/FilterHeatMap";
 import DateModal from "@/components/modal/DateModal";
 import { MarkerWithInfoWindow } from "@/components/MarkerWithInfoWindow";
-import WebHeatmap from "@/components/WebHeatmap";
 import heatmapData from "./data/heatmap";
 import dayjs, { Dayjs, locale } from "dayjs";
 import { CrimeType, MarkerType, crimeImages } from "./data/marker";
@@ -81,7 +87,7 @@ import {
   setDoc,
 } from "@react-native-firebase/firestore";
 import React from "react";
-import { DateType, ModeType } from "react-native-ui-datepicker";
+
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -92,6 +98,17 @@ import Geocoder from "react-native-geocoding";
 import * as Location from "expo-location";
 import { db } from "../FirebaseConfig";
 import { ReactNativeFirebase } from "@react-native-firebase/app";
+import { FeatureCollection, Point } from "geojson";
+import {
+  EarthquakesGeojson,
+  loadEarthquakeGeojson,
+} from "@/constants/earthquakes";
+import { ModeType } from "react-native-ui-datepicker";
+import WebHeatmap from "@/components/WebHeatmap";
+import {
+  loadMarkersFromFirestore,
+  MarkersCollection,
+} from "@/constants/markers";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -134,27 +151,22 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     categories.map(() => false)
   );
   // FILTER CALLBACKS
-
   const handleFilterSheetChange = useCallback((index: any) => {
     setIsFilterSheetOpen(index !== -1);
   }, []);
-
   const handleFilterSnapPress = useCallback((index: number) => {
     console.log(filterSheetRef.current?.snapToIndex(index));
     console.log(index);
     filterSheetRef.current?.snapToIndex(index);
   }, []);
-
   const handleFilterClosePress = useCallback(() => {
     filterSheetRef.current?.close();
   }, []);
-
   const handleCategoryPress = (index: number) => {
     setCategoryStates((prevStates) =>
       prevStates.map((state, i) => (i === index ? !state : state))
     );
   };
-
   //CALENDAR SETTINGS
   const calendarSheetRef = useRef<BottomSheet>(null);
   const calendarSnapPoints = useMemo(() => ["40%"], []);
@@ -163,31 +175,25 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
   const [markedDates, setMarkedDates] = useState<{
     [key: string]: { selected: boolean; selectedColor: string };
   }>({});
-
   const handleCalendarSheetChange = useCallback((index: any) => {
     setIsCalendarSheetOpen(index !== -1);
   }, []);
-
   const handleCalendarSnapPress = useCallback((index: number) => {
     calendarSheetRef.current?.snapToIndex(index);
   }, []);
-
   const handleCalendarClosePress = useCallback(() => {
     calendarSheetRef.current?.close();
   }, []);
-
   useFocusEffect(
     useCallback(() => {
       return () =>
         filterSheetRef.current?.close() || calendarSheetRef.current?.close();
     }, [])
   );
-
   //HEAT MAP SETTINGS
   // Static array of points for testing
   const heatmapPoints = heatmapData;
   const [isHeatmapVisible, setIsHeatmapVisible] = useState(false);
-
   const toggleHeatmap = useCallback(() => {
     setIsHeatmapVisible((prev) => {
       console.log("Previous State", prev);
@@ -517,6 +523,13 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     const [pins, setMarkers] = useState<MarkerType[]>([]);
     console.log(pins);
     const [isAddingMarker, setIsAddingMarker] = useState(false);
+    //Heatmap
+    const [radius, setRadius] = useState(25);
+    const [opacity, setOpacity] = useState(1);
+    const [earthquakesGeojson, setEarthquakesGeojson] =
+      useState<EarthquakesGeojson>({ type: "FeatureCollection", features: [] });
+    const [markersCollection, setMarkersCollection] =
+      useState<MarkersCollection>([]);
     //Handlers
     const closeError = () => {
       setShowError(false);
@@ -586,6 +599,14 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
       return unsubscribe;
     }, [navigation]);
 
+    useEffect(() => {
+      loadEarthquakeGeojson().then((data) => setEarthquakesGeojson(data));
+    }, []);
+
+    useEffect(() => {
+      loadMarkersFromFirestore().then((data) => setMarkersCollection(data));
+    }, []);
+
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -604,14 +625,22 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               defaultCenter={position}
               disableDoubleClickZoom={true}
               defaultZoom={15}
-              mapId="5cc51025f805d25d"
+              gestureHandling={"greedy"}
+              mapId={isHeatmapVisible ? "7a9e2ebecd32a903" : "5cc51025f805d25d"}
               mapTypeControl={true}
               streetViewControl={false}
               mapTypeId="roadmap"
               scrollwheel={true}
-              minZoom={14}
-              maxZoom={20}
+              disableDefaultUI={false}
             >
+              {isHeatmapVisible && (
+                <WebHeatmap
+                  geojson={markersCollection}
+                  radius={radius}
+                  opacity={opacity}
+                />
+              )}
+
               <MarkerWithInfoWindow
                 markers={pins}
                 selectedDate={selectedDate}
@@ -626,8 +655,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
                   alignItems: "center",
                 }}
               ></View>
-              <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
-              {isHeatmapVisible && <WebHeatmap heatmap={filteredHeatmap} />}
+
               <PlacesLibrary />
             </Map>
           </APIProvider>
@@ -698,7 +726,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               source={filter}
             />
           </Pressable>
-          {/* Megaphone Button */}
           <Pressable
             style={{
               position: "absolute",
@@ -713,7 +740,9 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               alignItems: "center",
               backgroundColor: "#fff", // Center icon within circle
             }}
-            onPress={() => navigation.navigate("NewReports")} // Navigate to NewReports screen
+            onPress={() =>
+              navigation.navigate("Reports", { screen: "NewReports" })
+            } // Navigate to NewReports screen
           >
             <Ionicons
               name="megaphone" // Ionicons megaphone icon
@@ -721,6 +750,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               color="#115272" // Set color of the icon
             />
           </Pressable>
+          <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
           <DateDisplay
             markers={pins}
             allMarkers={allMarkers}
