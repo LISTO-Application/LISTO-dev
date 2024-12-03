@@ -43,7 +43,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import { Image, type ImageSource } from "expo-image";
 import storage from "@react-native-firebase/storage";
 import firestore from "@react-native-firebase/firestore";
-import { subDays, subYears } from "date-fns";
+import { getUnixTime, parse, subDays, subYears } from "date-fns";
 import TitleCard from "@/components/TitleCard";
 import { Asset } from "expo-asset";
 const database = db;
@@ -201,6 +201,9 @@ export default function NewReports({
     }
     const defaultImage = require("../../assets/images/default-image.jpg");
     const defaultURI = Asset.fromModule(defaultImage).uri;
+
+    const timestamp = parse(time, "hh:mm a", new Date());
+    const unixTimestamp = Math.floor(timestamp.getTime() / 1000);
     console.log(defaultURI);
     const newReport = {
       id: uuidv4(),
@@ -212,7 +215,7 @@ export default function NewReports({
       location: location,
       coordinate: geoPoint,
       additionalInfo: additionalInfo || "Undescribed Report",
-      date: date || ["Unknown Date: ", new Date().toDateString()],
+      date: new Date(date) || ["Unknown Date: ", new Date().toDateString()],
       time: time || ["Unknown Time: ", new Date().toTimeString()],
       image: resizedImage
         ? { filename: imageFilename, uri: resizedImage.uri }
@@ -222,10 +225,7 @@ export default function NewReports({
       //   ? { filename: imageFilename, uri: selectedImage }
       //   : undefined,
       status: "PENDING",
-      timeStamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      timestamp: unixTimestamp,
     };
 
     try {
@@ -247,8 +247,9 @@ export default function NewReports({
   const [startDate, setStartDate] = useState<Date | null>(new Date());
 
   useEffect(() => {
-    const dateInput = dayjs(startDate).format("MM-DD-YYYY");
+    const dateInput = dayjs(startDate).format("YYYY-MM-DD");
     const timeInput = dayjs(startDate).format("hh:mm A");
+    console.log(dateInput);
     setDate(dateInput);
     setTime(timeInput);
   }, [startDate]);

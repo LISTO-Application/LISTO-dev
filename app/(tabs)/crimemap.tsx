@@ -99,10 +99,6 @@ import * as Location from "expo-location";
 import { db } from "../FirebaseConfig";
 import { ReactNativeFirebase } from "@react-native-firebase/app";
 import { FeatureCollection, Point } from "geojson";
-import {
-  EarthquakesGeojson,
-  loadEarthquakeGeojson,
-} from "@/constants/earthquakes";
 import { ModeType } from "react-native-ui-datepicker";
 import WebHeatmap from "@/components/WebHeatmap";
 import {
@@ -524,10 +520,8 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     console.log(pins);
     const [isAddingMarker, setIsAddingMarker] = useState(false);
     //Heatmap
-    const [radius, setRadius] = useState(25);
-    const [opacity, setOpacity] = useState(1);
-    const [earthquakesGeojson, setEarthquakesGeojson] =
-      useState<EarthquakesGeojson>({ type: "FeatureCollection", features: [] });
+    const [radius, setRadius] = useState(50);
+    const [opacity, setOpacity] = useState(0.8);
     const [markersCollection, setMarkersCollection] =
       useState<MarkersCollection>([]);
     //Handlers
@@ -600,10 +594,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     }, [navigation]);
 
     useEffect(() => {
-      loadEarthquakeGeojson().then((data) => setEarthquakesGeojson(data));
-    }, []);
-
-    useEffect(() => {
       loadMarkersFromFirestore().then((data) => setMarkersCollection(data));
     }, []);
 
@@ -632,6 +622,8 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               mapTypeId="roadmap"
               scrollwheel={true}
               disableDefaultUI={false}
+              minZoom={14}
+              maxZoom={18}
             >
               {isHeatmapVisible && (
                 <WebHeatmap
@@ -640,7 +632,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
                   opacity={opacity}
                 />
               )}
-
               <MarkerWithInfoWindow
                 markers={pins}
                 selectedDate={selectedDate}
@@ -659,7 +650,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               <PlacesLibrary />
             </Map>
           </APIProvider>
-
           <Modal
             animationType="fade"
             transparent={true}
@@ -672,7 +662,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               selectedCrimeFilters={selectedCrimeFilters}
             />
           </Modal>
-
           <Modal
             animationType="fade"
             transparent={true}
@@ -691,7 +680,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               setMode={setMode}
             />
           </Modal>
-
           <Modal
             animationType="fade"
             transparent={true}

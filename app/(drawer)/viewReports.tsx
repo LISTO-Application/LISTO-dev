@@ -31,6 +31,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  firebase,
   getDocs,
   getFirestore,
 } from "@react-native-firebase/firestore";
@@ -43,6 +44,9 @@ import ClearFilter from "@/components/ClearFilter";
 import PaginationReport from "@/components/PaginationReport";
 import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
+import dayjs from "dayjs";
+import { format, formatDate, fromUnixTime } from "date-fns";
+import { Icon } from "@expo/vector-icons/build/createIconSet";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -61,6 +65,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       const querySnapshot = await getDocs(collection(db, "reports"));
       const reportList: Report[] = querySnapshot.docs.map((doc) => {
         const imageData = doc.data().image || {};
+        const date = doc.data().date;
+
+        const newDate = new Date(date._seconds * 1000);
 
         return {
           id: doc.id,
@@ -71,10 +78,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           coordinate: doc.data().coordinate,
           location: doc.data().location || "Unknown Location",
           name: doc.data().name || "Anonymous",
-          date: doc.data().date || [
-            "Unknown Date: ",
-            new Date().toDateString(),
-          ],
+          date: newDate || ["Unknown Date: ", new Date().toDateString()],
           time: doc.data().time || [
             "Unknown Time: ",
             new Date().toTimeString(),
@@ -84,14 +88,14 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             uri: imageData.uri || "Unknown Uri",
           },
           status: doc.data().status,
-          timeStamp: doc.data().timeStamp || new Date().toISOString(),
+          timestamp: doc.data().timestamp || new Date().toLocaleString(),
         };
       });
 
       // Sort the reports by date after fetching
       const sortedReports = reportList.sort((a, b) => {
-        const dateA = new Date(a.date[1]);
-        const dateB = new Date(b.date[1]);
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
         return dateA.getTime() - dateB.getTime(); // Sort in ascending order
       });
 
@@ -141,7 +145,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   };
   reports.forEach((report) => {
     const image = report.image;
-    console.log(image.uri);
   });
 
   //Animation to Hide side bar
@@ -180,10 +183,12 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           report.title.toLowerCase().includes(query) ||
           report.location.toLowerCase().includes(query) ||
           report.category.toLowerCase().includes(query) ||
-          report.date.toLowerCase().includes(query) ||
+          dayjs(new Date(report.date))
+            .format("YYYY-MM-DD")
+            .toLowerCase()
+            .includes(query) ||
           report.status.toLowerCase().includes(query) ||
-          report.additionalInfo.toLowerCase().includes(query) ||
-          report.date.includes(query)
+          report.additionalInfo.toLowerCase().includes(query)
         );
       });
     }
@@ -363,6 +368,16 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               } else {
                 iconSource = require("../../assets/images/question-mark.png");
               }
+
+              // const date = new Date(
+              //   report.date._seconds * 1000 + report.date._nanoseconds / 1000000
+              // );
+              const parsedDate = format(report.date, "yyyy-MM-dd");
+              console.log(parsedDate);
+              console.log(new Date(report.timestamp * 1000));
+              const timestamp = new Date(report.timestamp * 1000);
+              const localTime = dayjs(timestamp).format("hh:mm A");
+
               return (
                 <View key={report.id} style={webstyles.reportContainer}>
                   <Image source={iconSource} style={webstyles.reportIcon} />
@@ -380,7 +395,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                           fontWeight: "300",
                         }}
                       >
-                        {report.date}
+                        {parsedDate}
                       </Text>
                       <Text
                         style={{ flex: 1, color: "white", fontWeight: "300" }}
@@ -453,7 +468,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                         color="#DA4B46"
                       />
                     </TouchableOpacity>
-                    <Text style={webstyles.timeText}>{report.timeStamp}</Text>
+                    <Text style={webstyles.timeText}>{localTime}</Text>
                   </View>
                 </View>
               );

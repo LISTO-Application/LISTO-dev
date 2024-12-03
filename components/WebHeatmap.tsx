@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useEffect, useMemo } from "react";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { FeatureCollection, Point, GeoJsonProperties } from "geojson";
@@ -10,69 +10,46 @@ type HeatmapProps = {
   opacity: number;
 };
 
-type HeatmapData = {
-  location: google.maps.LatLng | null;
-  weight: number;
-};
-
 const WebHeatmap = ({ geojson, radius, opacity }: HeatmapProps) => {
   const map = useMap();
-  const visualization = useMapsLibrary("visualization");
+  const visual = useMapsLibrary("visualization");
+  const heatmapLayerRef = useRef<google.maps.visualization.HeatmapLayer | null>(
+    null
+  );
 
-  const heatmap = useMemo(() => {
-    if (!visualization || !map) {
-      console.warn("Google Maps visualization or map is not ready.");
-      return null;
+  useEffect(() => {
+    if (!map || !visual) {
+      console.error("Google Maps Visualization library is not loaded.");
+      return;
     }
-    console.log("Heatmap layer created.");
-    return new google.maps.visualization.HeatmapLayer({
-      radius: radius * 2,
-      opacity: opacity,
-      map: map,
+
+    const heatmapData = geojson.map((marker) => {
+      const [lat, lng] = marker.coordinate.split(",").map(Number);
+      return {
+        location: new google.maps.LatLng(lat, lng),
+        weight: marker.weight,
+      };
     });
-  }, [visualization, radius, opacity]);
-
-  useEffect(() => {
-    if (!heatmap) {
-      console.warn("Heatmap layer is not initialized.");
-      return;
-    }
-    if (!geojson || geojson.length === 0) {
-      console.warn("GeoJSON data is empty or invalid.");
-      return;
-    }
-    console.log("Setting heatmap data...");
-    const heatmapData: HeatmapData[] = geojson
-      .map((point) => {
-        const [lng, lat] = point.coordinate.split(",").map(Number);
-
-        if (isNaN(lng) || isNaN(lat)) {
-          console.warn(`Invalid coordinates found: ${point.coordinate}`);
-          return null;
-        }
-
-        const location = new google.maps.LatLng(lat, lng);
-        return location ? { location, weight: point.weight * 10 } : null;
-      })
-      .filter(
-        (item): item is google.maps.visualization.WeightedLocation =>
-          item !== null
-      );
-
-    if (heatmapData.length === 0) {
-      console.warn("No valid heatmap data to set.");
-      return;
+    if (!heatmapLayerRef.current) {
+      heatmapLayerRef.current = new visual.HeatmapLayer({
+        data: heatmapData,
+        radius,
+        opacity,
+        map,
+      });
     } else {
-      heatmap.setData(heatmapData);
-      console.log(`Heatmap data set with ${heatmapData.length} points.`);
+      heatmapLayerRef.current.setData(heatmapData);
+      heatmapLayerRef.current.set("radius", radius);
+      heatmapLayerRef.current.set("opacity", opacity);
     }
-  }, [heatmap, geojson]);
-  console.log(heatmap);
-  useEffect(() => {
-    if (!heatmap) return;
-    heatmap.setMap(map);
-    console.log("Heatmap layer added to the map.");
-  }, [heatmap, map]);
+    return () => {
+      if (heatmapLayerRef.current) {
+        heatmapLayerRef.current.setMap(null);
+        heatmapLayerRef.current = null;
+      }
+    };
+  }, [geojson, radius, opacity, map, visual]);
+
   return null;
 };
 

@@ -29,7 +29,7 @@ import SideBar from "@/components/SideBar";
 import { crimeImages, CrimeType } from "../(tabs)/data/marker";
 import { crimeType, DropdownCrimeTypes } from "./newReports";
 import DropDownPicker from "react-native-dropdown-picker";
-import { add } from "date-fns";
+import { add, format, subDays, subYears } from "date-fns";
 import DatePicker from "react-datepicker";
 import dayjs from "dayjs";
 import TitleCard from "@/components/TitleCard";
@@ -40,17 +40,20 @@ function EditReport({ navigation }: { navigation: any }) {
   const { report }: { report: any } = route.params as { report: Report };
 
   //Parsing the date
-  const editDate = report.date; //11-20-2024
+  console.log(report.date);
+  console.log(format(report.date, "yyyy-MM-dd"));
+  const editDate = format(report.date, "yyyy-MM-dd");
+  // const editDate = report.date; //11-20-2024
   const editTime = report.time; //04:02 PM
   const editedDateTime = `${editDate} ${editTime}`;
   const parsedEditedDateTime = new Date(editedDateTime);
   console.log(parsedEditedDateTime);
-  console.log(editDate, editTime);
+  // console.log(editDate, editTime);
 
   const [category, setCategory] = useState<DropdownCrimeTypes | null>(null);
   const [title, setTitle] = useState(report.title);
   const [name, setName] = useState(report.name);
-  const [date, setDate] = useState(report.date);
+  const [date, setDate] = useState(editDate);
   const [dateTime, setDateTime] = useState();
   const [time, setTime] = useState(report.time);
   const [selectedValue, setSelectedValue] = useState(report.category);
@@ -63,17 +66,18 @@ function EditReport({ navigation }: { navigation: any }) {
   };
 
   console.log(report);
-
   const handleSubmit = async () => {
     console.log("Crime Type:", selectedValue);
     console.log("Location:", location);
     console.log("Additional Information:", additionalInfo);
+    const formattedDate = new Date(date);
+    console.log("Formatted Date", formattedDate);
     const updatedReport = {
       ...report,
       name: name,
       title: title,
       additionalInfo: additionalInfo,
-      date: date,
+      date: formattedDate,
       time: time,
       icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
       category: selectedValue.toLowerCase(),
@@ -102,18 +106,20 @@ function EditReport({ navigation }: { navigation: any }) {
   const [items, setItems] = useState(crimeType);
 
   //Date
-  const [startDate, setStartDate] = useState<Date | null>(parsedEditedDateTime);
+  const [startDate, setStartDate] = useState<Date>(parsedEditedDateTime);
 
   useEffect(() => {
-    const dateInput = dayjs(startDate).format("MM-DD-YYYY");
+    const dateInput = startDate;
+    console.log("Date Input", format(dateInput, "yyyy-MM-dd"));
     const timeInput = dayjs(startDate).format("hh:mm A");
-    setDate(dateInput);
+    setDate(format(dateInput, "yyyy-MM-dd"));
     setTime(timeInput);
     console.log(startDate);
-
     console.log(dateInput, timeInput);
     console.log(date);
   }, [startDate]);
+  const minDate =
+    value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
 
   //Animation to Hide side bar
   const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
@@ -157,9 +163,7 @@ function EditReport({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     return (
       <View style={webstyles.container}>
-        {/* Sidebar */}
         <SideBar sideBarPosition={sideBarPosition} navigation={navigation} />
-        {/* Toggle Button */}
         <TouchableOpacity
           onPress={toggleSideBar}
           style={[
@@ -180,24 +184,19 @@ function EditReport({ navigation }: { navigation: any }) {
           ]}
         >
           <TitleCard />
-
           <ScrollView
             contentContainerStyle={[
               webstyles.reportList,
               isAlignedRight && { width: "75%" },
             ]}
           >
-            {/* Report Details */}
             <Text>Reporter's Username:</Text>
-            <TextInput value={name} />
-
-            <Text>Subject:</Text>
+            <TextInput value={name} /> <Text>Subject:</Text>
             <TextInput
               style={webstyles.inputField}
               value={title}
               onChangeText={setTitle}
             />
-
             <Text>Select Crime Type:</Text>
             <DropDownPicker
               open={open}
@@ -214,14 +213,12 @@ function EditReport({ navigation }: { navigation: any }) {
                 handleSelect(selectedItem);
               }}
             />
-
             <Text>Location:</Text>
             <TextInput
               style={webstyles.inputField}
               value={location}
               onChangeText={setLocation}
             />
-
             <Text>Date and Time Happened:</Text>
             <View style={{ flex: 1, flexDirection: "row" }}>
               <TextInput
@@ -240,13 +237,15 @@ function EditReport({ navigation }: { navigation: any }) {
             <View style={{ width: 250 }}>
               <DatePicker
                 selected={startDate}
-                onChange={(date) => setStartDate(date)}
+                onChange={(date: Date | null) => setStartDate(date)}
                 value={dateTime}
+                maxDate={new Date()}
+                minDate={minDate}
                 showTimeInput
+                showMonthYearDropdown
                 inline
               />
             </View>
-
             <Text>Additional Information:</Text>
             <TextInput
               style={webstyles.textArea}
@@ -255,15 +254,12 @@ function EditReport({ navigation }: { navigation: any }) {
               value={additionalInfo}
               onChangeText={setAdditionalInfo}
             />
-
             <Text>Image Upload:</Text>
             <TextInput
               style={webstyles.inputField}
               value="https://cloud.com/BarangayBatasan/Virus.img"
               editable={false}
             />
-
-            {/* Buttons */}
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}
