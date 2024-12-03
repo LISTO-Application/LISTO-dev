@@ -39,7 +39,7 @@ export default function TabLayout() {
       <AuthProvider>
         <NavigationContainer independent={true}>
           <Drawer.Navigator
-            initialRouteName="Emergency"
+            initialRouteName="Report Incident"
             screenOptions={({ route, navigation }) =>
               DrawerScreenOptions({ route, navigation })
             }
@@ -47,7 +47,6 @@ export default function TabLayout() {
               return <UserBanner {...props} />;
             }}
           >
-            <Drawer.Screen name="Emergency" component={Emergency} />
             <Drawer.Screen name="Report Incident" component={CrimeMap} />
             <Drawer.Screen name="Account" component={UserAccount} />
             <Drawer.Screen

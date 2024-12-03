@@ -14,7 +14,7 @@ export interface Report {
     | "carnapping"
     | "theft";
   title: string;
-  date: string;
+  date: Date;
   additionalInfo: string;
   location: string;
   coordinate: GeoPoint;
@@ -25,5 +25,5 @@ export interface Report {
     uri: string;
   };
   status: "PENDING" | "VALID" | "PENALIZED";
-  timeStamp: string; // Store time in a string format for simplicity
+  timestamp: number;
 }
