@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import React, { Component, useState } from "react";
 import { webstyles } from "@/styles/webstyles";
+import { format } from "date-fns";
+import dayjs from "dayjs";
 
 export default function ValidateReportCard({
   report,
@@ -23,6 +25,12 @@ export default function ValidateReportCard({
   ) => void;
 }) {
   const [isImageZoomVisible, setIsImageZoomVisible] = useState(false);
+  const parsedDate = format(report.date, "yyyy-MM-dd");
+  console.log(parsedDate);
+  console.log(new Date(report.timestamp * 1000));
+  const timestamp = new Date(report.timestamp * 1000);
+  const localTime = dayjs(timestamp).format("hh:mm A");
+  console.log(format(new Date(report.timestamp * 1000), "hh:mm a"));
 
   return (
     <View
@@ -71,7 +79,7 @@ export default function ValidateReportCard({
                 marginLeft: 10,
               }}
             >
-              {report.time} &nbsp; {report.date}
+              {parsedDate} &nbsp; {localTime}
             </Text>
           </View>
           {/* Report Category */}

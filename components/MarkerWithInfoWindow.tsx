@@ -21,12 +21,14 @@ export const MarkerWithInfoWindow = ({
   allMarkers,
   setMarkers,
   selectedCrimeFilters,
+  mode,
 }: {
   markers: MarkerType[];
   selectedDate: any;
   allMarkers: any;
   setMarkers: any;
   selectedCrimeFilters: CrimeFilter[];
+  mode: any;
 }) => {
   //Marker Details
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export const MarkerWithInfoWindow = ({
   const [filteredCrimeItems, setFilteredCrimeItems] = useState<MarkerType[]>(
     []
   );
+  console.log(markers);
   try {
     useEffect(() => {
       markers.forEach((marker) => {
@@ -55,19 +58,25 @@ export const MarkerWithInfoWindow = ({
     useEffect(() => {
       filterMarkers(selectedDate);
     }, [selectedCrimeFilters, selectedDate, allMarkers]);
-
     const filterMarkers = (date: any) => {
       let filteredMarkers = allMarkers;
 
       if (selectedDate) {
         const selectedMonth = dayjs(date).month() + 1;
         const selectedYear = dayjs(date).year();
+        const selectedDay = dayjs(date).get("D");
         filteredMarkers = filteredMarkers.filter((marker: any) => {
           const markerMonth = dayjs(marker.date).month() + 1;
           const markerYear = dayjs(marker.date).year();
-          return markerMonth === selectedMonth && markerYear === selectedYear;
+          const markerDay = dayjs(marker.date).get("D");
+          return (
+            markerMonth === selectedMonth &&
+            markerYear === selectedYear &&
+            markerDay === selectedDay
+          );
         });
       }
+
       console.log(
         "Selected Month:",
         selectedDate ? dayjs(selectedDate).month() + 1 : "None"
@@ -99,7 +108,10 @@ export const MarkerWithInfoWindow = ({
   };
 
   //To display them
-  const displayMarkers = filteredCrimeItems;
+  const displayMarkers =
+    mode === "single" || mode === "range" || mode === "multiple"
+      ? markers
+      : filteredCrimeItems;
 
   return (
     <>

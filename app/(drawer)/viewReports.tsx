@@ -377,6 +377,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               console.log(new Date(report.timestamp * 1000));
               const timestamp = new Date(report.timestamp * 1000);
               const localTime = dayjs(timestamp).format("hh:mm A");
+              console.log(format(new Date(report.timestamp * 1000), "hh:mm a"));
 
               return (
                 <View key={report.id} style={webstyles.reportContainer}>
@@ -395,7 +396,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                           fontWeight: "300",
                         }}
                       >
-                        {parsedDate}
+                        {parsedDate} &nbsp; {report.time}
                       </Text>
                       <Text
                         style={{ flex: 1, color: "white", fontWeight: "300" }}

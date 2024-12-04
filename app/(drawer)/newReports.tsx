@@ -133,14 +133,14 @@ export default function NewReports({
     if (!address || address.trim() === "") return null;
     const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
     const bounds = {
-      northeast: "14.7741,121.0947",
-      southwest: "14.6082,121.0244",
+      southeast: "14.649456,121.099608",
+      northwest: "14.694712,121.067647",
     };
     const region = "PH";
 
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
       address
-    )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`;
+    )}&bounds=${bounds.northwest}|${bounds.southeast}&region=${region}&key=${apiKey}`;
 
     try {
       const response = await fetch(url);
@@ -202,7 +202,7 @@ export default function NewReports({
     const defaultImage = require("../../assets/images/default-image.jpg");
     const defaultURI = Asset.fromModule(defaultImage).uri;
 
-    const timestamp = parse(time, "hh:mm a", new Date());
+    const timestamp = new Date();
     const unixTimestamp = Math.floor(timestamp.getTime() / 1000);
     console.log(defaultURI);
     const newReport = {
