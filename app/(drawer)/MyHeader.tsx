@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
   },
 
   mapModal: {
-    width: "90%",
+    width: "50%",
     height: "50%", // Adjust the height as needed
     backgroundColor: "white",
     borderRadius: 10,
