@@ -199,7 +199,11 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
         ...selectedMessageDetails,
         acknowledge: true, // Update acknowledge field locally
       };
-
+      setDistressMessagesCount((prevNotifs: any) => {
+        return prevNotifs.map((message: any) => {
+          message.id === updatedMessage.id ? updatedMessage : message;
+        });
+      });
       setSelectedMessageDetails(updatedMessage); // Update the selected message details state
       setMapModalVisible(false); // Close the modal after acknowledging
     } catch (error) {
@@ -481,7 +485,7 @@ const layoutStyles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 15,
-    paddingVertical: 30,
+    paddingVertical: 10,
     backgroundColor: "#115272",
   },
   iconGroup: {
@@ -493,7 +497,7 @@ const layoutStyles = StyleSheet.create({
     alignItems: "center",
   },
   icon: {
-    borderRadius: 25, // Increase radius to ensure the icon is centered
+    borderRadius: 15, // Increase radius to ensure the icon is centered
     borderWidth: 2,
     width: 50, // Size of the circle
     height: 50, // Size of the circle

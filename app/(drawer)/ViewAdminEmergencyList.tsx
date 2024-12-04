@@ -9,7 +9,8 @@ import {
   Dimensions,
   FlatList,
   Modal,
-  TouchableWithoutFeedback, Alert
+  TouchableWithoutFeedback,
+  Alert,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -17,13 +18,20 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 import { db } from "../FirebaseConfig";
 import { GeoPoint, Timestamp } from "@react-native-firebase/firestore";
 import "firebase/database";
-import { collection, getDocs, deleteDoc,doc} from "@react-native-firebase/firestore";
+import {
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+} from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { styles } from "@/styles/styles";
 import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
 import { Report } from "../(tabs)/data/reports";
 import PaginationReport from "@/components/PaginationReport";
+import { format } from "date-fns";
+import dayjs from "dayjs";
 
 export default function ViewAdminEmergencyList({
   navigation,
@@ -37,8 +45,6 @@ export default function ViewAdminEmergencyList({
   const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-
-
 
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -54,7 +60,13 @@ export default function ViewAdminEmergencyList({
         }
         const crimesArray: Report[] = crimesSnapshot.docs.map((doc) => {
           const imageData = doc.data().image || {};
+          let date = doc.data().date;
 
+          if (date && date._seconds) {
+            date = dayjs(date._seconds * 1000);
+          } else {
+            date = dayjs(date, ["MM/DD/YYYY", "MM-DD-YYYY"], true);
+          }
           return {
             id: doc.id,
             icon: doc.data().icon,
@@ -70,7 +82,7 @@ export default function ViewAdminEmergencyList({
               filename: imageData.filename || "Unknown Filename",
               uri: imageData.uri || "Unknown Uri",
             },
-            date: doc.data().date || "No date",
+            date: date || "No date",
             time: doc.data().time,
             category: doc.data().category || "No type",
             additionalInfo: doc.data().additionalInfo || "No info",
@@ -89,11 +101,14 @@ export default function ViewAdminEmergencyList({
     fetchIncidents(); // Fetch incidents when the component mounts
   }, []);
 
-  const formatDate = (timestamp: Timestamp | string): string => {
-    if (typeof timestamp === "string") return timestamp; // If it's already a string
-    const date = timestamp.toDate(); // Convert Firebase Timestamp to JavaScript Date
-    return date.toLocaleString(); // Format it as a readable string
-  };
+  // const formatDate = (date: Date | null): string => {
+  //   if (date && date._seconds) {
+  //     date = dayjs(date._seconds * 1000);
+  //   } else {
+  //     date = dayjs(date, ["MM/DD/YYYY", "MM-DD-YYYY"], true);
+  //   }
+  //   return format(date.toLocaleString(), "yyyy-MM-dd");
+  // };
 
   const formatCoordinates = (coordinates: GeoPoint): string => {
     return `Latitude: ${coordinates.latitude}, Longitude: ${coordinates.longitude}`;
@@ -141,10 +156,6 @@ export default function ViewAdminEmergencyList({
     setDeleteModalVisible(true);
   };
 
-
-  
-
-
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10; // Adjust this number based on how many reports per page
   const currentReports = filteredReports.slice(
@@ -174,7 +185,8 @@ export default function ViewAdminEmergencyList({
         return (
           report.title.toLowerCase().includes(query) ||
           report.category.toLowerCase().includes(query) ||
-          report.status.toLowerCase().includes(query)
+          report.status.toLowerCase().includes(query) ||
+          report.date.toString().includes(query)
         );
       });
     }
@@ -348,94 +360,125 @@ export default function ViewAdminEmergencyList({
             ]}
           >
             {currentReports.length > 0 ? (
-              currentReports.map((incident, index) => (
-                <View
-                  key={index}
-                  style={{
-                    marginBottom: 20,
-                    padding: 15,
-                    borderRadius: 8,
-                    backgroundColor: "#f9f9f9",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                  }}
-                >
-                  {/* Row: Title, Date, and Delete Button */}
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      {/* Left side: Title and Date */}
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            color: "#115272",
-          }}
-        >
-          {incident.category.charAt(0).toUpperCase() +
-            incident.category.slice(1)}
-        </Text>
-        <Text
-          style={{
-            color: "#115272",
-            fontSize: 14,
-            marginLeft: 10, // Space between title and date
-          }}
-        >
-          {formatDate(incident.date)}
-        </Text>
-      </View>
-      <TouchableOpacity
-  style={{ padding: 10 }}
-  onPress={() => handleDeleteRequest(incident.id)}
->
-  Unread
-</TouchableOpacity>
-      {/* Right side: Delete Button */}
-      <Modal
-  visible={isDeleteModalVisible}
-  animationType="fade"
-  transparent={true}
-  onRequestClose={() => setDeleteModalVisible(false)}
->
-  <TouchableWithoutFeedback onPress={() => setDeleteModalVisible(false)}>
-    <View style={[webstyles.modalContainer, { backgroundColor: 'transparent' }]}>
-      <TouchableWithoutFeedback>
-        <View style={webstyles.modalContent}>
-          <Text style={webstyles.modalHeader}>Confirm Read?</Text>
-          <Text style={webstyles.modalText}>
-            Do you acknowledge this
-          </Text>
-          <View style={webstyles.modalActions}>
-            <TouchableOpacity
-              style={[webstyles.modalButton, { backgroundColor: "#ccc" }]}
-              onPress={() => setDeleteModalVisible(false)}
-            >
-              <Text style={webstyles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[webstyles.modalButton, { backgroundColor: "#DA4B46" }]}
-              onPress={() => setDeleteModalVisible(false)}
-            >
-              <Text style={webstyles.modalButtonText}>Confirm</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </View>
-  </TouchableWithoutFeedback>
-</Modal>
-    </View>
+              currentReports.map((incident, index) => {
+                const date = incident.date;
+                const formattedDate = format(date, "yyyy-MM-dd");
+                return (
+                  <View
+                    key={index}
+                    style={{
+                      marginBottom: 20,
+                      padding: 15,
+                      borderRadius: 8,
+                      backgroundColor: "#f9f9f9",
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3.84,
+                    }}
+                  >
+                    {/* Row: Title, Date, and Delete Button */}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      {/* Left side: Title and Date */}
+                      <View
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 18,
+                            fontWeight: "bold",
+                            color: "#115272",
+                          }}
+                        >
+                          {incident.category.charAt(0).toUpperCase() +
+                            incident.category.slice(1)}
+                        </Text>
+                        <Text
+                          style={{
+                            color: "#115272",
+                            fontSize: 14,
+                            marginLeft: 10, // Space between title and date
+                          }}
+                        >
+                          {formattedDate}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={{ padding: 10 }}
+                        onPress={() => handleDeleteRequest(incident.id)}
+                      >
+                        Unread
+                      </TouchableOpacity>
+                      {/* Right side: Delete Button */}
+                      <Modal
+                        visible={isDeleteModalVisible}
+                        animationType="fade"
+                        transparent={true}
+                        onRequestClose={() => setDeleteModalVisible(false)}
+                      >
+                        <TouchableWithoutFeedback
+                          onPress={() => setDeleteModalVisible(false)}
+                        >
+                          <View
+                            style={[
+                              webstyles.modalContainer,
+                              { backgroundColor: "transparent" },
+                            ]}
+                          >
+                            <TouchableWithoutFeedback>
+                              <View style={webstyles.modalContent}>
+                                <Text style={webstyles.modalHeader}>
+                                  Confirm Read?
+                                </Text>
+                                <Text style={webstyles.modalText}>
+                                  Do you acknowledge this
+                                </Text>
+                                <View style={webstyles.modalActions}>
+                                  <TouchableOpacity
+                                    style={[
+                                      webstyles.modalButton,
+                                      { backgroundColor: "#ccc" },
+                                    ]}
+                                    onPress={() => setDeleteModalVisible(false)}
+                                  >
+                                    <Text style={webstyles.modalButtonText}>
+                                      Cancel
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={[
+                                      webstyles.modalButton,
+                                      { backgroundColor: "#DA4B46" },
+                                    ]}
+                                    onPress={() => setDeleteModalVisible(false)}
+                                  >
+                                    <Text style={webstyles.modalButtonText}>
+                                      Confirm
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </TouchableWithoutFeedback>
+                          </View>
+                        </TouchableWithoutFeedback>
+                      </Modal>
+                    </View>
 
-    {/* Coordinates */}
-    <Text
-      style={{ color: "#115272", fontSize: 14, marginTop: 10 }}
-    >
-      {formatCoordinates(incident.coordinate)}
-    </Text>
-  </View>
-              ))
+                    {/* Coordinates */}
+                    <Text
+                      style={{ color: "#115272", fontSize: 14, marginTop: 10 }}
+                    >
+                      {formatCoordinates(incident.coordinate)}
+                    </Text>
+                  </View>
+                );
+              })
             ) : (
               <Text style={{ textAlign: "center", marginTop: 20 }}>
                 No incidents available.
@@ -453,5 +496,4 @@ export default function ViewAdminEmergencyList({
       </View>
     );
   }
-  
 }
