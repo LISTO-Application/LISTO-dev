@@ -36,6 +36,7 @@ import ValidateReportCard from "@/components/ValidateReportCard";
 import PaginationReport from "@/components/PaginationReport";
 import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
+import dayjs from "dayjs";
 
 const database = db;
 
@@ -130,7 +131,9 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
         const querySnapshot = await getDocs(collection(db, "reports"));
         const reportList: Report[] = querySnapshot.docs.map((doc) => {
           const imageData = doc.data().image || {};
+          const date = doc.data().date;
 
+          const newDate = new Date(date._seconds * 1000);
           return {
             id: doc.id,
             icon: doc.data().icon || "",
@@ -140,10 +143,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             location: doc.data().location || "Unknown Location",
             coordinate: doc.data().coordinate,
             name: doc.data().name || "Anonymous",
-            date: doc.data().date || [
-              "Unknown Date: ",
-              new Date().toDateString(),
-            ],
+            date: newDate || ["Unknown Date: ", new Date().toDateString()],
             time: doc.data().time || [
               "Unknown Time: ",
               new Date().toTimeString(),
@@ -153,7 +153,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
               uri: imageData.uri || "Unknown Uri",
             },
             status: doc.data().status || "PENDING",
-            timeStamp: doc.data().timeStamp || new Date().toISOString(),
+            timestamp: doc.data().timestamp || new Date().toISOString(),
           };
         });
         setReports(reportList);
@@ -232,18 +232,20 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     if (searchQuery) {
       filtered = filtered.filter(
         (report: {
+          time: any;
           title: string;
           location: string;
           category: string;
-          date: string;
+          date: Date;
           status: string;
         }) => {
           const query = searchQuery.toLowerCase();
+          const date = dayjs(report.date).format("YYYY-MM-DD");
           return (
             report.title.toLowerCase().includes(query) ||
             report.location.toLowerCase().includes(query) ||
             report.category.toLowerCase().includes(query) ||
-            report.date.toLowerCase().includes(query) ||
+            date.toLowerCase().includes(query) ||
             report.status.toLowerCase().includes(query)
           );
         }

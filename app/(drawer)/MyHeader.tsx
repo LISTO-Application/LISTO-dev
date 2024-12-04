@@ -14,9 +14,10 @@ import {
   collection,
   query,
   where,
-  getDocs, onSnapshot
+  getDocs,
+  onSnapshot,
 } from "@react-native-firebase/firestore";
-import MapView, { Marker } from 'react-native-maps'; 
+import MapView, { Marker } from "react-native-maps";
 // TypeScript Types
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 
@@ -42,35 +43,43 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
   const [exclamationModalVisible, setExclamationModalVisible] = useState(false);
   const [distressMessagesCount, setDistressMessagesCount] = useState(0);
   const [distressMessagesDetails, setDistressMessagesDetails] = useState<
-  { emergencyType: string; addInfo: string; location: { latitude: number; longitude: number }; timestamp: Date }[]
->([]);
+    {
+      emergencyType: string;
+      addInfo: string;
+      location: { latitude: number; longitude: number };
+      timestamp: Date;
+    }[]
+  >([]);
 
-const [mapModalVisible, setMapModalVisible] = useState(false); // State for map modal visibility
-const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [mapModalVisible, setMapModalVisible] = useState(false); // State for map modal visibility
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
-const quezonCityRegion = {
-  latitude: 14.5995, // Quezon City's latitude
-  longitude: 121.0394, // Quezon City's longitude
-  latitudeDelta: 0.0001, // Adjust the zoom level to suit your needs
-  longitudeDelta: 0.0001,
-};
+  const quezonCityRegion = {
+    latitude: 14.5995, // Quezon City's latitude
+    longitude: 121.0394, // Quezon City's longitude
+    latitudeDelta: 0.0001, // Adjust the zoom level to suit your needs
+    longitudeDelta: 0.0001,
+  };
 
-const handleRegionChange = (region: any) => {
-  const { latitude, longitude } = quezonCityRegion;
-  const delta = 0.01;
+  const handleRegionChange = (region: any) => {
+    const { latitude, longitude } = quezonCityRegion;
+    const delta = 0.01;
 
-  // Lock the map region to QC only
-  if (
-    region.latitude < latitude - delta ||
-    region.latitude > latitude + delta ||
-    region.longitude < longitude - delta ||
-    region.longitude > longitude + delta
-  ) {
-    // If user moves outside QC, reset the region back to QC center
-    region.latitude = latitude;
-    region.longitude = longitude;
-  }
-};
+    // Lock the map region to QC only
+    if (
+      region.latitude < latitude - delta ||
+      region.latitude > latitude + delta ||
+      region.longitude < longitude - delta ||
+      region.longitude > longitude + delta
+    ) {
+      // If user moves outside QC, reset the region back to QC center
+      region.latitude = latitude;
+      region.longitude = longitude;
+    }
+  };
 
   // Fetch the count and titles of new reports whenever the component mounts or updates
   useEffect(() => {
@@ -137,36 +146,39 @@ const handleRegionChange = (region: any) => {
       console.error("Location is undefined or null");
       return;
     }
-  
+
     const locationParts = location.split(",");
     if (locationParts.length < 2) {
       console.error("Invalid location format");
       return;
     }
-  
+
     const [latitudeStr, longitudeStr] = locationParts;
     const latitude = parseFloat(latitudeStr.trim());
     const longitude = parseFloat(longitudeStr.trim());
-  
+
     if (isNaN(latitude) || isNaN(longitude)) {
       console.error("Invalid latitude or longitude");
       return;
     }
-  
+
     // Set the selected location and show the map modal
     setSelectedLocation({ latitude, longitude });
-    setMapModalVisible(true); 
+    setMapModalVisible(true);
   };
 
   const closeModal = () => {
     setModalVisible(false);
   };
 
- 
+  const [userRole, setUserRole] = useState("User");
+
+  const toggleUserRole = () => {
+    setUserRole((prevRole) => (prevRole === "Admin" ? "User" : "Admin"));
+  };
 
   return (
     <View style={layoutStyles.headerContainer}>
-      {/* Drawer Menu Icon */}
       <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
         <MaterialIcons
           name="menu"
@@ -175,50 +187,58 @@ const handleRegionChange = (region: any) => {
           style={layoutStyles.icon}
         />
       </TouchableOpacity>
-  
+
       {/* Notification and Exclamation Icons */}
-      <View style={layoutStyles.iconGroup}>
-        {/* Notification Icon */}
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={layoutStyles.buttonContainer}
-        >
-          <View style={layoutStyles.iconContainer}>
-            <MaterialIcons
-              name="notifications"
-              size={30}
-              color="#115272"
-              style={layoutStyles.iconInner}
-            />
-            {newReportsCount > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationText}>{newReportsCount}</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-  
-        {/* Exclamation Icon */}
-        <TouchableOpacity
-      onPress={() => setExclamationModalVisible(true)} // Show modal for distress messages
-      style={layoutStyles.buttonContainer}
-    >
-      <View style={layoutStyles.iconContainer}>
-        <MaterialIcons
-          name="error"
-          size={30}
-          color="#115272"
-          style={layoutStyles.iconInner}
-        />
-        {distressMessagesCount > 0 && (
-          <View style={styles.notificationBadge}>
-            <Text style={styles.notificationText}>{distressMessagesCount}</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-      </View>
-  
+      <Button
+        title={`Switch to ${userRole === "Admin" ? "User" : "Admin"}`}
+        onPress={toggleUserRole}
+      />
+      {userRole === "Admin" ? (
+        <View style={layoutStyles.iconGroup}>
+          {/* Notification Icon */}
+
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={layoutStyles.buttonContainer}
+          >
+            <View style={layoutStyles.iconContainer}>
+              <MaterialIcons
+                name="notifications"
+                size={30}
+                color="#115272"
+                style={layoutStyles.iconInner}
+              />
+              {newReportsCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationText}>{newReportsCount}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          {/* Exclamation Icon */}
+          <TouchableOpacity
+            onPress={() => setExclamationModalVisible(true)} // Show modal for distress messages
+            style={layoutStyles.buttonContainer}
+          >
+            <View style={layoutStyles.iconContainer}>
+              <MaterialIcons
+                name="error"
+                size={30}
+                color="#115272"
+                style={layoutStyles.iconInner}
+              />
+              {distressMessagesCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationText}>
+                    {distressMessagesCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      ) : null}
       {/* Notification Modal */}
       <Modal
         visible={modalVisible}
@@ -240,11 +260,15 @@ const handleRegionChange = (region: any) => {
                 </Text>
               ))}
             </ScrollView>
-            <Button title="Close" onPress={() => setModalVisible(false)} color="#115272" />
+            <Button
+              title="Close"
+              onPress={() => setModalVisible(false)}
+              color="#115272"
+            />
           </View>
         </View>
       </Modal>
-  
+
       {/* Exclamation Modal */}
       <Modal
         visible={exclamationModalVisible}
@@ -264,20 +288,28 @@ const handleRegionChange = (region: any) => {
                 const emergencyTypes = message.emergencyType || {}; // Ensure emergencyType exists
 
                 // Cast to Record<string, boolean> to avoid TypeScript errors
-                const typedEmergencyTypes = emergencyTypes as Record<string, boolean>;
+                const typedEmergencyTypes = emergencyTypes as Record<
+                  string,
+                  boolean
+                >;
 
                 // Filter out the types that are true
                 const activeEmergencyTypes = Object.keys(typedEmergencyTypes)
-                  .filter(key => typedEmergencyTypes[key] === true)
+                  .filter((key) => typedEmergencyTypes[key] === true)
                   .join(", ");
 
                 return (
                   <Text key={index} style={styles.reportTitle}>
                     {activeEmergencyTypes} - {message.addInfo} -{" "}
-                    <Text onPress={() => handleLocationClick(`${message.location.latitude}, ${message.location.longitude}`)}>
-
-  Click here for location
-</Text>
+                    <Text
+                      onPress={() =>
+                        handleLocationClick(
+                          `${message.location.latitude}, ${message.location.longitude}`
+                        )
+                      }
+                    >
+                      Click here for location
+                    </Text>
                   </Text>
                 );
               })}
@@ -298,21 +330,29 @@ const handleRegionChange = (region: any) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.mapModal}>
-          <MapView
-  provider="google"
-  style={{ flex: 1 }}
-  region={selectedLocation ? {
-    latitude: selectedLocation.latitude,
-    longitude: selectedLocation.longitude,
-    latitudeDelta: 0.01, // Adjust the zoom level to fit your needs
-    longitudeDelta: 0.01,
-  } : quezonCityRegion} 
-  onRegionChangeComplete={handleRegionChange}
->
-  {selectedLocation && (
-    <Marker coordinate={selectedLocation} title="Selected Location" />
-  )}
-</MapView>
+            <MapView
+              provider="google"
+              style={{ flex: 1 }}
+              minZoomLevel={5}
+              region={
+                selectedLocation
+                  ? {
+                      latitude: selectedLocation.latitude,
+                      longitude: selectedLocation.longitude,
+                      latitudeDelta: 0.01, // Adjust the zoom level to fit your needs
+                      longitudeDelta: 0.01,
+                    }
+                  : quezonCityRegion
+              }
+              onRegionChangeComplete={handleRegionChange}
+            >
+              {selectedLocation && (
+                <Marker
+                  coordinate={selectedLocation}
+                  title="Selected Location"
+                />
+              )}
+            </MapView>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setMapModalVisible(false)}
@@ -353,7 +393,7 @@ const layoutStyles = StyleSheet.create({
     justifyContent: "center", // Horizontally center the icon
     alignItems: "center", // Vertically center the icon
     lineHeight: 45, // Ensure text inside is centered vertically (if applicable)
-    textAlign: "center",// Ensure text is centered if any
+    textAlign: "center", // Ensure text is centered if any
   },
 
   iconContainer: {
@@ -378,7 +418,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
-  }, headerContainer: {
+  },
+  headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 10,

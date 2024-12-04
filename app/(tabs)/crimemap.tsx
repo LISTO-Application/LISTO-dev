@@ -57,7 +57,8 @@ import { styles } from "@/styles/styles";
 const toggler = require("../../assets/images/toggler.png");
 const filter = require("../../assets/images/filter.png");
 const heatmap = require("../../assets/images/heatmap.png");
-const marker = require("../../assets/images/marker-icon.png");
+const marker = require("../../assets/images/marker.png");
+const markerRed = require("../../assets/images/marker-red.png");
 const leftArrow = require("../../assets/images/left-arrow-icon.png");
 const rightArrow = require("../../assets/images/right-arrow-icon.png");
 
@@ -186,6 +187,13 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
         filterSheetRef.current?.close() || calendarSheetRef.current?.close();
     }, [])
   );
+  const [isMarkersVisible, setIsMarkersVisible] = useState(false);
+  const toggleMarkers = useCallback(() => {
+    setIsMarkersVisible((prev) => {
+      const newState = !prev;
+      return newState;
+    });
+  }, []);
   //HEAT MAP SETTINGS
   // Static array of points for testing
   const heatmapPoints = heatmapData;
@@ -509,11 +517,15 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     //Modal show
     const [toggleModal, setToggleModal] = useState(false);
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+
     const [showError, setShowError] = useState(false);
     //Date selection tool
     const [selectedDate, setSelectedDate] = useState(dayjs(new Date()));
     const [dateFunction, setDateFunction] = useState(selectedDate);
+    // console.log("Crime Map date function", dateFunction.format("YYYY-MM-DD"));
+
     const [mode, setMode] = useState<ModeType>("single");
+    console.log(mode);
     //All Markers
     const [allMarkers, setAllMarkers] = useState<MarkerType[]>([]);
     const [pins, setMarkers] = useState<MarkerType[]>([]);
@@ -558,7 +570,15 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
           querySnapshot.docs.map(async (doc) => {
             const coordinate = doc.data().coordinate;
             const location = doc.data().location;
+            let date = doc.data().date;
 
+            if (date && date._seconds) {
+              date = dayjs(date._seconds * 1000);
+            } else {
+              date = dayjs(date, ["MM/DD/YYYY", "MM-DD-YYYY"], true);
+            }
+
+            console.log("Date marker", date.format("YYYY-MM-DD"));
             if (!coordinate) {
               console.warn("Skipping invalid location:", location);
               return null;
@@ -568,7 +588,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               title: doc.data().title,
               location: doc.data().location,
               coordinate: coordinate,
-              date: doc.data().date,
+              date: date.isValid() ? date.format("YYYY-MM-DD") : null,
               details: doc.data().additionalInfo,
               crime: doc.data().category,
               image: crimeImages[doc.data().category as CrimeType],
@@ -632,13 +652,18 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
                   opacity={opacity}
                 />
               )}
-              <MarkerWithInfoWindow
-                markers={pins}
-                selectedDate={selectedDate}
-                allMarkers={allMarkers}
-                setMarkers={setMarkers}
-                selectedCrimeFilters={selectedCrimeFilters}
-              />
+
+              {isMarkersVisible && (
+                <MarkerWithInfoWindow
+                  markers={pins}
+                  selectedDate={selectedDate}
+                  allMarkers={allMarkers}
+                  setMarkers={setMarkers}
+                  selectedCrimeFilters={selectedCrimeFilters}
+                  mode={mode}
+                />
+              )}
+
               <View
                 style={{
                   flex: 1,
@@ -739,6 +764,22 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
             />
           </Pressable>
           <FilterHeatMap heatmap={heatmap} toggleHeatmap={toggleHeatmap} />
+          <Pressable
+            style={{
+              position: "absolute",
+              top: 300,
+              right: 20,
+            }}
+            onPress={toggleMarkers}
+          >
+            <Image
+              style={{
+                width: 50,
+                height: 50,
+              }}
+              source={isMarkersVisible ? markerRed : marker}
+            />
+          </Pressable>
           <DateDisplay
             markers={pins}
             allMarkers={allMarkers}
@@ -749,6 +790,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
             setSelectedDate={setSelectedDate}
             setDateFunction={setDateFunction}
             setShowError={setShowError}
+            setAllMarkers={setAllMarkers}
           />
         </SpacerView>
       </GestureHandlerRootView>

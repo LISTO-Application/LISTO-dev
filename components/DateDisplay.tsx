@@ -24,6 +24,7 @@ const DateDisplay = ({
   markers,
   allMarkers,
   setShowError,
+  setAllMarkers,
 }: {
   allMarkers: MarkerType[];
   selectedDate: dayjs.Dayjs;
@@ -34,6 +35,7 @@ const DateDisplay = ({
   setDateFunction: any;
   markers: MarkerType[];
   setShowError: (visible: boolean) => void;
+  setAllMarkers: any;
 }) => {
   const filterMarkersbyMonth = () => {
     try {

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import React, { useCallback, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, { ModeType, DateType } from "react-native-ui-datepicker";
@@ -65,7 +65,7 @@ const DateModal = ({
           "Is it same?: ",
           dayjs(markerDate).isSame(selectedDates as Date, "day")
         );
-        console.log("Date Function: ", dateFunction);
+        // console.log("Date Function: ", dateFunction.format("YYYY-MM-DD"));
         if (mode === "single") {
           return dayjs(markerDate).isSame(selectedDates as Date, "day");
         } else if (mode === "range") {
@@ -97,7 +97,7 @@ const DateModal = ({
     } else if (mode === "multiple" && dates) {
       selectedDateInput = dates;
     } else {
-      console.warn("Incomplete date selection");
+      alert("Incomplete date selection, please selected a date first.");
       return;
     }
     filterMarkersByDate(mode, selectedDateInput);
