@@ -32,6 +32,7 @@ import { Report } from "../(tabs)/data/reports";
 import PaginationReport from "@/components/PaginationReport";
 import { format } from "date-fns";
 import dayjs from "dayjs";
+import * as XLSX from "xlsx";
 
 export default function ViewAdminEmergencyList({
   navigation,
@@ -154,6 +155,56 @@ export default function ViewAdminEmergencyList({
   const handleDeleteRequest = (reportId: string) => {
     setSelectedReportId(reportId);
     setDeleteModalVisible(true);
+  };
+
+  const handleExport = () => {
+    if (filteredReports.length === 0) {
+      alert("No reports to export.");
+      return;
+    }
+
+    // Prepare data for export
+    const dataToExport = filteredReports.map((report, index) => {
+      let formattedDate = "N/A"; // Default to N/A if date is invalid
+
+      if (report.date) {
+        if (typeof report.date === "string" && report.date !== "###") {
+          formattedDate = report.date;
+        } else if (report.date instanceof Timestamp) {
+          formattedDate = formatDate(report.date);
+        }
+      }
+
+      return {
+        "S. No.": index + 1,
+        Category:
+          report.category.charAt(0).toUpperCase() + report.category.slice(1),
+        Date: formattedDate,
+        Coordinates: formatCoordinates(report.coordinate),
+      };
+    });
+
+    // Create a new worksheet (this will help with formatting for CSV export)
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+    // Convert worksheet to CSV
+    const csvData = XLSX.utils.sheet_to_csv(worksheet);
+
+    // Trigger download of the CSV file
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "FilteredReports.csv"); // Save as CSV
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImport = () => {
+    // Import logic (e.g., open file picker or parse imported data)
+    console.log("Importing data...");
   };
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -315,6 +366,44 @@ export default function ViewAdminEmergencyList({
           ]}
         >
           <TitleCard />
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              marginTop: 10,
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#115272",
+                paddingVertical: 12, // Increased padding
+                paddingHorizontal: 20, // Increased padding
+                borderRadius: 8, // Increased border radius for a more rounded button
+                marginRight: 10, // Adjusted spacing between buttons
+              }}
+              onPress={handleExport} // Define your export logic here
+            >
+              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>
+                Export
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#115272",
+                paddingVertical: 12, // Increased padding
+                paddingHorizontal: 20, // Increased padding
+                borderRadius: 8, // Increased border radius for a more rounded button
+                marginRight: 10, // Adjusted spacing between buttons
+              }}
+              onPress={handleImport} // Define your import logic here
+            >
+              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>
+                Import
+              </Text>
+            </TouchableOpacity>
+          </View>
           <SearchSort
             reports={crimes}
             setCategoryModalVisible={setCategoryModalVisible}
@@ -485,6 +574,7 @@ export default function ViewAdminEmergencyList({
               </Text>
             )}
           </ScrollView>
+
           <PaginationReport
             filteredReports={filteredReports}
             reportsPerPage={reportsPerPage}
