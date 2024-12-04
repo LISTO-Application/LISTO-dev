@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import {
   where,
   getDocs,
   onSnapshot,
+  updateDoc,
+  doc,
 } from "@react-native-firebase/firestore";
 import MapView, { Marker } from "react-native-maps";
 // TypeScript Types
@@ -23,7 +25,17 @@ import { DrawerNavigationProp } from "@react-navigation/drawer";
 
 // Component Imports
 import { ThemedButton } from "@/components/ThemedButton";
-
+import {
+  Map,
+  APIProvider,
+  useMapsLibrary,
+  useMap,
+  MapMouseEvent,
+  Pin,
+  AdvancedMarker,
+  InfoWindow,
+  useAdvancedMarkerRef,
+} from "@vis.gl/react-google-maps";
 // Type for Navigation
 type DrawerParamList = {
   emergency: undefined;
@@ -48,7 +60,9 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
       addInfo: string;
       location: { latitude: number; longitude: number };
       timestamp: Date;
-    }[]
+      id: string;
+      acknowledge: boolean;
+    }[] // Adding the 'id' property
   >([]);
 
   const [mapModalVisible, setMapModalVisible] = useState(false); // State for map modal visibility
@@ -57,29 +71,14 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
     longitude: number;
   } | null>(null);
 
-  const quezonCityRegion = {
-    latitude: 14.5995, // Quezon City's latitude
-    longitude: 121.0394, // Quezon City's longitude
-    latitudeDelta: 0.0001, // Adjust the zoom level to suit your needs
-    longitudeDelta: 0.0001,
-  };
+  const position = { lat: 14.685992094228787, lng: 121.07589171824928 };
 
-  const handleRegionChange = (region: any) => {
-    const { latitude, longitude } = quezonCityRegion;
-    const delta = 0.01;
-
-    // Lock the map region to QC only
-    if (
-      region.latitude < latitude - delta ||
-      region.latitude > latitude + delta ||
-      region.longitude < longitude - delta ||
-      region.longitude > longitude + delta
-    ) {
-      // If user moves outside QC, reset the region back to QC center
-      region.latitude = latitude;
-      region.longitude = longitude;
-    }
-  };
+  const [mapRegion, setMapRegion] = useState({
+    latitude: 0,
+    longitude: 0,
+    latitudeDelta: 0.1, // Controls zoom level
+    longitudeDelta: 0.1, // Controls zoom level
+  });
 
   // Fetch the count and titles of new reports whenever the component mounts or updates
   useEffect(() => {
@@ -110,62 +109,104 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
           const messagesDetails = snapshot.docs.map((doc) => {
             const data = doc.data();
             const timestamp = data.timestamp;
-
-            // Convert the Unix timestamp (milliseconds) into a Date object
             const parsedTimestamp = new Date(timestamp);
-
-            // Handle location, which is a Firestore GeoPoint (latitude, longitude)
             const location = data.location;
-            const latitude = location.latitude; // Extract latitude from GeoPoint
-            const longitude = location.longitude; // Extract longitude from GeoPoint
+            const latitude = location.latitude;
+            const longitude = location.longitude;
 
-            // Construct the message details
             return {
               emergencyType: data.emergencyType || {},
               addInfo: data.addInfo || "",
-              location: { latitude, longitude }, // Use extracted latitude and longitude
-              timestamp: parsedTimestamp, // Store timestamp as Date object
+              location: { latitude, longitude },
+              timestamp: parsedTimestamp,
+              id: doc.id, // Document ID
+              acknowledge: data.acknowledged || false,
             };
           });
 
-          setDistressMessagesCount(messagesDetails.length); // Set the count of messages
-          setDistressMessagesDetails(messagesDetails); // Update the state with the details
+          setDistressMessagesCount(messagesDetails.length);
+          setDistressMessagesDetails(messagesDetails);
         } else {
-          setDistressMessagesCount(0); // No distress messages
-          setDistressMessagesDetails([]); // Clear the details
+          setDistressMessagesCount(0);
+          setDistressMessagesDetails([]);
         }
       } catch (error) {
-        console.error("Error fetching distress messages:", error); // Handle errors
+        console.error("Error fetching distress messages:", error);
       }
     };
+
     fetchDistressMessages();
   }, []);
 
+  const [selectedMessageDetails, setSelectedMessageDetails] = useState<{
+    emergencyType: string;
+    addInfo: string;
+    location: { latitude: number; longitude: number };
+    timestamp: Date;
+    id: string; // Assuming you're using Firestore doc ID as a string
+  } | null>(null);
+
   const handleLocationClick = (location: string) => {
-    if (!location) {
-      console.error("Location is undefined or null");
-      return;
+    try {
+      const [latitudeStr, longitudeStr] = location.split(",");
+      const latitude = parseFloat(latitudeStr.trim());
+      const longitude = parseFloat(longitudeStr.trim());
+
+      if (isNaN(latitude) || isNaN(longitude)) {
+        throw new Error("Invalid latitude or longitude.");
+      }
+
+      // Find the corresponding distress message based on the clicked location
+      const selectedMessage = distressMessagesDetails.find(
+        (message) =>
+          message.location.latitude === latitude &&
+          message.location.longitude === longitude
+      );
+
+      if (selectedMessage) {
+        setSelectedLocation({ latitude, longitude });
+        setSelectedMessageDetails(selectedMessage); // Set the selected message details for display
+
+        // Set the map region to center on the clicked location with zoom level
+        setMapRegion({
+          latitude,
+          longitude,
+          latitudeDelta: 0.05, // Zoom in
+          longitudeDelta: 0.05, // Zoom in
+        });
+
+        setMapModalVisible(true); // Show the map modal
+      } else {
+        console.warn("No matching message found for the clicked location.");
+      }
+    } catch (error) {
+      console.error("Error parsing location:", error);
     }
-
-    const locationParts = location.split(",");
-    if (locationParts.length < 2) {
-      console.error("Invalid location format");
-      return;
-    }
-
-    const [latitudeStr, longitudeStr] = locationParts;
-    const latitude = parseFloat(latitudeStr.trim());
-    const longitude = parseFloat(longitudeStr.trim());
-
-    if (isNaN(latitude) || isNaN(longitude)) {
-      console.error("Invalid latitude or longitude");
-      return;
-    }
-
-    // Set the selected location and show the map modal
-    setSelectedLocation({ latitude, longitude });
-    setMapModalVisible(true);
   };
+
+  const handleAcknowledge = async () => {
+    if (!selectedMessageDetails) return;
+
+    try {
+      // Send request to Firestore to update the 'acknowledged' field in the database
+      const messageRef = doc(db, "distress", selectedMessageDetails.id);
+      await updateDoc(messageRef, {
+        acknowledged: true, // Mark as acknowledged
+      });
+
+      // Update the local state to reflect the acknowledged status
+      const updatedMessage = {
+        ...selectedMessageDetails,
+        acknowledge: true, // Update acknowledge field locally
+      };
+
+      setSelectedMessageDetails(updatedMessage); // Update the selected message details state
+      setMapModalVisible(false); // Close the modal after acknowledging
+    } catch (error) {
+      console.error("Error acknowledging message:", error);
+    }
+  };
+  // Log the region whenever it changes (for debugging)
 
   const closeModal = () => {
     setModalVisible(false);
@@ -176,6 +217,9 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
   const toggleUserRole = () => {
     setUserRole((prevRole) => (prevRole === "Admin" ? "User" : "Admin"));
   };
+  useEffect(() => {
+    console.log("Selected Location:", selectedLocation);
+  }, [selectedLocation]);
 
   return (
     <View style={layoutStyles.headerContainer}>
@@ -283,6 +327,7 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
                 ? `${distressMessagesCount} new distress messages`
                 : "No new distress messages"}
             </Text>
+
             <ScrollView style={styles.reportListContainer}>
               {distressMessagesDetails.map((message, index) => {
                 const emergencyTypes = message.emergencyType || {}; // Ensure emergencyType exists
@@ -299,21 +344,26 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
                   .join(", ");
 
                 return (
-                  <Text key={index} style={styles.reportTitle}>
-                    {activeEmergencyTypes} - {message.addInfo} -{" "}
-                    <Text
-                      onPress={() =>
-                        handleLocationClick(
-                          `${message.location.latitude}, ${message.location.longitude}`
-                        )
-                      }
-                    >
-                      Click here for location
+                  <View key={index} style={styles.cardContainer}>
+                    <Text style={styles.label}>Emergency Type:</Text>{" "}
+                    {activeEmergencyTypes} - {message.addInfo}
+                    <Text>
+                      <Text
+                        style={styles.locationText}
+                        onPress={() =>
+                          handleLocationClick(
+                            `${message.location.latitude}, ${message.location.longitude}`
+                          )
+                        }
+                      >
+                        Show Marker Location
+                      </Text>
                     </Text>
-                  </Text>
+                  </View>
                 );
               })}
             </ScrollView>
+
             <Button
               title="Close"
               onPress={() => setExclamationModalVisible(false)}
@@ -329,37 +379,96 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
         onRequestClose={() => setMapModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.mapModal}>
-            <MapView
-              provider="google"
-              style={{ flex: 1 }}
-              minZoomLevel={5}
-              region={
-                selectedLocation
-                  ? {
-                      latitude: selectedLocation.latitude,
-                      longitude: selectedLocation.longitude,
-                      latitudeDelta: 0.01, // Adjust the zoom level to fit your needs
-                      longitudeDelta: 0.01,
-                    }
-                  : quezonCityRegion
-              }
-              onRegionChangeComplete={handleRegionChange}
-            >
-              {selectedLocation && (
-                <Marker
-                  coordinate={selectedLocation}
-                  title="Selected Location"
-                />
+          <APIProvider
+            apiKey="AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"
+            region="PH"
+          >
+            <View style={styles.mapModal}>
+              <Map
+                center={position}
+                zoom={18} // Increase the zoom level for a more zoomed-in view
+                gestureHandling="greedy"
+                mapTypeControl={true}
+                streetViewControl={false}
+                mapId="5cc51025f805d25d"
+                mapTypeId="roadmap"
+                scrollwheel={true}
+                disableDefaultUI={false}
+                minZoom={10}
+                maxZoom={17} // Allow zooming in to a higher level
+              >
+                <AdvancedMarker position={position} title="Selected Location" />
+              </Map>
+
+              {/* Distress Message Details - No scroll */}
+              {selectedMessageDetails && (
+                <View style={styles.distressMessagesContainer}>
+                  <View style={styles.cardContainer}>
+                    {/* Extracting active emergency types */}
+                    <Text style={styles.reportTitle}>
+                      <Text style={styles.label}>Emergency Type: </Text>
+                      {(() => {
+                        // Ensure emergencyType exists and cast to Record<string, boolean>
+                        const emergencyTypes =
+                          selectedMessageDetails.emergencyType || {};
+                        const typedEmergencyTypes = emergencyTypes as Record<
+                          string,
+                          boolean
+                        >;
+
+                        // Filter out the types that are true
+                        const activeEmergencyTypes = Object.keys(
+                          typedEmergencyTypes
+                        )
+                          .filter((key) => typedEmergencyTypes[key] === true) // Keep only true ones
+                          .join(", "); // Join them into a comma-separated string
+
+                        // Display active emergency types, or a fallback message if none
+                        return activeEmergencyTypes
+                          ? activeEmergencyTypes
+                          : "None";
+                      })()}
+                    </Text>
+                    <Text style={styles.reportTitle}>
+                      <Text style={styles.label}>Time of Report:</Text>{" "}
+                      {new Date(
+                        selectedMessageDetails.timestamp
+                      ).toLocaleString()}
+                    </Text>
+                    <Text style={styles.reportTitle}>
+                      <Text style={styles.label}>Add Info:</Text>{" "}
+                      {selectedMessageDetails.addInfo}
+                    </Text>
+                    <Text style={styles.reportTitle}>
+                      <Text style={styles.label}>Coordinates:</Text>{" "}
+                      {selectedMessageDetails.location.latitude},{" "}
+                      {selectedMessageDetails.location.longitude}
+                    </Text>
+                    <Text style={styles.reportTitle}>
+                      <Text style={styles.label}>ID:</Text>{" "}
+                      {selectedMessageDetails.id} {/* Display ID */}
+                    </Text>
+                  </View>
+                </View>
               )}
-            </MapView>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setMapModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+
+              {/* Acknowledge Button */}
+              <TouchableOpacity
+                style={styles.acknowledgeButton}
+                onPress={handleAcknowledge}
+              >
+                <Text style={styles.acknowledgeButtonText}>Acknowledge</Text>
+              </TouchableOpacity>
+
+              {/* Close Button */}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setMapModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </APIProvider>
         </View>
       </Modal>
     </View>
@@ -425,6 +534,45 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#115272",
   },
+  distressMessagesContainer: {
+    marginTop: 15,
+    maxHeight: "50%",
+    marginBottom: 15,
+  },
+  label: {
+    fontWeight: "bold",
+    color: "#115272",
+  },
+  acknowledgeButton: {
+    backgroundColor: "green",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  acknowledgeButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  cardContainer: {
+    backgroundColor: "#f8f8f8",
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5, // For Android shadow
+  },
+  locationText: {
+    color: "#115272",
+    textDecorationLine: "underline",
+  },
+
   mapModal: {
     width: "90%",
     height: "50%", // Adjust the height as needed
