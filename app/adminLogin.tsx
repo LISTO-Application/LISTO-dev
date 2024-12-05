@@ -142,96 +142,8 @@ export default function adminLogin() {
               placeholder="********"
               secureTextEntry
             />
-            <SpacerView height="2%" />
-            <Modal isVisible={toggleModal}>
-              <SpacerView
-                style={{ height: "75%", width: "50%", alignSelf: "center" }}
-              >
-                <ThemedView
-                  style={{
-                    flex: 1,
-                    backgroundColor: "white",
-                    width: "50%",
-                    height: "100%",
-                    borderRadius: 20,
-                    flexDirection: "column",
-                    alignItems: "center",
-                    padding: 30,
-                  }}
-                >
-                  <ThemedText type="title" darkColor="#115272">
-                    Terms and Conditions:
-                  </ThemedText>
-                  <ThemedText
-                    style={{
-                      color: "black",
-                      padding: 20,
-                      textAlign: "justify",
-                    }}
-                  >
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                    do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                    Duis aute irure dolor in reprehenderit in voluptate velit
-                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
-                    occaecat cupidatat non proident, sunt in culpa qui officia
-                    deserunt mollit anim id est laborum.
-                  </ThemedText>
-                  <ThemedText type="title" darkColor="#115272">
-                    Data Privacy:
-                  </ThemedText>
-                  <ThemedText
-                    style={{
-                      color: "black",
-                      padding: 20,
-                      textAlign: "justify",
-                    }}
-                  >
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                    do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                    Duis aute irure dolor in reprehenderit in voluptate velit
-                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
-                    occaecat cupidatat non proident, sunt in culpa qui officia
-                    deserunt mollit anim id est laborum.
-                  </ThemedText>
-                  <SpacerView height="15%" />
-                  <ThemedButton
-                    title="Close"
-                    width="25%"
-                    style={{ justifyContent: "center" }}
-                    onPress={() => setToggleModal(false)}
-                  />
-                </ThemedView>
-              </SpacerView>
-            </Modal>
-            <BouncyCheckbox
-              style={{
-                flexDirection: "row",
-                width: "75%",
-                justifyContent: "center",
-              }}
-              size={25}
-              fillColor="red"
-              unFillColor="#FFFFFF"
-              text="Click here to agree to the Terms and Conditions and Data Privacy"
-              iconStyle={{ borderColor: "red", borderRadius: 10 }}
-              innerIconStyle={{ borderWidth: 2, borderRadius: 10 }}
-              textStyle={{
-                textDecorationLine: "none",
-                color: "black",
-              }}
-              onPress={(isChecked: boolean) => {
-                console.log(isChecked, "checked");
-                if (isChecked) {
-                  setToggleModal(true);
-                } else {
-                  setToggleModal(false);
-                }
-              }}
-            />
+           
+           
             <SpacerView height="2%" />
             <ThemedButton
               width="25%"
@@ -243,21 +155,7 @@ export default function adminLogin() {
               }}
             />
             <SpacerView height="2.5%" />
-            <Pressable
-              style={{
-                width: "auto",
-                height: "auto",
-              }}
-              onPress={() => {
-                router.replace({
-                  pathname: "/",
-                });
-              }}
-            >
-              <ThemedText lightColor="#115272" darkColor="#115272" type="body">
-                Already have an account?{" "}
-              </ThemedText>
-            </Pressable>
+           
           </SpacerView>
         </SpacerView>
       </SpacerView>

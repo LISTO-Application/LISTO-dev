@@ -17,7 +17,7 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 import { db } from "../FirebaseConfig";
 import { GeoPoint, Timestamp } from "@react-native-firebase/firestore";
 import "firebase/database";
-import { collection, getDocs, deleteDoc,doc} from "@react-native-firebase/firestore";
+import { collection, getDocs, deleteDoc,doc, addDoc, onSnapshot} from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { styles } from "@/styles/styles";
 import TitleCard from "@/components/TitleCard";
@@ -28,6 +28,7 @@ import * as XLSX from "xlsx";
 import * as DocumentPicker from 'expo-document-picker'; // For mobile file selection
 import { v4 as uuidv4 } from "uuid";
 import { crimeImages, CrimeType } from "../(tabs)/data/marker";
+import { Asset } from "expo-asset";
 
 export default function ViewAdminEmergencyList({
   navigation,
@@ -44,54 +45,187 @@ export default function ViewAdminEmergencyList({
 
 
 
-  useEffect(() => {
-    const fetchIncidents = async () => {
-      try {
-        // Fetch the incidents collection from Firestore
-        const crimesSnapshot = await getDocs(collection(db, "crimes"));
-
-        console.log("Fetched Incidents Snapshot:", crimesSnapshot); // Debugging log
-
-        if (crimesSnapshot.empty) {
-          console.log("No incidents found in Firestore.");
-          return; // No incidents, so return early
-        }
-        const crimesArray: Report[] = crimesSnapshot.docs.map((doc) => {
-          const imageData = doc.data().image || {};
-
-          return {
-            id: doc.id,
-            icon: doc.data().icon,
-            name: doc.data().name,
-            title: doc.data().title,
-            status: doc.data().status || "PENDING",
-            location: doc.data().location,
-            coordinate: doc.data().coordinate || {
-              _latitude: 0,
-              _longitude: 0,
-            }, // Fallback if coordinates are not available
-            image: {
-              filename: imageData.filename || "Unknown Filename",
-              uri: imageData.uri || "Unknown Uri",
-            },
-            date: doc.data().date || "No date",
-            time: doc.data().time,
-            category: doc.data().category || "No type",
-            additionalInfo: doc.data().additionalInfo || "No info",
-            timeStamp: doc.data().timeStamp,
-          };
-        });
-
-        console.log("Mapped Incidents:", crimesArray); // Debugging log
-        setCrimes(crimesArray); // Update state with incidents
-        setFilteredReports(crimesArray);
-      } catch (error) {
-        console.error("Error fetching incidents:", error);
+  const fetchIncidents = async () => {
+    try {
+      // Reference to the 'crimes' collection in Firestore
+      const crimesCollectionRef = collection(db, "crimes");
+  
+      // Fetch documents from the 'crimes' collection
+      const crimesSnapshot = await getDocs(crimesCollectionRef);
+  
+      if (crimesSnapshot.empty) {
+        console.log("No incidents found in Firestore.");
+        return; // Exit if no incidents are found
       }
-    };
-
-    fetchIncidents(); // Fetch incidents when the component mounts
-  }, []);
+  
+      // Map over the documents and format them
+      const crimesArray: Report[] = crimesSnapshot.docs.map((doc) => {
+        const imageData = doc.data().image || {};
+  
+        return {
+          id: doc.id,
+          icon: doc.data().icon,
+          name: doc.data().name,
+          title: doc.data().title,
+          status: doc.data().status || "PENDING",
+          location: doc.data().location,
+          coordinate: doc.data().coordinate || {
+            _latitude: 0,
+            _longitude: 0,
+          }, // Fallback if coordinates are not available
+          image: {
+            filename: imageData.filename || "Unknown Filename",
+            uri: imageData.uri || "Unknown Uri",
+          },
+          date: doc.data().date || "No date",
+          time: doc.data().time,
+          category: doc.data().category || "No type",
+          additionalInfo: doc.data().additionalInfo || "No info",
+          timeStamp: doc.data().timeStamp,
+        };
+      });
+  
+      // Debugging log for mapped incidents
+      console.log("Mapped Incidents:", crimesArray);
+  
+      // Update state with incidents
+      setCrimes(crimesArray);
+      setFilteredReports(crimesArray);
+  
+    } catch (error) {
+      console.error("Error fetching incidents:", error);
+    }
+  };
+  
+  // Call the fetchIncidents function when the component mounts
+  useEffect(() => {
+    fetchIncidents();
+  }, []); // Empty dependency array means this will run only once when the component mounts
+  
+  // Inside your handleImport function
+  
+  const handleImport = async () => {
+    try {
+      // Open file picker to select the document
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+      });
+  
+      if (result.canceled) {
+        console.log('File selection was canceled.');
+        return;
+      }
+  
+      // Get the selected file
+      const file = result.assets?.[0];
+      if (!file?.uri) {
+        console.error('No URI found for the selected file.');
+        return;
+      }
+  
+      console.log('File selected:', file.name);
+  
+      // Fetch the file data
+      const response = await fetch(file.uri);
+      const data = await response.blob();
+      console.log('File data fetched successfully.');
+  
+      // Read the file content
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const binaryData = event.target?.result;
+        if (!binaryData) {
+          console.error('Failed to read the file.');
+          return;
+        }
+  
+        console.log('File read successfully, parsing data...');
+  
+        // Parse the binary data into a workbook
+        const workbook = XLSX.read(binaryData, { type: 'binary' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+  
+        console.log('Parsed Data:', jsonData);
+  
+        // Map the data to the Report interface
+        const importedReports: Report[] = jsonData.map((item: any) => {
+          // Parsing logic for date and other fields...
+          const rawDate = item['Date'] || '';
+          let formattedDate = '';
+          if (typeof rawDate === 'number') {
+            const excelEpoch = new Date(Date.UTC(1900, 0, 1));
+            const adjustedDate = new Date(excelEpoch.getTime() + (rawDate - 1 - 1) * 86400000);
+            formattedDate = adjustedDate.toLocaleDateString('en-PH');
+          } else if (typeof rawDate === 'string' && rawDate.trim()) {
+            const dateParts = rawDate.split('/');
+            if (dateParts.length === 3) {
+              const formattedRawDate = `${dateParts[0]}/${dateParts[1]}/${dateParts[2]}`;
+              const parsedDate = new Date(formattedRawDate);
+              if (!isNaN(parsedDate.getTime())) {
+                const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0');
+                const day = parsedDate.getDate().toString().padStart(2, '0');
+                const year = parsedDate.getFullYear().toString().slice(2);
+                formattedDate = `${month}/${day}/${year}`;
+              } else {
+                formattedDate = new Date().toLocaleDateString(); // Default if invalid
+              }
+            }
+          }
+  
+          // Construct the report object
+          const report = {
+            id: uuidv4(),
+            category: item['Category'] || 'Unknown',
+            date: formattedDate,
+            coordinate: {
+              latitude: parseFloat(item['Latitude'] || '0'),
+              longitude: parseFloat(item['Longitude'] || '0'),
+            },
+            icon: 'No Icon',
+            title: item['Title'] || 'Untitled Report',
+            additionalInfo: item['Additional Info'] || 'No additional info',
+            location: item['Location'] || 'Unknown location',
+            name: item['Name'] || 'Unknown name',
+            time: item['Time'] || '',
+            image: {
+              filename: item['Image Filename'] || 'default.png',
+              uri: item['Image URI'] || 'default-image-url',
+            },
+            status: item['Status'] || 'Valid',
+          };
+  
+          console.log('Mapped Report:', report);
+          return report;
+        });
+  
+        // Add reports to Firestore
+        const crimesCollection = collection(db, 'crimes');
+        try {
+          for (const report of importedReports) {
+            await addDoc(crimesCollection, report); // Add each report to Firestore
+          }
+          console.log('Reports successfully added to Firestore.');
+          alert('Reports successfully added.');
+  
+          // Fetch the updated list of incidents after adding the reports
+          await fetchIncidents(); // Ensure this waits until the reports are added
+        } catch (error) {
+          console.error('Error adding reports to Firestore:', error);
+          alert('Failed to add reports. Please try again.');
+        }
+      };
+  
+      // Read the file as binary string
+      reader.readAsBinaryString(data);
+  
+    } catch (error) {
+      console.error('Error during file import:', error);
+      alert('An error occurred during file import. Please check the file format.');
+    }
+  };
+  
 
   const formatDate = (timestamp: Timestamp | string): string => {
     if (typeof timestamp === "string") return timestamp; // If it's already a string
@@ -259,83 +393,12 @@ export default function ViewAdminEmergencyList({
     timestamp: number;
     additionalInfo: string;
   }
-
-
-  const handleImport = async () => {
-    try {
-      // Step 1: Pick a document using DocumentPicker
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-      });
   
-      // Handle cancellation
-      if (result.canceled) {
-        console.log('File selection was canceled.');
-        return;
-      }
+ 
   
-      const file = result.assets?.[0]; // Access the first file if multiple are supported
-      if (!file?.uri) {
-        console.error('No URI found for the selected file.');
-        return;
-      }
   
-      console.log('File selected:', file.name);
   
-      // Step 2: Fetch the file and convert it to a blob
-      const response = await fetch(file.uri);
-      const data = await response.blob();
   
-      // Step 3: Read the file using FileReader
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const binaryData = event.target?.result;
-        if (!binaryData) {
-          console.error('Failed to read the file.');
-          return;
-        }
-  
-        // Step 4: Parse the binary data into a workbook
-        const workbook = XLSX.read(binaryData, { type: 'binary' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-  
-        // Step 5: Convert the worksheet data into JSON
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        console.log('Parsed Data:', jsonData);
-  
-        // Step 6: Map the data to match the Report type
-        const importedReports: Report[] = jsonData.map((item: any) => ({
-          id: uuidv4(),
-          category: item['Category'] || 'Unknown',
-          date: item['Date'] || 'N/A',
-          coordinate: {
-            latitude: parseFloat(item['Latitude'] || '0'),
-            longitude: parseFloat(item['Longitude'] || '0'),
-          },
-          icon: 'No Icon',
-          title: item['Title'] || 'Untitled Report',
-          additionalInfo: item['Additional Info'] || 'No additional info',
-          location: item['Location'] || 'Unknown location',
-          name: item['Name'] || 'Unknown name',
-          time: item['Time'] || '00:00',
-          image: item['Image'] || 'default-image-url',
-          status: item['Status'] || 'Valid',
-          timestamp: item['Timestamp'] || new Date().toISOString(),
-        }));
-  
-        // Step 7: Update the state with the imported reports
-        setCrimes((prevCrimes) => [...prevCrimes, ...importedReports]);
-      };
-  
-      // Read the file data as binary string
-      reader.readAsBinaryString(data);
-    } catch (error) {
-      console.error('Error during file import:', error);
-      alert('An error occurred during file import.');
-    }
-  };
-
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10; // Adjust this number based on how many reports per page
   const currentReports = filteredReports.slice(
