@@ -33,6 +33,9 @@ import PaginationReport from "@/components/PaginationReport";
 import { format } from "date-fns";
 import dayjs from "dayjs";
 import * as XLSX from "xlsx";
+import * as DocumentPicker from "expo-document-picker"; // For mobile file selection
+import { v4 as uuidv4 } from "uuid";
+import { crimeImages, CrimeType } from "../(tabs)/data/marker";
 
 export default function ViewAdminEmergencyList({
   navigation,
@@ -157,6 +160,8 @@ export default function ViewAdminEmergencyList({
     setDeleteModalVisible(true);
   };
 
+  // Import GeoPoint from Firebase Firestore
+
   const handleExport = () => {
     if (filteredReports.length === 0) {
       alert("No reports to export.");
@@ -167,6 +172,7 @@ export default function ViewAdminEmergencyList({
     const dataToExport = filteredReports.map((report, index) => {
       let formattedDate = "N/A"; // Default to N/A if date is invalid
 
+      // Handle date formatting
       if (report.date) {
         if (typeof report.date === "string" && report.date !== "###") {
           formattedDate = report.date;
@@ -175,17 +181,73 @@ export default function ViewAdminEmergencyList({
         }
       }
 
+      // Ensure report.coordinate is a GeoPoint
+      let geoPoint = report.coordinate;
+      if (geoPoint && !(geoPoint instanceof GeoPoint)) {
+        geoPoint = new GeoPoint(geoPoint.latitude, geoPoint.longitude);
+      }
+
+      // Ensure the location is available or default to 'Unknown'
+      const location = report.location || "Unknown";
+
+      // Now geoPoint is guaranteed to be a GeoPoint
       return {
         "S. No.": index + 1,
         Category:
           report.category.charAt(0).toUpperCase() + report.category.slice(1),
         Date: formattedDate,
-        Coordinates: formatCoordinates(report.coordinate),
+        Coordinates: geoPoint
+          ? `${geoPoint.latitude}, ${geoPoint.longitude}`
+          : "N/A", // Show coordinates as string
+        Location: location, // Add the location field here
+        Title: report.title || "N/A", // Assuming there's a title field
+        Description: report.additionalInfo || "N/A", // Assuming there's a description field
+        Status: report.status || "N/A", // Assuming there's a status field
       };
     });
 
-    // Create a new worksheet (this will help with formatting for CSV export)
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    // Ensure that the columns have proper headers and the data is in the correct format
+    const headers = [
+      "S. No.",
+      "Category",
+      "Date",
+      "Coordinates",
+      "Location",
+      "Title",
+      "Description",
+      "Status",
+    ];
+
+    // Create a new worksheet with the provided data and header
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport, {
+      header: headers,
+    });
+
+    // Automatically adjust column widths based on content
+    const colWidths = headers.map((header) => {
+      // Find the maximum length of content in each column and adjust width accordingly
+      let maxLength = header.length;
+      dataToExport.forEach((report: { [key: string]: any }) => {
+        const cellValue = report[header];
+        if (
+          cellValue &&
+          typeof cellValue === "string" &&
+          cellValue.length > maxLength
+        ) {
+          maxLength = cellValue.length;
+        } else if (
+          typeof cellValue === "number" &&
+          String(cellValue).length > maxLength
+        ) {
+          maxLength = String(cellValue).length;
+        }
+      });
+
+      // Increase the width padding more significantly
+      return { wch: maxLength + 100 }; // Increased padding for better readability
+    });
+
+    worksheet["!cols"] = colWidths; // Apply the column widths to the worksheet
 
     // Convert worksheet to CSV
     const csvData = XLSX.utils.sheet_to_csv(worksheet);
@@ -202,9 +264,105 @@ export default function ViewAdminEmergencyList({
     document.body.removeChild(link);
   };
 
-  const handleImport = () => {
-    // Import logic (e.g., open file picker or parse imported data)
-    console.log("Importing data...");
+  interface Report {
+    id: string;
+    category: string;
+    date: string | Date;
+    coordinate: {
+      latitude: number;
+      longitude: number;
+    };
+    icon: string; // Icon is a string
+    title: string;
+    location: string;
+    name: string;
+    time: string | Date;
+    image: {
+      filename: string;
+      uri: string;
+    };
+    status: string;
+    timestamp: number;
+    additionalInfo: string;
+  }
+
+  const handleImport = async () => {
+    try {
+      // Step 1: Pick a document using DocumentPicker
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "text/csv",
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ],
+      });
+
+      // Handle cancellation
+      if (result.canceled) {
+        console.log("File selection was canceled.");
+        return;
+      }
+
+      const file = result.assets?.[0]; // Access the first file if multiple are supported
+      if (!file?.uri) {
+        console.error("No URI found for the selected file.");
+        return;
+      }
+
+      console.log("File selected:", file.name);
+
+      // Step 2: Fetch the file and convert it to a blob
+      const response = await fetch(file.uri);
+      const data = await response.blob();
+
+      // Step 3: Read the file using FileReader
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const binaryData = event.target?.result;
+        if (!binaryData) {
+          console.error("Failed to read the file.");
+          return;
+        }
+
+        // Step 4: Parse the binary data into a workbook
+        const workbook = XLSX.read(binaryData, { type: "binary" });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // Step 5: Convert the worksheet data into JSON
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        console.log("Parsed Data:", jsonData);
+
+        // Step 6: Map the data to match the Report type
+        const importedReports: Report[] = jsonData.map((item: any) => ({
+          id: uuidv4(),
+          category: item["Category"] || "Unknown",
+          date: item["Date"] || "N/A",
+          coordinate: {
+            latitude: parseFloat(item["Latitude"] || "0"),
+            longitude: parseFloat(item["Longitude"] || "0"),
+          },
+          icon: "No Icon",
+          title: item["Title"] || "Untitled Report",
+          additionalInfo: item["Additional Info"] || "No additional info",
+          location: item["Location"] || "Unknown location",
+          name: item["Name"] || "Unknown name",
+          time: item["Time"] || "00:00",
+          image: item["Image"] || "default-image-url",
+          status: item["Status"] || "Valid",
+          timestamp: item["Timestamp"] || new Date().toISOString(),
+        }));
+
+        // Step 7: Update the state with the imported reports
+        setCrimes((prevCrimes) => [...prevCrimes, ...importedReports]);
+      };
+
+      // Read the file data as binary string
+      reader.readAsBinaryString(data);
+    } catch (error) {
+      console.error("Error during file import:", error);
+      alert("An error occurred during file import.");
+    }
   };
 
   const [currentPage, setCurrentPage] = useState(1);

@@ -8,6 +8,7 @@ import editReport from "./editReport";
 import ReportDetails from "./reportDetails";
 import ViewAdminEmergencyList from "./ViewAdminEmergencyList";
 import ValidateReports from "./validateReports";
+import NewAdminReports from "./newAdminReports";
 
 const RootReports = () => {
   const Stack = createNativeStackNavigator();
@@ -45,6 +46,11 @@ const RootReports = () => {
         name="ViewAdminEmergencyList"
         component={ViewAdminEmergencyList}
         options={{ headerShown: false, title: "Admin View Emergency Report" }}
+      />
+      <Stack.Screen
+        name="newAdminReports"
+        component={NewAdminReports}
+        options={{ headerShown: false, title: "New Admin Reports" }}
       />
     </Stack.Navigator>
   );
