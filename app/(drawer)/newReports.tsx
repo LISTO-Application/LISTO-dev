@@ -136,7 +136,7 @@ export default function NewReports({
     if (!address || address.trim() === "") return null;
     const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
     const bounds = {
-      northeast: "14.693963,121.101193",
+      northeast: "14.693963,121.101193", // Adjusted bounds
       southwest: "14.649732,121.067052",
     };
     const region = "PH";
