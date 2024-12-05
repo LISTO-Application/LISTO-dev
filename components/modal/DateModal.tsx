@@ -17,6 +17,8 @@ const DateModal = ({
   setDateFunction,
   mode,
   setMode,
+  setFilteredCrimeItems,
+  filteredCrimeItems,
 }: {
   setSelectedDate: any;
   setToggleModal: (visible: boolean) => void;
@@ -27,10 +29,13 @@ const DateModal = ({
   setDateFunction: any;
   mode: ModeType;
   setMode: (mode: ModeType) => void;
+  setFilteredCrimeItems: any;
+  filteredCrimeItems: any;
 }) => {
   dayjs.extend(isBetween);
   //States
-
+  console.log("allmarkers", allMarkers);
+  console.log("filteredCrimeItems", filteredCrimeItems);
   const [timePicker, setTimePicker] = useState(false);
   const [range, setRange] = React.useState<{
     startDate: DateType;
@@ -56,15 +61,9 @@ const DateModal = ({
     if (mode === "range" || mode === "multiple") {
       setIsAddingMarker(false);
     }
-    setMarkers(() => {
+    setFilteredCrimeItems(() => {
       return allMarkers.filter((marker: any) => {
         const markerDate = dayjs(marker.date, "MM-DD-YYYY").toDate();
-        console.log("Marker Date: ", markerDate);
-        console.log("Selected Dates: ", selectedDates);
-        console.log(
-          "Is it same?: ",
-          dayjs(markerDate).isSame(selectedDates as Date, "day")
-        );
         // console.log("Date Function: ", dateFunction.format("YYYY-MM-DD"));
         if (mode === "single") {
           return dayjs(markerDate).isSame(selectedDates as Date, "day");

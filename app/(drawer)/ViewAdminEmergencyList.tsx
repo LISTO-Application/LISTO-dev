@@ -9,7 +9,8 @@ import {
   Dimensions,
   FlatList,
   Modal,
-  TouchableWithoutFeedback, Alert
+  TouchableWithoutFeedback,
+  Alert,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -24,8 +25,10 @@ import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
 import { Report } from "../(tabs)/data/reports";
 import PaginationReport from "@/components/PaginationReport";
+import { format, formatDate } from "date-fns";
+import dayjs, { Dayjs } from "dayjs";
 import * as XLSX from "xlsx";
-import * as DocumentPicker from 'expo-document-picker'; // For mobile file selection
+import * as DocumentPicker from "expo-document-picker"; // For mobile file selection
 import { v4 as uuidv4 } from "uuid";
 import { crimeImages, CrimeType } from "../(tabs)/data/marker";
 import { Asset } from "expo-asset";
@@ -227,13 +230,18 @@ export default function ViewAdminEmergencyList({
   };
   
 
-  const formatDate = (timestamp: Timestamp | string): string => {
-    if (typeof timestamp === "string") return timestamp; // If it's already a string
-    const date = timestamp.toDate(); // Convert Firebase Timestamp to JavaScript Date
-    return date.toLocaleString(); // Format it as a readable string
-  };
+  // const formatDate = (date: Date | null): string => {
+  //   if (date && date._seconds) {
+  //     date = dayjs(date._seconds * 1000);
+  //   } else {
+  //     date = dayjs(date, ["MM/DD/YYYY", "MM-DD-YYYY"], true);
+  //   }
+  //   return format(date.toLocaleString(), "yyyy-MM-dd");
+  // };
 
-  const formatCoordinates = (coordinates: GeoPoint): string => {
+  const formatCoordinates = (
+    coordinates: GeoPoint | { latitude: number; longitude: number }
+  ): string => {
     return `Latitude: ${coordinates.latitude}, Longitude: ${coordinates.longitude}`;
   };
 
@@ -279,98 +287,109 @@ export default function ViewAdminEmergencyList({
     setDeleteModalVisible(true);
   };
 
-    // Import GeoPoint from Firebase Firestore
+  // Import GeoPoint from Firebase Firestore
 
-    const handleExport = () => {
-      if (filteredReports.length === 0) {
-        alert("No reports to export.");
-        return;
+  const handleExport = () => {
+    if (filteredReports.length === 0) {
+      alert("No reports to export.");
+      return;
+    }
+
+    // Prepare data for export
+    const dataToExport = filteredReports.map((report, index) => {
+      let formattedDate = "N/A"; // Default to N/A if date is invalid
+      let date = report.date;
+      console.log(format(date, "yyyy-MM-dd"));
+      if (date) {
+        if (typeof date === "object") {
+          formattedDate = format(date, "yyyy-MM-dd");
+        } else if (report.date instanceof Timestamp) {
+          formattedDate = format(date, "yyyy-MM-dd");
+        }
       }
-    
-      // Prepare data for export
-      const dataToExport = filteredReports.map((report, index) => {
-        let formattedDate = "N/A";  // Default to N/A if date is invalid
-    
-        // Handle date formatting
-        if (report.date) {
-          if (typeof report.date === "string" && report.date !== "###") {
-            formattedDate = report.date;
-          } else if (report.date instanceof Timestamp) {
-            formattedDate = formatDate(report.date);
-          }
-        }
-    
-        // Ensure report.coordinate is a GeoPoint
-        let geoPoint = report.coordinate;
-        if (geoPoint && !(geoPoint instanceof GeoPoint)) {
-          geoPoint = new GeoPoint(geoPoint.latitude, geoPoint.longitude);
-        }
-    
-        // Ensure the location is available or default to 'Unknown'
-        const location = report.location || "Unknown";
-    
-        // Now geoPoint is guaranteed to be a GeoPoint
-        return {
-          "S. No.": index + 1,
-          "Category": report.category.charAt(0).toUpperCase() + report.category.slice(1),
-          "Date": formattedDate,
-          "Coordinates": geoPoint ? `${geoPoint.latitude}, ${geoPoint.longitude}` : "N/A",  // Show coordinates as string
-          "Location": location,  // Add the location field here
-          "Title": report.title || "N/A",  // Assuming there's a title field
-          "Description": report.additionalInfo || "N/A",  // Assuming there's a description field
-          "Status": report.status || "N/A",  // Assuming there's a status field
-        };
-      });
-    
-      // Ensure that the columns have proper headers and the data is in the correct format
-      const headers = [
-        "S. No.", 
-        "Category", 
-        "Date", 
-        "Coordinates", 
-        "Location", 
-        "Title", 
-        "Description", 
-        "Status"
-      ];
-    
-      // Create a new worksheet with the provided data and header
-      const worksheet = XLSX.utils.json_to_sheet(dataToExport, { header: headers });
-    
-      // Automatically adjust column widths based on content
-      const colWidths = headers.map(header => {
-        // Find the maximum length of content in each column and adjust width accordingly
-        let maxLength = header.length;
-        dataToExport.forEach((report: { [key: string]: any }) => {
-          const cellValue = report[header];
-          if (cellValue && typeof cellValue === 'string' && cellValue.length > maxLength) {
-            maxLength = cellValue.length;
-          } else if (typeof cellValue === 'number' && String(cellValue).length > maxLength) {
-            maxLength = String(cellValue).length;
-          }
-        });
-        
-        // Increase the width padding more significantly
-        return { wch: maxLength + 100 };  // Increased padding for better readability
-      });
-    
-      worksheet["!cols"] = colWidths;  // Apply the column widths to the worksheet
-    
-      // Convert worksheet to CSV
-      const csvData = XLSX.utils.sheet_to_csv(worksheet);
-    
-      // Trigger download of the CSV file
-      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-    
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "FilteredReports.csv"); // Save as CSV
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
 
+      // Ensure report.coordinate is a GeoPoint
+      let geoPoint = report.coordinate;
+      if (geoPoint && !(geoPoint instanceof GeoPoint)) {
+        geoPoint = new GeoPoint(geoPoint.latitude, geoPoint.longitude);
+      }
+
+      // Ensure the location is available or default to 'Unknown'
+      const location = report.location || "Unknown";
+
+      // Now geoPoint is guaranteed to be a GeoPoint
+      return {
+        "S. No.": index + 1,
+        Category:
+          report.category.charAt(0).toUpperCase() + report.category.slice(1),
+        Date: formattedDate,
+        Coordinates: geoPoint
+          ? `${geoPoint.latitude}, ${geoPoint.longitude}`
+          : "N/A", // Show coordinates as string
+        Location: location, // Add the location field here
+        Title: report.title || "N/A", // Assuming there's a title field
+        Description: report.additionalInfo || "N/A", // Assuming there's a description field
+        Status: report.status || "N/A", // Assuming there's a status field
+      };
+    });
+
+    // Ensure that the columns have proper headers and the data is in the correct format
+    const headers = [
+      "S. No.",
+      "Category",
+      "Date",
+      "Coordinates",
+      "Location",
+      "Title",
+      "Description",
+      "Status",
+    ];
+
+    // Create a new worksheet with the provided data and header
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport, {
+      header: headers,
+    });
+
+    // Automatically adjust column widths based on content
+    const colWidths = headers.map((header) => {
+      // Find the maximum length of content in each column and adjust width accordingly
+      let maxLength = header.length;
+      dataToExport.forEach((report: { [key: string]: any }) => {
+        const cellValue = report[header];
+        if (
+          cellValue &&
+          typeof cellValue === "string" &&
+          cellValue.length > maxLength
+        ) {
+          maxLength = cellValue.length;
+        } else if (
+          typeof cellValue === "number" &&
+          String(cellValue).length > maxLength
+        ) {
+          maxLength = String(cellValue).length;
+        }
+      });
+
+      // Increase the width padding more significantly
+      return { wch: maxLength + 100 }; // Increased padding for better readability
+    });
+
+    worksheet["!cols"] = colWidths; // Apply the column widths to the worksheet
+
+    // Convert worksheet to CSV
+    const csvData = XLSX.utils.sheet_to_csv(worksheet);
+
+    // Trigger download of the CSV file
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "FilteredReports.csv"); // Save as CSV
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   interface Report {
     id: string;
@@ -380,7 +399,7 @@ export default function ViewAdminEmergencyList({
       latitude: number;
       longitude: number;
     };
-    icon: string;  // Icon is a string
+    icon: string; // Icon is a string
     title: string;
     location: string;
     name: string;
@@ -400,35 +419,31 @@ export default function ViewAdminEmergencyList({
   
   
   const [currentPage, setCurrentPage] = useState(1);
-  const reportsPerPage = 10; // Adjust this number based on how many reports per page
+  const reportsPerPage = 10;
   const currentReports = filteredReports.slice(
     (currentPage - 1) * reportsPerPage,
     currentPage * reportsPerPage
   );
-  // Get unique crime categories from reports
+
   const crimeCategories = Array.from(
     new Set(crimes.map((report) => report.category))
   );
 
-  // Filter reports based on search query and selected category
   const filterReports = (searchQuery: string, category: string | null) => {
-    let filtered = crimes; // Start with all reports
+    let filtered = crimes;
 
-    // Apply category filter if a category is selected
     if (category) {
       filtered = filtered.filter(
         (report: { category: string }) => report.category === category
       );
     }
 
-    // Apply search query filter if a query is provided
     if (searchQuery) {
       filtered = filtered.filter((report) => {
         const query = searchQuery.toLowerCase();
         return (
-          report.title.toLowerCase().includes(query) ||
           report.category.toLowerCase().includes(query) ||
-          report.status.toLowerCase().includes(query)
+          report.date.toString().includes(query)
         );
       });
     }
@@ -557,60 +572,17 @@ export default function ViewAdminEmergencyList({
           ]}
         >
           <TitleCard />
-          
-          <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 10 }}>
-  <TouchableOpacity
-     style={{
-      backgroundColor: "#115272",
-      paddingVertical: 12, // Increased padding
-      paddingHorizontal: 20, // Increased padding
-      borderRadius: 8, // Increased border radius for a more rounded button
-      marginRight: 10, // Adjusted spacing between buttons
-    }}
-    onPress={handleExport} // Define your export logic here
-  >
-    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>Export</Text>
-  </TouchableOpacity>
 
-  <TouchableOpacity
-     style={{
-      backgroundColor: "#115272",
-      paddingVertical: 12, // Increased padding
-      paddingHorizontal: 20, // Increased padding
-      borderRadius: 8, // Increased border radius for a more rounded button
-      marginRight: 10, // Adjusted spacing between buttons
-    }}
-    onPress={handleImport} // Define your import logic here
-  >
-    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>Import</Text>
-  </TouchableOpacity>
-  <TouchableOpacity
-  style={{
-    backgroundColor: "#115272",
-    paddingVertical: 12, // Increased padding
-    paddingHorizontal: 20, // Increased padding
-    borderRadius: 8, // Increased border radius for a more rounded button
-    marginRight: 10, // Adjusted spacing between buttons
-  }}
-  onPress={() => {
-    // Redirect to newAdminReports screen
-    navigation.navigate("newAdminReports"); // Replace with the correct screen name if different
-  }}
->
-  <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>Add Crime Report</Text>
-</TouchableOpacity>
-</View>
           <SearchSort
-
-
-
-
             reports={crimes}
             setCategoryModalVisible={setCategoryModalVisible}
             setFilteredReports={setFilteredReports}
             isAlignedRight={isAlignedRight}
             filterReports={filterReports}
+            handleExport={handleExport}
+            handleImport={handleImport}
           />
+
           <Modal
             visible={isCategoryModalVisible}
             animationType="slide"
@@ -634,15 +606,15 @@ export default function ViewAdminEmergencyList({
                         style={webstyles.modalOption}
                         onPress={() => handleCategorySelect(item)}
                       >
-                        <Text style={webstyles.modalOptionText}>{item}</Text>
+                        <Text style={webstyles.modalOptionText}>
+                          {item.charAt(0).toUpperCase() + item.slice(1)}
+                        </Text>
                       </TouchableOpacity>
                     )}
                   />
                 </View>
               </View>
             </TouchableWithoutFeedback>
-
-            
           </Modal>
           <ScrollView
             contentContainerStyle={[
@@ -651,119 +623,168 @@ export default function ViewAdminEmergencyList({
             ]}
           >
             {currentReports.length > 0 ? (
-              currentReports.map((incident, index) => (
-                <View
-                  key={index}
-                  style={{
-                    marginBottom: 20,
-                    padding: 15,
-                    borderRadius: 8,
-                    backgroundColor: "#f9f9f9",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                  }}
-                >
-                  {/* Row: Title, Date, and Delete Button */}
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      {/* Left side: Title and Date */}
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            color: "#115272",
-          }}
-        >
-          {incident.category.charAt(0).toUpperCase() +
-            incident.category.slice(1)}
-        </Text>
-        <Text
-          style={{
-            color: "#115272",
-            fontSize: 14,
-            marginLeft: 10, // Space between title and date
-          }}
-        >
-          {formatDate(incident.date)}
-        </Text>
-      </View>
-      <TouchableOpacity
-  style={{ padding: 10 }}
-  onPress={() => handleDeleteRequest(incident.id)}
->
-  Unread
-</TouchableOpacity>
-      {/* Right side: Delete Button */}
-      <Modal
-  visible={isDeleteModalVisible}
-  animationType="fade"
-  transparent={true}
-  onRequestClose={() => setDeleteModalVisible(false)}
->
-  <TouchableWithoutFeedback onPress={() => setDeleteModalVisible(false)}>
-    <View style={[webstyles.modalContainer, { backgroundColor: 'transparent' }]}>
-      <TouchableWithoutFeedback>
-        <View style={webstyles.modalContent}>
-          <Text style={webstyles.modalHeader}>Confirm Read?</Text>
-          <Text style={webstyles.modalText}>
-            Do you acknowledge this
-          </Text>
-          <View style={webstyles.modalActions}>
-            <TouchableOpacity
-              style={[webstyles.modalButton, { backgroundColor: "#ccc" }]}
-              onPress={() => setDeleteModalVisible(false)}
-            >
-              <Text style={webstyles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[webstyles.modalButton, { backgroundColor: "#DA4B46" }]}
-              onPress={() => setDeleteModalVisible(false)}
-            >
-              <Text style={webstyles.modalButtonText}>Confirm</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </View>
-  </TouchableWithoutFeedback>
-</Modal>
-    </View>
+              currentReports.map((incident, index) => {
+                const date = incident.date;
+                const formattedDate = format(date, "yyyy-MM-dd");
+                return (
+                  <View
+                    key={index}
+                    style={{
+                      marginBottom: 20,
+                      padding: 15,
+                      borderRadius: 8,
+                      backgroundColor: "#f9f9f9",
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3.84,
+                    }}
+                  >
+                    {/* Row: Title, Date, and Delete Button */}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      {/* Left side: Title and Date */}
+                      <View
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 18,
+                            fontWeight: "bold",
+                            color: "#115272",
+                          }}
+                        >
+                          {incident.category.charAt(0).toUpperCase() +
+                            incident.category.slice(1)}
+                        </Text>
+                        <Text
+                          style={{
+                            color: "#115272",
+                            fontSize: 14,
+                            marginLeft: 10, // Space between title and date
+                          }}
+                        >
+                          {formattedDate}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={{ padding: 10 }}
+                        onPress={() => handleDeleteRequest(incident.id)}
+                      >
+                        Unread
+                      </TouchableOpacity>
+                      {/* Right side: Delete Button */}
+                      <Modal
+                        visible={isDeleteModalVisible}
+                        animationType="fade"
+                        transparent={true}
+                        onRequestClose={() => setDeleteModalVisible(false)}
+                      >
+                        <TouchableWithoutFeedback
+                          onPress={() => setDeleteModalVisible(false)}
+                        >
+                          <View
+                            style={[
+                              webstyles.modalContainer,
+                              { backgroundColor: "transparent" },
+                            ]}
+                          >
+                            <TouchableWithoutFeedback>
+                              <View style={webstyles.modalContent}>
+                                <Text style={webstyles.modalHeader}>
+                                  Confirm Read?
+                                </Text>
+                                <Text style={webstyles.modalText}>
+                                  Do you acknowledge this
+                                </Text>
+                                <View style={webstyles.modalActions}>
+                                  <TouchableOpacity
+                                    style={[
+                                      webstyles.modalButton,
+                                      { backgroundColor: "#ccc" },
+                                    ]}
+                                    onPress={() => setDeleteModalVisible(false)}
+                                  >
+                                    <Text style={webstyles.modalButtonText}>
+                                      Cancel
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={[
+                                      webstyles.modalButton,
+                                      { backgroundColor: "#DA4B46" },
+                                    ]}
+                                    onPress={() => setDeleteModalVisible(false)}
+                                  >
+                                    <Text style={webstyles.modalButtonText}>
+                                      Confirm
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </TouchableWithoutFeedback>
+                          </View>
+                        </TouchableWithoutFeedback>
+                      </Modal>
+                    </View>
 
-    {/* Coordinates */}
-    <Text
-      style={{ color: "#115272", fontSize: 14, marginTop: 10 }}
-    >
-      {formatCoordinates(incident.coordinate)}
-    </Text>
-  </View>
-              ))
+                    {/* Coordinates */}
+                    <Text
+                      style={{ color: "#115272", fontSize: 14, marginTop: 10 }}
+                    >
+                      {formatCoordinates(incident.coordinate)}
+                    </Text>
+                  </View>
+                );
+              })
             ) : (
               <Text style={{ textAlign: "center", marginTop: 20 }}>
                 No incidents available.
               </Text>
             )}
-
-
           </ScrollView>
 
-       
-   
           <PaginationReport
             filteredReports={filteredReports}
             reportsPerPage={reportsPerPage}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
             isAlignedRight={isAlignedRight}
-
-            
           />
-          
         </Animated.View>
-        
+        <TouchableOpacity
+          style={webstyles.fab}
+          onPress={() => navigation.navigate("newAdminReports")}
+        >
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 20,
+            }}
+          >
+            <Text
+              style={{
+                alignSelf: "center",
+                color: "white",
+                fontWeight: "bold",
+                fontSize: 20,
+              }}
+            >
+              Add a crime
+            </Text>
+            <View style={{ alignSelf: "center" }}>
+              <Ionicons name="add" size={30} color="white" />
+            </View>
+          </View>
+        </TouchableOpacity>
       </View>
     );
   }
-  
 }

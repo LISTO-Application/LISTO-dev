@@ -19,10 +19,7 @@ export default function ValidateReportCard({
 }: {
   report: any;
   handleTitlePress: any;
-  handleStatusChange: (
-    reportId: string,
-    newStatus: "PENDING" | "VALID" | "PENALIZED"
-  ) => void;
+  handleStatusChange: (reportId: string, newStatus: boolean) => void;
 }) {
   const [isImageZoomVisible, setIsImageZoomVisible] = useState(false);
   const parsedDate = format(report.date, "yyyy-MM-dd");
@@ -69,7 +66,8 @@ export default function ValidateReportCard({
                   color: "#115272",
                 }}
               >
-                {report.title}
+                {report.category.charAt(0).toUpperCase() +
+                  report.category.slice(1)}
               </Text>
             </TouchableOpacity>
             <Text
@@ -102,7 +100,7 @@ export default function ValidateReportCard({
           marginTop: 10,
         }}
       >
-        {report.status === "PENDING" ? (
+        {report.status === false ? (
           <>
             <TouchableOpacity
               style={{
@@ -112,7 +110,7 @@ export default function ValidateReportCard({
                 borderRadius: 5,
                 marginLeft: 5,
               }}
-              onPress={() => handleStatusChange(report.id, "VALID")}
+              onPress={() => handleStatusChange(report.uid, true)}
             >
               <Text
                 style={{
@@ -132,7 +130,7 @@ export default function ValidateReportCard({
                 borderRadius: 5,
                 marginLeft: 5,
               }}
-              onPress={() => handleStatusChange(report.id, "PENALIZED")}
+              onPress={() => handleStatusChange(report.uid, false)}
             >
               <Text
                 style={{
@@ -149,9 +147,9 @@ export default function ValidateReportCard({
           <Text
             style={{
               color:
-                report.status === "VALID"
+                report.status === true
                   ? "#28a745"
-                  : report.status === "PENALIZED"
+                  : report.status === false
                     ? "#dc3545"
                     : "#6c757d",
               fontWeight: "bold",
@@ -159,7 +157,7 @@ export default function ValidateReportCard({
               textAlign: "right",
             }}
           >
-            {report.status === "VALID" ? "Valid" : "Penalized"}
+            {report.status === true ? "Valid" : "Invalid"}
           </Text>
         )}
       </View>
