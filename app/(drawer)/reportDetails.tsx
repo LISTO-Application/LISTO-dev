@@ -4,7 +4,8 @@ import {
   Text,
   ActivityIndicator,
   StyleSheet,
-  ScrollView, Image
+  ScrollView,
+  Image,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import firestore from "@react-native-firebase/firestore";
@@ -12,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity } from "react-native-gesture-handler";
 
 interface ReportDetailsType {
-  id: string;
+  uid: string;
   title: string;
   category: string;
   location: string | null;
@@ -28,8 +29,8 @@ interface ReportDetailsType {
 
 const ReportDetails = ({ navigation }: { navigation: any }) => {
   const route = useRoute(); // Using useRoute to access params
-  const { id } = route.params as {
-    id: string;
+  const { uid } = route.params as {
+    uid: string;
   };
   // Example report data (this should come from your data source, such as an API or state)
 
@@ -41,16 +42,16 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
+    if (uid) {
       const fetchReportDetails = async () => {
         try {
-          const reportRef = firestore().collection("reports").doc(id);
+          const reportRef = firestore().collection("reports").doc(uid);
           const reportDoc = await reportRef.get();
-  
+
           if (reportDoc.exists) {
             const reportData = reportDoc.data();
             setReportDetails({
-              id: reportDoc.id,
+              uid: reportDoc.id,
               title: reportData?.title || "Untitled",
               category: reportData?.category || "Unknown Category",
               location: reportData?.location || "Unknown Location",
@@ -71,10 +72,10 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
           setLoading(false);
         }
       };
-  
+
       fetchReportDetails();
     }
-  }, [id]);
+  }, [uid]);
 
   if (loading) {
     return (
@@ -114,12 +115,6 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
         <View style={styles.detailRow}>
           <Text style={styles.label}>Reportee's Username:</Text>
           <Text style={styles.value}>{reportDetails.reporterName}</Text>
-        </View>
-
-        {/* Report Title */}
-        <View style={styles.detailRow}>
-          <Text style={styles.label}>Report Title:</Text>
-          <Text style={styles.value}>{reportDetails.title}</Text>
         </View>
 
         {/* Selected Crime Type */}
@@ -173,22 +168,22 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
             </Text>
           </View>
           <View style={styles.detailRow}>
-
-  <Text style={styles.label}>Attached Image:</Text>
-  {reportDetails.image ? (
-    <View style={styles.imageContainer}>
-      <Image
-        source={{ uri: reportDetails.image.uri }}
-        style={styles.image}
-        resizeMode="contain"
-      />
-      <Text style={styles.filename}>{reportDetails.image.filename}</Text>
-    </View>
-  ) : (
-    <Text style={styles.value}>No image attached.</Text>
-  )}
-</View>
-
+            <Text style={styles.label}>Attached Image:</Text>
+            {reportDetails.image ? (
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{ uri: reportDetails.image.uri }}
+                  style={styles.image}
+                  resizeMode="contain"
+                />
+                <Text style={styles.filename}>
+                  {reportDetails.image.filename}
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.value}>No image attached.</Text>
+            )}
+          </View>
         </View>
       </View>
     </ScrollView>

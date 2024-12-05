@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import https from "https";
 import {
   Animated,
   Dimensions,
@@ -47,6 +48,7 @@ import SearchSort from "@/components/SearchSort";
 import dayjs from "dayjs";
 import { format, formatDate, fromUnixTime } from "date-fns";
 import { Icon } from "@expo/vector-icons/build/createIconSet";
+import firestore from "@react-native-firebase/firestore";
 
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -70,10 +72,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         const newDate = new Date(date._seconds * 1000);
 
         return {
-          id: doc.id,
-          icon: doc.data().icon || "",
+          uid: doc.id,
+          phone: doc.data().phone || "Unknown Number",
           category: doc.data().category || "Unknown",
-          title: doc.data().title || "Untitled",
           additionalInfo: doc.data().additionalInfo || "Unknown Report",
           coordinate: doc.data().coordinate,
           location: doc.data().location || "Unknown Location",
@@ -125,7 +126,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     try {
       await deleteDoc(doc(db, "reports", reportId));
       setFilteredReports((prevReports) =>
-        prevReports.filter((r) => r.id !== reportId)
+        prevReports.filter((r) => r.uid !== reportId)
       );
       Alert.alert("Report deleted successfully");
     } catch (error) {
@@ -134,6 +135,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   };
   const handleEditReport = (report: Report) => {
     // Redirect to the report edit page with the report ID in the query
+    console.log("Report UID:", report.uid);
     navigation.navigate("EditReports", { report });
   };
   const handleSubmitReport = () => {
@@ -180,14 +182,12 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       filtered = filtered.filter((report) => {
         const query = searchQuery.toLowerCase();
         return (
-          report.title.toLowerCase().includes(query) ||
           report.location.toLowerCase().includes(query) ||
           report.category.toLowerCase().includes(query) ||
           dayjs(new Date(report.date))
             .format("YYYY-MM-DD")
             .toLowerCase()
             .includes(query) ||
-          report.status.toLowerCase().includes(query) ||
           report.additionalInfo.toLowerCase().includes(query)
         );
       });
@@ -222,13 +222,13 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         <SpacerView height={90} />
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           {currentReports.map((report) => (
-            <View key={report.id} style={styles.reportContainer}>
+            <View key={report.uid} style={styles.reportContainer}>
               <SpacerView height={20} />
               <View style={styles.reportIcon}>
                 <Ionicons name="alert-circle-outline" size={24} color="white" />
               </View>
               <View style={styles.reportTextContainer}>
-                <Text style={styles.reportTitle}>{report.title}</Text>
+                <Text style={styles.reportTitle}>{report.category}</Text>
               </View>
               <View style={styles.reportActions}>
                 {/* Edit Icon */}
@@ -242,7 +242,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 {/* Trash Icon (Delete) */}
                 <TouchableOpacity
                   style={styles.editIcon}
-                  onPress={() => handleDeleteReport(report.id)}
+                  onPress={() => handleDeleteReport(report.uid)}
                 >
                   <Ionicons name="trash-bin" size={24} color="white" />
                 </TouchableOpacity>
@@ -310,6 +310,8 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             setFilteredReports={setFilteredReports}
             isAlignedRight={isAlignedRight}
             filterReports={filterReports}
+            handleExport={undefined}
+            handleImport={undefined}
           />
           <Modal
             visible={isCategoryModalVisible}
@@ -380,7 +382,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               console.log(format(new Date(report.timestamp * 1000), "hh:mm a"));
 
               return (
-                <View key={report.id} style={webstyles.reportContainer}>
+                <View key={report.uid} style={webstyles.reportContainer}>
                   <Image source={iconSource} style={webstyles.reportIcon} />
                   <View style={{ flex: 1, flexDirection: "column" }}>
                     <View style={{ flexDirection: "row" }}>
@@ -406,8 +408,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     </View>
                     <View style={{ flexDirection: "row" }}>
                       <Text style={[webstyles.reportInfo, { marginLeft: 20 }]}>
-                        {report.title.charAt(0).toUpperCase() +
-                          report.title.slice(1)}
+                        {report.phone}
                       </Text>
                       <Text style={[webstyles.reportInfo]}>
                         <b>Remarks:</b> {report.additionalInfo}
@@ -427,13 +428,11 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     <View
                       style={[
                         { borderWidth: 5, borderRadius: 10 },
-                        report.status === "VALID"
+                        report.status === true
                           ? { borderColor: "green" }
-                          : report.status === "PENALIZED"
-                            ? { borderColor: "red" }
-                            : report.status === "PENDING"
-                              ? { borderColor: "yellow" }
-                              : null,
+                          : report.status === false
+                            ? { borderColor: "orange" }
+                            : null,
                       ]}
                     ></View>
                   </View>
@@ -441,19 +440,19 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     <TouchableOpacity
                       style={[
                         webstyles.editIcon,
-                        report.status === "VALID" && webstyles.disabledIcon,
+                        report.status === true && webstyles.disabledIcon,
                       ]}
                       onPress={() =>
-                        report.status !== "VALID" && handleEditReport(report)
+                        report.status !== true && handleEditReport(report)
                       }
-                      disabled={report.status === "VALID"}
+                      disabled={report.status === true}
                     >
                       <Ionicons
                         name="create-outline"
                         size={30}
-                        color={report.status !== "PENDING" ? "gray" : "white"}
+                        color={report.status !== false ? "gray" : "white"}
                         style={
-                          report.status !== "PENDING" && {
+                          report.status !== false && {
                             textDecorationLine: "line-through",
                           }
                         }
@@ -461,7 +460,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={webstyles.editIcon}
-                      onPress={() => handleDeleteReport(report.id)}
+                      onPress={() => handleDeleteReport(report.uid)}
                     >
                       <Ionicons
                         name="trash-bin-outline"

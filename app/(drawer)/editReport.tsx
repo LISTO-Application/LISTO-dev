@@ -22,7 +22,7 @@ import { useLocalSearchParams } from "expo-router"; // Ensure you have expo-rout
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { RouteProp, useRoute } from "@react-navigation/native";
 import EditReportMobile from "./mobile/EditReport";
-import { doc, updateDoc } from "@react-native-firebase/firestore";
+import { doc, getDoc, updateDoc } from "@react-native-firebase/firestore";
 import { db } from "../FirebaseConfig";
 import { getIconName } from "@/assets/utils/getIconName";
 import SideBar from "@/components/SideBar";
@@ -39,6 +39,11 @@ function EditReport({ navigation }: { navigation: any }) {
   const route = useRoute();
   const { report }: { report: any } = route.params as { report: Report };
 
+  if (!report.uid) {
+    console.error("UID is missing or invalid.");
+    Alert.alert("Error", "Unable to identify the report.");
+    return;
+  }
   //Parsing the date
   console.log(report.date);
   console.log(format(report.date, "yyyy-MM-dd"));
@@ -52,7 +57,7 @@ function EditReport({ navigation }: { navigation: any }) {
 
   const [category, setCategory] = useState<DropdownCrimeTypes | null>(null);
   const [title, setTitle] = useState(report.title);
-  const [name, setName] = useState(report.name);
+  const [name, setName] = useState(report.name || "Anonymous");
   const [date, setDate] = useState(editDate);
   const [dateTime, setDateTime] = useState();
   const [time, setTime] = useState(report.time);
@@ -60,33 +65,40 @@ function EditReport({ navigation }: { navigation: any }) {
   const [location, setLocation] = useState(report.location);
   const [additionalInfo, setAdditionalInfo] = useState(report.additionalInfo);
 
-  const handleSelect = (item: DropdownCrimeTypes) => {
-    setSelectedValue(item.label); // Update the selected value
+  const handleSelect = (item: DropdownCrimeTypes | undefined) => {
+    setSelectedValue(item?.label); // Update the selected value
     setIsDropdownVisible(false); // Close the dropdown
   };
 
-  console.log(report);
   const handleSubmit = async () => {
     console.log("Crime Type:", selectedValue);
     console.log("Location:", location);
     console.log("Additional Information:", additionalInfo);
-    const formattedDate = new Date(date);
-    console.log("Formatted Date", formattedDate);
-    const updatedReport = {
-      ...report,
-      name: name,
-      title: title,
-      additionalInfo: additionalInfo,
-      date: formattedDate,
-      time: time,
-      icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
-      category: selectedValue.toLowerCase(),
-      location: location,
-    };
 
     try {
-      // Update the Firestore document with the new report data
-      const reportRef = doc(db, "reports", report.id); // Ensure 'report.id' holds the correct document ID
+      // Update the Firestore document with the new report data\
+      console.log("Report UID:", report.uid);
+      const reportRef = doc(db, "reports", report.uid); // Ensure 'report.id' holds the correct document ID
+
+      const docSnap = await getDoc(reportRef);
+      console.log("Document ID:", docSnap);
+      console.log("Document:", docSnap.data());
+      if (!docSnap.exists) {
+        console.error("Document not found:", report.uid);
+        Alert.alert("Error", "Document not found. Unable to update.");
+        return;
+      }
+
+      const formattedDate = new Date(date);
+      const updatedReport = {
+        ...report,
+        additionalInfo: additionalInfo,
+        date: formattedDate,
+        time: time,
+        category: selectedValue.toLowerCase(),
+        location: location,
+      };
+
       await updateDoc(reportRef, updatedReport);
 
       console.log("Report updated successfully:", updatedReport);
@@ -106,7 +118,7 @@ function EditReport({ navigation }: { navigation: any }) {
   const [items, setItems] = useState(crimeType);
 
   //Date
-  const [startDate, setStartDate] = useState<Date>(parsedEditedDateTime);
+  const [startDate, setStartDate] = useState<Date | null>(parsedEditedDateTime);
 
   useEffect(() => {
     const dateInput = startDate;
@@ -191,11 +203,11 @@ function EditReport({ navigation }: { navigation: any }) {
             ]}
           >
             <Text>Reporter's Username:</Text>
-            <TextInput value={name} /> <Text>Subject:</Text>
             <TextInput
               style={webstyles.inputField}
-              value={title}
-              onChangeText={setTitle}
+              value={name}
+              editable={true}
+              aria-disabled
             />
             <Text>Select Crime Type:</Text>
             <DropDownPicker

@@ -3,8 +3,8 @@ import dayjs from "dayjs";
 import { Image } from "react-native-reanimated/lib/typescript/Animated";
 
 export interface Report {
-  id: string;
-  icon: Image;
+  uid: string;
+  phone: string;
   category:
     | "murder"
     | "robbery"
@@ -13,7 +13,6 @@ export interface Report {
     | "rape"
     | "carnapping"
     | "theft";
-  title: string;
   date: Date;
   additionalInfo: string;
   location: string;
@@ -24,6 +23,6 @@ export interface Report {
     filename: string;
     uri: string;
   };
-  status: "PENDING" | "VALID" | "PENALIZED";
+  status: boolean;
   timestamp: number;
 }

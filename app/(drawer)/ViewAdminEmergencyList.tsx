@@ -30,12 +30,15 @@ import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
 import { Report } from "../(tabs)/data/reports";
 import PaginationReport from "@/components/PaginationReport";
-import { format } from "date-fns";
-import dayjs from "dayjs";
+import { format, formatDate } from "date-fns";
+import dayjs, { Dayjs } from "dayjs";
 import * as XLSX from "xlsx";
 import * as DocumentPicker from "expo-document-picker"; // For mobile file selection
 import { v4 as uuidv4 } from "uuid";
 import { crimeImages, CrimeType } from "../(tabs)/data/marker";
+import DocumentPicker from "react-native-document-picker";
+import RNFS from "react-native-fs";
+import firestore from "@react-native-firebase/firestore";
 
 export default function ViewAdminEmergencyList({
   navigation,
@@ -171,13 +174,13 @@ export default function ViewAdminEmergencyList({
     // Prepare data for export
     const dataToExport = filteredReports.map((report, index) => {
       let formattedDate = "N/A"; // Default to N/A if date is invalid
-
-      // Handle date formatting
-      if (report.date) {
-        if (typeof report.date === "string" && report.date !== "###") {
-          formattedDate = report.date;
+      let date = report.date;
+      console.log(format(date, "yyyy-MM-dd"));
+      if (date) {
+        if (typeof date === "object") {
+          formattedDate = format(date, "yyyy-MM-dd");
         } else if (report.date instanceof Timestamp) {
-          formattedDate = formatDate(report.date);
+          formattedDate = format(date, "yyyy-MM-dd");
         }
       }
 
@@ -366,35 +369,30 @@ export default function ViewAdminEmergencyList({
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const reportsPerPage = 10; // Adjust this number based on how many reports per page
+  const reportsPerPage = 10;
   const currentReports = filteredReports.slice(
     (currentPage - 1) * reportsPerPage,
     currentPage * reportsPerPage
   );
-  // Get unique crime categories from reports
+
   const crimeCategories = Array.from(
     new Set(crimes.map((report) => report.category))
   );
 
-  // Filter reports based on search query and selected category
   const filterReports = (searchQuery: string, category: string | null) => {
-    let filtered = crimes; // Start with all reports
+    let filtered = crimes;
 
-    // Apply category filter if a category is selected
     if (category) {
       filtered = filtered.filter(
         (report: { category: string }) => report.category === category
       );
     }
 
-    // Apply search query filter if a query is provided
     if (searchQuery) {
       filtered = filtered.filter((report) => {
         const query = searchQuery.toLowerCase();
         return (
-          report.title.toLowerCase().includes(query) ||
           report.category.toLowerCase().includes(query) ||
-          report.status.toLowerCase().includes(query) ||
           report.date.toString().includes(query)
         );
       });
@@ -525,50 +523,20 @@ export default function ViewAdminEmergencyList({
         >
           <TitleCard />
 
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              marginTop: 10,
-            }}
-          >
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#115272",
-                paddingVertical: 12, // Increased padding
-                paddingHorizontal: 20, // Increased padding
-                borderRadius: 8, // Increased border radius for a more rounded button
-                marginRight: 10, // Adjusted spacing between buttons
-              }}
-              onPress={handleExport} // Define your export logic here
-            >
-              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>
-                Export
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#115272",
-                paddingVertical: 12, // Increased padding
-                paddingHorizontal: 20, // Increased padding
-                borderRadius: 8, // Increased border radius for a more rounded button
-                marginRight: 10, // Adjusted spacing between buttons
-              }}
-              onPress={handleImport} // Define your import logic here
-            >
-              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>
-                Import
-              </Text>
-            </TouchableOpacity>
-          </View>
           <SearchSort
             reports={crimes}
             setCategoryModalVisible={setCategoryModalVisible}
             setFilteredReports={setFilteredReports}
             isAlignedRight={isAlignedRight}
             filterReports={filterReports}
+            handleExport={handleExport}
+            handleImport={handleImport}
+            // pickFile={pickFile}
+            // excelData={excelData}
+            // uploading={uploading}
+            // uploadToFirestore={uploadToFirestore}
           />
+
           <Modal
             visible={isCategoryModalVisible}
             animationType="slide"
@@ -592,7 +560,9 @@ export default function ViewAdminEmergencyList({
                         style={webstyles.modalOption}
                         onPress={() => handleCategorySelect(item)}
                       >
-                        <Text style={webstyles.modalOptionText}>{item}</Text>
+                        <Text style={webstyles.modalOptionText}>
+                          {item.charAt(0).toUpperCase() + item.slice(1)}
+                        </Text>
                       </TouchableOpacity>
                     )}
                   />
