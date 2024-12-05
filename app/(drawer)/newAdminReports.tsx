@@ -20,7 +20,7 @@ import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { useRoute } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
-import { db, str } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
+import { db } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
 import {
   collection,
   addDoc,
@@ -127,34 +127,36 @@ export default function NewAdminReports({
 
   //GEOCODING
 
-  const geocodeAddress = async (address: string): Promise<GeoPoint | string | null | undefined> => {
+  const geocodeAddress = async (
+    address: string
+  ): Promise<GeoPoint | string | null | undefined> => {
     if (!address || address.trim() === "") return null;
     const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
     const bounds = {
-      southeast: "14.649456,121.099608",  // Adjusted bounds
-      northwest: "14.694712,121.067647",
+      northeast: "14.693963,121.101193", // Adjusted bounds
+      southwest: "14.649732,121.067052",
     };
     const region = "PH";
-  
+
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
       address
-    )}&bounds=${bounds.northwest},${bounds.southeast}&region=${region}&key=${apiKey}`;
-  
+    )}&bounds=${bounds.northeast},${bounds.southwest}&region=${region}&key=${apiKey}`;
+
     try {
       const response = await fetch(url);
       const data = await response.json();
-  
+
       if (data.status === "OK" && data.results.length > 0) {
         const { lat, lng } = data.results[0].geometry.location;
         console.log("Geocoded location:", lat, lng);
-  
-        const [neLat, neLng] = bounds.northwest.split(",").map(Number);
-        const [swLat, swLng] = bounds.southeast.split(",").map(Number);
+
+        const [neLat, neLng] = bounds.northeast.split(",").map(Number);
+        const [swLat, swLng] = bounds.southwest.split(",").map(Number);
         console.log(bounds);
         const isWithinBounds =
           lat >= swLat && lat <= neLat && lng >= swLng && lng <= neLng;
         console.log("Within the bounds:", isWithinBounds);
-  
+
         if (isWithinBounds) {
           return new firebase.firestore.GeoPoint(lat, lng);
         } else {
@@ -170,7 +172,6 @@ export default function NewAdminReports({
       return null;
     }
   };
-  
 
   const handleSubmit = async () => {
     let resizedImage = null;
@@ -187,23 +188,23 @@ export default function NewAdminReports({
         return;
       }
     }
-  
+
     const locationString = location;
     const geoPoint = await geocodeAddress(locationString);
-  
+
     if (!geoPoint) {
       console.warn("Skipping invalid location:", locationString);
       alert(`Does not accept locations beyond Quezon City: ${locationString}`);
       return;
     }
-  
+
     const defaultImage = require("../../assets/images/default-image.jpg");
     const defaultURI = Asset.fromModule(defaultImage).uri;
-  
+
     const timestamp = new Date();
     const unixTimestamp = Math.floor(timestamp.getTime() / 1000);
     console.log(defaultURI);
-  
+
     const newCrime = {
       id: uuidv4(),
       icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
@@ -218,10 +219,10 @@ export default function NewAdminReports({
       image: resizedImage
         ? { filename: imageFilename, uri: resizedImage.uri }
         : { filename: "Untitled Image", uri: defaultURI },
-      status: "VALID",
+      status: true,
       timestamp: unixTimestamp,
     };
-  
+
     try {
       console.log(newCrime);
       const crimeRef = collection(database, "crimes"); // Save to 'crimes' collection
@@ -358,7 +359,7 @@ export default function NewAdminReports({
           ]}
         >
           <TitleCard />
-        
+
           <ScrollView
             contentContainerStyle={[
               webstyles.reportList,
@@ -371,14 +372,6 @@ export default function NewAdminReports({
               value={name}
               editable={true}
               aria-disabled
-            />
-            <Text>Subject:</Text>
-            <TextInput
-              style={webstyles.inputField}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Title (e.g: 'Murder at XX street' "
-              placeholderTextColor={"#8c8c8c"}
             />
             <Text>Select Crime Type:</Text>
             <DropDownPicker
