@@ -36,7 +36,6 @@ import * as XLSX from "xlsx";
 import * as DocumentPicker from "expo-document-picker"; // For mobile file selection
 import { v4 as uuidv4 } from "uuid";
 import { crimeImages, CrimeType } from "../(tabs)/data/marker";
-import DocumentPicker from "react-native-document-picker";
 import RNFS from "react-native-fs";
 import firestore from "@react-native-firebase/firestore";
 
@@ -117,7 +116,9 @@ export default function ViewAdminEmergencyList({
   //   return format(date.toLocaleString(), "yyyy-MM-dd");
   // };
 
-  const formatCoordinates = (coordinates: GeoPoint): string => {
+  const formatCoordinates = (
+    coordinates: GeoPoint | { latitude: number; longitude: number }
+  ): string => {
     return `Latitude: ${coordinates.latitude}, Longitude: ${coordinates.longitude}`;
   };
 
@@ -531,10 +532,6 @@ export default function ViewAdminEmergencyList({
             filterReports={filterReports}
             handleExport={handleExport}
             handleImport={handleImport}
-            // pickFile={pickFile}
-            // excelData={excelData}
-            // uploading={uploading}
-            // uploadToFirestore={uploadToFirestore}
           />
 
           <Modal

@@ -297,7 +297,7 @@ export default function NewReports({
       // selectedImage && imageFilename
       //   ? { filename: imageFilename, uri: selectedImage }
       //   : undefined,
-      status: "PENDING",
+      status: false,
       timestamp: unixTimestamp,
     };
 
