@@ -1,8 +1,16 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Button,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
 import ClearFilter from "./ClearFilter";
+import { useRoute } from "@react-navigation/native";
 
 export default function SearchSort({
   reports,
@@ -10,19 +18,31 @@ export default function SearchSort({
   setFilteredReports,
   isAlignedRight,
   filterReports,
+  handleExport = () => {},
+  handleImport = () => {},
+  pickFile,
+  excelData,
+  uploading,
+  uploadToFirestore,
 }: {
   reports: any;
   setCategoryModalVisible: any;
   setFilteredReports: any;
   isAlignedRight: any;
   filterReports: any;
+  handleExport: any;
+  handleImport: any;
+  pickFile: any;
+  excelData: any;
+  uploading: any;
+  uploadToFirestore: any;
 }) {
+  const route = useRoute();
   const [isSortedAsc, setIsSortedAsc] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
-  const [currentStatusSort, setCurrentStatusSort] = useState<
-    "PENDING" | "VALID" | "PENALIZED"
-  >("PENDING");
+  const [currentStatusSort, setCurrentStatusSort] = useState<boolean>(false);
+
   // Handle search query change
   const handleSearch = (query: string) => {
     setSearchQuery(query); // Update search query state
@@ -85,18 +105,18 @@ export default function SearchSort({
   const sortReportsByStatus = () => {
     // Cycle through status types
     const nextStatus =
-      currentStatusSort === "PENDING"
-        ? "VALID"
-        : currentStatusSort === "VALID"
-          ? "PENALIZED"
-          : "PENDING";
+      currentStatusSort === false
+        ? true
+        : currentStatusSort === true
+          ? false
+          : false;
 
     setCurrentStatusSort(nextStatus); // Update the state to the next status
 
     // Sort the reports based on the new status
     setFilteredReports((prevReports: any) => {
       const sortedReports = [...prevReports].sort((a, b) => {
-        const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+        const statusOrder = [true, false];
         // Sort reports by the status order
         return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
       });
@@ -169,7 +189,80 @@ export default function SearchSort({
         <View style={{ alignSelf: "center", left: -40 }}>
           <Ionicons name={"search-outline"} size={24} />
         </View>
+        {route.name === "ViewAdminEmergencyList" ? (
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              marginTop: 10,
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#115272",
+                paddingHorizontal: 20,
+                borderRadius: 8,
+                marginRight: 10,
+                width: 100,
+                height: 50,
+                justifyContent: "center",
+              }}
+              onPress={handleExport}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 16,
+                  fontWeight: "bold",
+                  alignSelf: "center",
+                }}
+              >
+                Export
+              </Text>
+            </TouchableOpacity>
+            {/* <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Button title="Pick an Excel File" onPress={pickFile} />
+              {excelData && <Text>{JSON.stringify(excelData, null, 2)}</Text>}
+              <Button
+                title={uploading ? "Uploading..." : "Upload Data to Firestore"}
+                onPress={uploadToFirestore}
+                disabled={uploading}
+              />
+            </View> */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#115272",
+                paddingVertical: 12,
+                paddingHorizontal: 20,
+                borderRadius: 8,
+                marginRight: 10,
+                width: 100,
+                height: 50,
+                justifyContent: "center",
+              }}
+              onPress={handleImport}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 16,
+                  fontWeight: "bold",
+                  alignSelf: "center",
+                }}
+              >
+                Import
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
+
       <View
         style={[
           {
@@ -195,7 +288,7 @@ export default function SearchSort({
             setItems={setItems}
             setValue={setValue}
             onChangeValue={handleDropDownChange}
-            placeholder="Select a filter"
+            placeholder="Filter or Sort"
           />
         </View>
       </View>

@@ -22,6 +22,7 @@ export const MarkerWithInfoWindow = ({
   setMarkers,
   selectedCrimeFilters,
   mode,
+  displayMarkers,
 }: {
   markers: MarkerType[];
   selectedDate: any;
@@ -29,6 +30,7 @@ export const MarkerWithInfoWindow = ({
   setMarkers: any;
   selectedCrimeFilters: CrimeFilter[];
   mode: any;
+  displayMarkers: any;
 }) => {
   //Marker Details
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
@@ -37,10 +39,7 @@ export const MarkerWithInfoWindow = ({
   const [markerCrime, setMarkerCrime] = useState<CrimeType | undefined>();
   const [markerName, setMarkerName] = useState<string>();
   const markerRefs = useRef<{ [key: string]: any }>({});
-  const [filteredCrimeItems, setFilteredCrimeItems] = useState<MarkerType[]>(
-    []
-  );
-  console.log(markers);
+
   try {
     useEffect(() => {
       markers.forEach((marker) => {
@@ -54,51 +53,6 @@ export const MarkerWithInfoWindow = ({
     console.warn(error);
   }
 
-  try {
-    useEffect(() => {
-      filterMarkers(selectedDate);
-    }, [selectedCrimeFilters, selectedDate, allMarkers]);
-    const filterMarkers = (date: any) => {
-      let filteredMarkers = allMarkers;
-
-      if (selectedDate) {
-        const selectedMonth = dayjs(date).month() + 1;
-        const selectedYear = dayjs(date).year();
-        const selectedDay = dayjs(date).get("D");
-        filteredMarkers = filteredMarkers.filter((marker: any) => {
-          const markerMonth = dayjs(marker.date).month() + 1;
-          const markerYear = dayjs(marker.date).year();
-          const markerDay = dayjs(marker.date).get("D");
-          return (
-            markerMonth === selectedMonth &&
-            markerYear === selectedYear &&
-            markerDay === selectedDay
-          );
-        });
-      }
-
-      console.log(
-        "Selected Month:",
-        selectedDate ? dayjs(selectedDate).month() + 1 : "None"
-      );
-      console.log(
-        "Selected Crimes:",
-        selectedCrimeFilters.map((filter) => filter.label)
-      );
-      console.log("Filtered Markers:", filteredMarkers);
-      if (selectedCrimeFilters.length > 0) {
-        const filteredCrimeMarkers = markers.filter((marker: any) =>
-          selectedCrimeFilters.some((filter) => filter.label === marker.crime)
-        );
-        // console.log("TempItems", tempItems);
-        setFilteredCrimeItems(filteredCrimeMarkers);
-        // setMarkers(tempItems.flat());
-      } else {
-        setFilteredCrimeItems(filteredMarkers);
-      }
-    };
-  } catch (error) {}
-
   const handleMarkerClick = (marker: MarkerType) => {
     setActiveMarkerId(marker.id);
     setMarkerDetails(marker.details);
@@ -107,11 +61,17 @@ export const MarkerWithInfoWindow = ({
     setMarkerName(marker.title);
   };
 
-  //To display them
-  const displayMarkers =
-    mode === "single" || mode === "range" || mode === "multiple"
-      ? markers
-      : filteredCrimeItems;
+  // if (selectedCrimeFilters.length > 0) {
+  //   filteredMarkers = markers.filter((marker: any) =>
+  //     selectedCrimeFilters.some((filter) => filter.label === marker.crime)
+  //   );
+  //   // console.log("TempItems", tempItems);
+  //   console.log("Filtered Markers:", filteredMarkers);
+  //   setFilteredCrimeItems(filteredMarkers);
+  //   // setMarkers(tempItems.flat());
+  // } else {
+  //   setFilteredCrimeItems(filteredMarkers);
+  // }
 
   return (
     <>
@@ -152,8 +112,25 @@ export const MarkerWithInfoWindow = ({
         `}
       </style>
       {displayMarkers.map((marker: any) => {
-        const latitude = marker.coordinate._latitude;
-        const longitude = marker.coordinate._longitude;
+        let latitude, longitude;
+        if (
+          "_latitude" in marker.coordinate &&
+          "_longitude" in marker.coordinate
+        ) {
+          // If marker.coordinate is a GeoPoint
+          latitude = marker.coordinate._latitude;
+          longitude = marker.coordinate._longitude;
+        } else if (
+          "latitude" in marker.coordinate &&
+          "longitude" in marker.coordinate
+        ) {
+          // If marker.coordinate is a Map coordinate
+          latitude = marker.coordinate.latitude;
+          longitude = marker.coordinate.longitude;
+        } else {
+          console.error("Invalid coordinate format:", marker.coordinate);
+          return; // Or handle the error appropriately
+        }
 
         markerRefs.current[marker.id] =
           markerRefs.current[marker.id] || React.createRef();

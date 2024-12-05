@@ -25,6 +25,8 @@ const DateDisplay = ({
   allMarkers,
   setShowError,
   setAllMarkers,
+  handleNextMonth,
+  handlePrevMonth,
 }: {
   allMarkers: MarkerType[];
   selectedDate: dayjs.Dayjs;
@@ -36,53 +38,9 @@ const DateDisplay = ({
   markers: MarkerType[];
   setShowError: (visible: boolean) => void;
   setAllMarkers: any;
+  handleNextMonth: any;
+  handlePrevMonth: any;
 }) => {
-  const filterMarkersbyMonth = () => {
-    try {
-      setMarkers(() => {
-        return allMarkers.filter((marker) => {
-          const markerDate = dayjs(marker.date, "MM-DD-YYYY");
-          if (dateFunction) {
-            return (
-              markerDate.month() + 1 === dateFunction.month() + 1 &&
-              markerDate.year() === dateFunction.year()
-            );
-          }
-        });
-      });
-    } catch (error: any) {
-      console.error("Error", error);
-    }
-  };
-
-  useEffect(() => {
-    filterMarkersbyMonth();
-  }, [dateFunction]);
-
-  const handleNextMonth = () => {
-    try {
-      console.log(dateFunction);
-      const nextMonth = dateFunction.add(1, "month");
-      setDateFunction(nextMonth);
-      setSelectedDate(nextMonth);
-      filterMarkersbyMonth();
-    } catch (error) {
-      console.warn("Error:", error);
-      return setShowError(true);
-    }
-  };
-
-  const handlePrevMonth = () => {
-    try {
-      const lastMonth = dateFunction.subtract(1, "month");
-      setDateFunction(lastMonth);
-      setSelectedDate(lastMonth);
-      filterMarkersbyMonth();
-    } catch (error) {
-      console.warn("Error:", error);
-      return setShowError(true);
-    }
-  };
   const currentDate = selectedDate.format("MMMM YYYY");
 
   return (

@@ -525,11 +525,9 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     // console.log("Crime Map date function", dateFunction.format("YYYY-MM-DD"));
 
     const [mode, setMode] = useState<ModeType>("single");
-    console.log(mode);
     //All Markers
     const [allMarkers, setAllMarkers] = useState<MarkerType[]>([]);
     const [pins, setMarkers] = useState<MarkerType[]>([]);
-    console.log(pins);
     const [isAddingMarker, setIsAddingMarker] = useState(false);
     //Heatmap
     const [radius, setRadius] = useState(50);
@@ -617,6 +615,107 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
       loadMarkersFromFirestore().then((data) => setMarkersCollection(data));
     }, []);
 
+    const [filteredCrimeItems, setFilteredCrimeItems] = useState(allMarkers);
+
+    const filterMarkers = () => {
+      try {
+        let filteredMarkers = [...allMarkers];
+
+        // Filter by selected date
+        if (selectedDate) {
+          const selectedDay = dayjs(selectedDate).date();
+          const selectedMonth = dayjs(selectedDate).month() + 1;
+          const selectedYear = dayjs(selectedDate).year();
+
+          filteredMarkers = filteredMarkers.filter((marker) => {
+            const markerDate = dayjs(marker.date);
+            return (
+              markerDate.date() === selectedDay &&
+              markerDate.month() + 1 === selectedMonth &&
+              markerDate.year() === selectedYear
+            );
+          });
+        }
+
+        // Filter by selected crime filters
+        if (selectedCrimeFilters.length > 0) {
+          filteredMarkers = filteredMarkers.filter((marker) =>
+            selectedCrimeFilters.some((filter) => filter.label === marker.crime)
+          );
+        }
+
+        setFilteredCrimeItems(filteredMarkers);
+      } catch (error) {
+        console.error("Error filtering markers:", error);
+      }
+    };
+
+    const filterMarkersByMonth = () => {
+      try {
+        if (dateFunction) {
+          const selectedMonth = dateFunction.month() + 1;
+          const selectedYear = dateFunction.year();
+
+          let monthFilteredMarkers = allMarkers.filter((marker) => {
+            const markerDate = dayjs(marker.date);
+            return (
+              markerDate.month() + 1 === selectedMonth &&
+              markerDate.year() === selectedYear
+            );
+          });
+
+          if (selectedCrimeFilters.length > 0) {
+            monthFilteredMarkers = monthFilteredMarkers.filter((marker) =>
+              selectedCrimeFilters.some(
+                (filter) => filter.label === marker.crime
+              )
+            );
+          }
+
+          setFilteredCrimeItems(monthFilteredMarkers);
+        }
+      } catch (error) {
+        console.error("Error filtering markers by month:", error);
+      }
+    };
+
+    // Update filters when relevant state changes
+    useEffect(() => {
+      filterMarkers();
+    }, [selectedDate, selectedCrimeFilters, allMarkers]);
+
+    useEffect(() => {
+      filterMarkersByMonth();
+    }, [dateFunction, selectedCrimeFilters]);
+
+    // Handle month navigation
+    const handleNextMonth = () => {
+      try {
+        const nextMonth = dateFunction.add(1, "month");
+        setDateFunction(nextMonth);
+        setSelectedDate(nextMonth);
+      } catch (error) {
+        console.warn("Error advancing to the next month:", error);
+      }
+    };
+
+    const handlePrevMonth = () => {
+      try {
+        const prevMonth = dateFunction.subtract(1, "month");
+        setDateFunction(prevMonth);
+        setSelectedDate(prevMonth);
+      } catch (error) {
+        console.warn("Error returning to the previous month:", error);
+      }
+    };
+
+    // To display filtered markers
+    const displayMarkers =
+      mode === "single" || mode === "range" || mode === "multiple"
+        ? filteredCrimeItems
+        : allMarkers;
+
+    console.log(displayMarkers);
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -645,15 +744,13 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               minZoom={14}
               maxZoom={18}
             >
-              {isHeatmapVisible && (
+              {isHeatmapVisible ? (
                 <WebHeatmap
                   geojson={markersCollection}
                   radius={radius}
                   opacity={opacity}
                 />
-              )}
-
-              {isMarkersVisible && (
+              ) : isMarkersVisible ? (
                 <MarkerWithInfoWindow
                   markers={pins}
                   selectedDate={selectedDate}
@@ -661,9 +758,20 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
                   setMarkers={setMarkers}
                   selectedCrimeFilters={selectedCrimeFilters}
                   mode={mode}
+                  displayMarkers={displayMarkers}
                 />
-              )}
+              ) : null}
 
+              {/* <Marker
+                coordinate={{
+                  latitude: 0,
+                  longitude: 0,
+                }}
+                onPress={async () => {}}
+                icon={}
+                tracksViewChanges={false}
+                tracksInfoWindowChanges={false}
+              /> */}
               <View
                 style={{
                   flex: 1,
@@ -696,6 +804,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
             <DateModal
               allMarkers={allMarkers}
               dateFunction={dateFunction}
+              setFilteredCrimeItems={setFilteredCrimeItems}
               mode={mode}
               setToggleModal={setToggleModal}
               setSelectedDate={setSelectedDate}
@@ -703,6 +812,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               setIsAddingMarker={setIsAddingMarker}
               setDateFunction={setDateFunction}
               setMode={setMode}
+              filteredCrimeItems={filteredCrimeItems}
             />
           </Modal>
           <Modal
@@ -791,6 +901,8 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
             setDateFunction={setDateFunction}
             setShowError={setShowError}
             setAllMarkers={setAllMarkers}
+            handleNextMonth={handleNextMonth}
+            handlePrevMonth={handlePrevMonth}
           />
         </SpacerView>
       </GestureHandlerRootView>

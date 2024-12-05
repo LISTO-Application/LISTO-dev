@@ -48,37 +48,33 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   const handleTitlePress = (report: Report) => {
     console.log("Navigating to details page for report:", report);
     navigation.navigate("ReportDetails", {
-      id: report.id,
-      title: report.title,
+      uid: report.uid,
       category: report.category,
       status: report.status,
       additionalInfo: report.additionalInfo,
       image: report.image,
     });
   };
-  const handleStatusChange = async (
-    reportId: string,
-    newStatus: "PENDING" | "VALID" | "PENALIZED"
-  ) => {
+  const handleStatusChange = async (reportId: string, newStatus: boolean) => {
     try {
       setReports((prevReports) =>
         prevReports.map((report) =>
-          report.id === reportId ? { ...report, status: newStatus } : report
+          report.uid === reportId ? { ...report, status: newStatus } : report
         )
       );
       setFilteredReports((prevReports) =>
         prevReports.map((report) =>
-          report.id === reportId ? { ...report, status: newStatus } : report
+          report.uid === reportId ? { ...report, status: newStatus } : report
         )
       );
 
-      const report = reports.find((r) => r.id === reportId);
+      const report = reports.find((r) => r.uid === reportId);
       if (report) {
         const reportRef = doc(db, "reports", reportId);
         await updateDoc(reportRef, { status: newStatus });
         console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
 
-        if (newStatus === "VALID") {
+        if (newStatus === true) {
           try {
             const newCrime = {
               ...report,
@@ -88,31 +84,33 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             const crimeRef = collection(database, "crimes");
             await addDoc(crimeRef, newCrime);
             console.log(
-              `Report ${report.id} transferred to incidents from ${report}`
+              `Report ${report.uid} transferred to incidents from ${report}`
             );
           } catch (error) {
             console.error("Error transferring report:", error);
           }
         }
-        if (newStatus === "VALID" || newStatus === "PENALIZED") {
+        if (newStatus === true) {
           try {
             await deleteDoc(doc(db, "reports", reportId));
             setReports((prevReports) =>
-              prevReports.filter((r) => r.id !== reportId)
+              prevReports.filter((r) => r.uid !== reportId)
             );
             setFilteredReports((prevReports) =>
-              prevReports.filter((r) => r.id !== reportId)
+              prevReports.filter((r) => r.uid !== reportId)
             );
-            console.log(`Report ${report.id} removed from reports.`);
+            console.log(`Report ${report.uid} removed from reports.`);
           } catch (error) {
-            alert(`Error deleting the report ${report.title}`);
+            alert(
+              `Error deleting the report ${report.category} by ${report.name} on ${report.date}`
+            );
           }
         }
 
         // Re-sort the reports based on the new status
         setFilteredReports((prevReports) => {
           const sortedReports = [...prevReports].sort((a, b) => {
-            const statusOrder = ["PENDING", "VALID", "PENALIZED"];
+            const statusOrder = [true, false];
             return (
               statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
             );
@@ -135,10 +133,9 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
           const newDate = new Date(date._seconds * 1000);
           return {
-            id: doc.id,
-            icon: doc.data().icon || "",
+            uid: doc.data().uid,
+            phone: doc.data().phone || "Unknown Number",
             category: doc.data().category || "Unknown",
-            title: doc.data().title || "Untitled",
             additionalInfo: doc.data().additionalInfo || "Unknown Report",
             location: doc.data().location || "Unknown Location",
             coordinate: doc.data().coordinate,
@@ -152,7 +149,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
               filename: imageData.filename || "Unknown Filename",
               uri: imageData.uri || "Unknown Uri",
             },
-            status: doc.data().status || "PENDING",
+            status: doc.data().status,
             timestamp: doc.data().timestamp || new Date().toISOString(),
           };
         });
@@ -233,20 +230,16 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
       filtered = filtered.filter(
         (report: {
           time: any;
-          title: string;
           location: string;
           category: string;
           date: Date;
-          status: string;
         }) => {
           const query = searchQuery.toLowerCase();
           const date = dayjs(report.date).format("YYYY-MM-DD");
           return (
-            report.title.toLowerCase().includes(query) ||
             report.location.toLowerCase().includes(query) ||
             report.category.toLowerCase().includes(query) ||
-            date.toLowerCase().includes(query) ||
-            report.status.toLowerCase().includes(query)
+            date.toLowerCase().includes(query)
           );
         }
       );
@@ -277,13 +270,13 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           {currentReports.map((report) => (
-            <View key={report.id}>
+            <View key={report.uid}>
               {/* Report content */}
               <View style={styles.reportContainer}>
                 <View style={styles.reportIcon}>
                   <Ionicons
                     name={
-                      report.title === "HOMICIDE" ? "alert-circle" : "alert"
+                      report.category === "homicide" ? "alert-circle" : "alert"
                     }
                     size={24}
                     color="white"
@@ -295,13 +288,12 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                   <TouchableOpacity
                     onPress={() =>
                       navigation.navigate("reportDetails", {
-                        id: report.id,
-                        title: report.title,
+                        uid: report.uid,
                         category: report.category,
                       })
                     }
                   >
-                    <Text style={styles.reportTitle}>{report.title}</Text>
+                    <Text style={styles.reportTitle}>{report.category}</Text>
                   </TouchableOpacity>
                   <Text style={styles.reportDetails}>
                     {report.additionalInfo}
@@ -387,6 +379,8 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             setFilteredReports={setFilteredReports}
             isAlignedRight={isAlignedRight}
             filterReports={filterReports}
+            handleExport={undefined}
+            handleImport={undefined}
           />
           <Modal
             visible={isCategoryModalVisible}
@@ -411,7 +405,9 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                         style={webstyles.modalOption}
                         onPress={() => handleCategorySelect(item)}
                       >
-                        <Text style={webstyles.modalOptionText}>{item}</Text>
+                        <Text style={webstyles.modalOptionText}>
+                          {item.charAt(0).toUpperCase() + item.slice(1)}
+                        </Text>
                       </TouchableOpacity>
                     )}
                   />
@@ -428,7 +424,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             {currentReports.length > 0 ? (
               currentReports.map((report) => (
                 <View
-                  key={report.id}
+                  key={report.uid}
                   style={{
                     marginBottom: 20,
                     padding: 15,

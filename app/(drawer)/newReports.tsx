@@ -20,7 +20,7 @@ import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { useRoute } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
-import { db, str } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
+import { db } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
 import {
   collection,
   addDoc,
@@ -41,11 +41,13 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { FontAwesome } from "@expo/vector-icons";
 import { Image, type ImageSource } from "expo-image";
-import storage from "@react-native-firebase/storage";
 import firestore from "@react-native-firebase/firestore";
 import { getUnixTime, parse, subDays, subYears } from "date-fns";
+import * as FileSystem from "expo-file-system";
 import TitleCard from "@/components/TitleCard";
 import { Asset } from "expo-asset";
+import storage from "@react-native-firebase/storage";
+
 const database = db;
 
 export interface DropdownCrimeTypes {
@@ -111,6 +113,7 @@ export default function NewReports({
   const [time, setTime] = useState("");
   const [title, setTitle] = useState("");
   const [name, setName] = useState(""); //TO set the reporter's name
+  const [phone, setPhone] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | undefined>(
     undefined
   );
@@ -133,14 +136,14 @@ export default function NewReports({
     if (!address || address.trim() === "") return null;
     const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
     const bounds = {
-      southeast: "14.649456,121.099608",
-      northwest: "14.694712,121.067647",
+      northeast: "14.693963,121.101193",
+      southwest: "14.649732,121.067052",
     };
     const region = "PH";
 
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
       address
-    )}&bounds=${bounds.northwest}|${bounds.southeast}&region=${region}&key=${apiKey}`;
+    )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`;
 
     try {
       const response = await fetch(url);
@@ -157,8 +160,8 @@ export default function NewReports({
           lat <= neLat && lat >= swLat && lng <= neLng && lng >= swLng;
         console.log("Within the bounds:", isWithinBounds);
         console.log("Parsed bounds:", {
-          northeast: { lat: neLat, lng: neLng },
-          southwest: { lat: swLat, lng: swLng },
+          northwest: { lat: neLat, lng: neLng },
+          southeast: { lat: swLat, lng: swLng },
         });
         console.log(data.results[0].geometry.bounds);
 
@@ -175,20 +178,87 @@ export default function NewReports({
     }
   };
 
+  // const blobToBase64 = (blob: Blob): Promise<string> => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       if (typeof reader.result === "string") {
+  //         resolve(reader.result);
+  //       } else {
+  //         reject(new Error("Failed to convert to Blob to Base64 string."));
+  //       }
+  //     };
+  //     reader.onerror = reject;
+  //     reader.readAsDataURL(blob); // Converts the blob to a Base64 string
+  //   });
+  // };
+
   const handleSubmit = async () => {
     let resizedImage = null;
     if (selectedImage) {
       try {
+        // Resize the image
         resizedImage = await ImageManipulator.manipulateAsync(
           selectedImage,
           [{ resize: { width: 800 } }],
           { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
+
+        // If on Web, use FileReader to convert image to base64
+        if (resizedImage !== null) {
+          if (Platform.OS === "web") {
+            const base64Image = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                resolve(reader.result as string);
+              };
+              reader.onerror = reject;
+
+              // Create a temporary image element and load the file into it
+              fetch(resizedImage.uri)
+                .then((response) => response.blob())
+                .then((blob) => reader.readAsDataURL(blob));
+            });
+
+            // Prepare the Firebase storage reference
+            const reference = firebase
+              .storage()
+              .ref("/reportImages/" + Date.now() + ".jpg");
+
+            // Upload the base64 image
+            await reference.putString(base64Image.split(",")[1], "base64", {
+              contentType: "image/jpeg",
+            });
+          } else {
+            // For native platforms (iOS/Android)
+            const base64Image = await FileSystem.readAsStringAsync(
+              resizedImage.uri,
+              {
+                encoding: FileSystem.EncodingType.Base64,
+              }
+            );
+
+            // Prepare the Firebase storage reference
+            const reference = firebase
+              .storage()
+              .ref("/reportImages/" + Date.now() + ".jpg");
+
+            // Upload the base64 image
+            await reference.putString(base64Image, "base64", {
+              contentType: "image/jpeg",
+            });
+          }
+          alert("Image uploaded successfully!");
+        } else {
+          alert("Failed to resize image. Please try again.");
+        }
       } catch (error) {
-        console.error("Error resizing image:", error);
-        alert("Failed to process the image. Please try again.");
+        console.error("Error processing and uploading the image:", error);
+        alert("Failed to process and upload the image. Please try again.");
         return;
       }
+    } else {
+      alert("No image selected, proceeding to create report.");
     }
 
     const locationString = location;
@@ -199,6 +269,11 @@ export default function NewReports({
       alert(`Does not accept locations beyond Quezon City: ${locationString}`);
       return;
     }
+
+    if (!selectedValue) {
+      alert("Select a valid category!");
+      return;
+    }
     const defaultImage = require("../../assets/images/default-image.jpg");
     const defaultURI = Asset.fromModule(defaultImage).uri;
 
@@ -206,12 +281,10 @@ export default function NewReports({
     const unixTimestamp = Math.floor(timestamp.getTime() / 1000);
     console.log(defaultURI);
     const newReport = {
-      id: uuidv4(),
-      icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
-      // icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
+      uid: uuidv4(),
+      phone: phone,
       name: name,
       category: selectedValue.toLowerCase(),
-      title: title || "Untitled Report",
       location: location,
       coordinate: geoPoint,
       additionalInfo: additionalInfo || "Undescribed Report",
@@ -224,7 +297,7 @@ export default function NewReports({
       // selectedImage && imageFilename
       //   ? { filename: imageFilename, uri: selectedImage }
       //   : undefined,
-      status: "PENDING",
+      status: false,
       timestamp: unixTimestamp,
     };
 
@@ -376,14 +449,6 @@ export default function NewReports({
               value={name}
               editable={true}
               aria-disabled
-            />
-            <Text>Subject:</Text>
-            <TextInput
-              style={webstyles.inputField}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Title (e.g: 'Murder at XX street' "
-              placeholderTextColor={"#8c8c8c"}
             />
             <Text>Select Crime Type:</Text>
             <DropDownPicker
