@@ -34,7 +34,7 @@ const DrawerScreenOptions = ({
       }
       return <Ionicons name={iconName} size={size} color={color} />;
     },
-    headerShown: true,
+    headerShown: !["Reports", "Validate"].includes(route.name),
     header: () => <MyHeader navigation={navigation} />,
     drawerStyle: {
       backgroundColor: "#f0f0f0",

@@ -3,6 +3,11 @@
     "name": "LISTO-dev",
     "slug": "LISTO-dev",
     "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -13,11 +18,13 @@
       "backgroundColor": "#115272"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pingusbingus.LISTOdev"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
+        "bundleIdentifier": "com.pingusbingus.LISTOdev",
         "backgroundColor": "#115272"
       },
       "config": {
@@ -117,7 +124,16 @@
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/perf",
       "expo-share-intent",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-asset"
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
     ],
     "experiments": {
       "typedRoutes": true

@@ -7,25 +7,21 @@ import { NavigationContainer } from "@react-navigation/native";
 import {
   Tabs,
 } from "expo-router";
-
-//JWT Imports
-// import "core-js/stable/atob";
-// import { jwtDecode } from "jwt-decode";
-
 //Component Imports
 import { TabBar } from "@/components/navigation/TabBar";
-
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
 import Emergency from "./emergency";
-import CrimeMap from ".";
-import UserAccount from "./account";
+import CrimeMap from "./crimemap";
+import UserAccount from ".";
 import ValidateReports from "../(drawer)/validateReports";
+
 import UserBanner from "../(drawer)/UserBanner";
 import DrawerScreenOptions from "../(drawer)/DrawerScreenOptions";
 import RootReports from "../(drawer)/RootReports";
 import ChangeUserAccount from "../changeUserInformation";
 import { firebase } from "@react-native-firebase/firestore";
+import ReportDetails from "../(drawer)/reportDetails";
 
 const report = require("../../assets/images/report-icon.png");
 
@@ -46,22 +42,13 @@ export default function TabLayout() {
               return <UserBanner {...props} />;
             }}
           >
-            <Drawer.Screen name="Emergency" component={Emergency} />
             <Drawer.Screen name="Report Incident" component={CrimeMap} />
             <Drawer.Screen name="Account" component={UserAccount} />
-            <Drawer.Screen name="ChangeAccount" component={ChangeUserAccount} />
             <Drawer.Screen
               name="Reports"
               component={RootReports}
               options={{
                 title: "View Reports",
-              }}
-            />
-            <Drawer.Screen
-              name="Validate"
-              component={ValidateReports}
-              options={{
-                title: "Validate Reports",
               }}
             />
           </Drawer.Navigator>
