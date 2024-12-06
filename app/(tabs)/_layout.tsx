@@ -1,49 +1,41 @@
 //React Imports
-import { Platform } from "react-native";
+import { Platform, Text, } from "react-native";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+import { NavigationContainer } from "@react-navigation/native";
 
 //Expo Imports
 import {
-  useRouter,
   Tabs,
-  useFocusEffect,
-  useNavigation,
-  router,
 } from "expo-router";
-//Component Imports
-import { TabBarIcon } from "@/components/navigation/TabBarIcon";
-import { TabBar } from "@/components/navigation/TabBar";
-import { ThemedText } from "@/components/ThemedText";
 
-import { createDrawerNavigator } from "@react-navigation/drawer";
-import { NavigationContainer } from "@react-navigation/native";
+//JWT Imports
+// import "core-js/stable/atob";
+// import { jwtDecode } from "jwt-decode";
+
+//Component Imports
+import { TabBar } from "@/components/navigation/TabBar";
 
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
 import Emergency from "./emergency";
-import CrimeMap from "./crimemap";
-import UserAccount from "./[id]";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
-import ViewReports from "../(drawer)/viewReports";
+import CrimeMap from ".";
+import UserAccount from "./account";
 import ValidateReports from "../(drawer)/validateReports";
-import Login from "..";
-import { AuthContext, AuthProvider } from "../AuthContext";
-import MyHeader from "../(drawer)/MyHeader";
 import UserBanner from "../(drawer)/UserBanner";
 import DrawerScreenOptions from "../(drawer)/DrawerScreenOptions";
 import RootReports from "../(drawer)/RootReports";
 import ChangeUserAccount from "../changeUserInformation";
+import { firebase } from "@react-native-firebase/firestore";
 
 const report = require("../../assets/images/report-icon.png");
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const router = useRouter();
+
+  const session = firebase.auth().currentUser;
   const Drawer = createDrawerNavigator();
 
   if (Platform.OS === "web") {
     return (
-      <AuthProvider>
         <NavigationContainer independent={true}>
           <Drawer.Navigator
             initialRouteName="Report Incident"
@@ -74,14 +66,19 @@ export default function TabLayout() {
             />
           </Drawer.Navigator>
         </NavigationContainer>
-      </AuthProvider>
     );
   } else if (Platform.OS === "android") {
+
+    if(session == null) {
+      return <Tabs tabBar={(props) => null}/>
+    }
+    
     return (
       <Tabs
         initialRouteName="index"
         screenOptions={{
           headerShown: false,
+          tabBarHideOnKeyboard: true,
         }}
         tabBar={(props) => <TabBar {...props} />}
       >
@@ -89,6 +86,7 @@ export default function TabLayout() {
           name="emergency"
           options={{
             tabBarShowLabel: false,
+            tabBarHideOnKeyboard: true,
             title: "Emergency",
           }}
         />
@@ -97,6 +95,7 @@ export default function TabLayout() {
           name="index"
           options={{
             tabBarShowLabel: false,
+            tabBarHideOnKeyboard: true,
             title: "Crime Map",
           }}
         />
@@ -104,23 +103,21 @@ export default function TabLayout() {
           name="report"
           options={{
             tabBarShowLabel: false,
+            tabBarHideOnKeyboard: true,
             title: "Report",
           }}
         />
 
         <Tabs.Screen
-          name="[id]"
+          name="account"
           options={{
             tabBarShowLabel: false,
+            tabBarHideOnKeyboard: true,
             title: "Account",
           }}
         />
+
       </Tabs>
     );
-  } else {
-    console.log("User is not logged in");
-    router.replace({
-      pathname: "/",
-    });
   }
-}
+} 

@@ -5,23 +5,41 @@ import {
   ScrollView,
   Image,
   StyleSheet,
+  Alert,
+  Pressable,
+  ActivityIndicator,
 } from "react-native";
+import { useState } from "react";
 
 //Expo Imports
-import { router } from "expo-router";
+import { router, Redirect } from "expo-router";
+
+//Firebase Imports
+import { firebase } from "@react-native-firebase/auth";
 
 //Stylesheet Imports
 import { styles } from "@/styles/styles";
 import { utility } from "@/styles/utility";
 
 //Component Imports
-import { ThemedInput } from "@/components/ThemedInput";
-import { ThemedText } from "@/components/ThemedText";
-import { SpacerView } from "@/components/SpacerView";
-import { ThemedButton } from "@/components/ThemedButton";
+import { ThemedInput } from "@/components";
+import { ThemedText } from "@/components";
+import { SpacerView } from "@/components";
+import { ThemedButton } from "@/components";
 
 export default function Forgot() {
-  const logo = require("../assets/images/logo.png");
+
+  const session = firebase.auth().currentUser
+  if(session != null) {
+    return <Redirect href="../(tabs)"/>;
+  }
+
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Email validation
+
+  const logo = require("../../assets/images/logo.png");
   const keyboardBehavior: "padding" | "height" =
     Platform.OS === "ios" ? "padding" : "height";
   if (Platform.OS === "android") {
@@ -40,14 +58,42 @@ export default function Forgot() {
           >
             
               <ThemedText lightColor='#FFF' darkColor='#FFF' type="title">Forgot your password?</ThemedText>
-              <ThemedInput type='outline' placeholder='Email' />
+              <ThemedInput type='outline' placeholder='Email' onChangeText={setEmail}/>
               <SpacerView height={40} />
               <SpacerView height={40}>
-                <ThemedButton title="Submit" 
-                onPress={() => 
-                  router.replace({
-                    pathname: "/",
-                  })} />
+                {!loading && <ThemedButton title="Submit" 
+                onPress={async () => {
+                  setLoading(true);
+                  if(emailRegex.test(email)) {
+                    await firebase.auth().sendPasswordResetEmail(email)
+                    .then(() => {
+                      Alert.alert("Email sent", "A password reset link has been sent to the email if it exists.");
+                      setLoading(false);
+                      router.replace("../(auth)/login");
+                    })
+                    .catch((error) => {
+                      Alert.alert("Password reset failed", error);
+                      setLoading(false);
+                    });
+                  } else if (email == "") {
+                    Alert.alert("Invalid Email", "Please enter an email address.");
+                  } else {
+                    Alert.alert("Invalid Email", "Please enter a valid email address.");
+                  }
+                }} />}
+
+                {loading && 
+                <Pressable
+                  style={{
+                    backgroundColor: "#DA4B46",
+                    height: 36,
+                    width: "100%",
+                    borderRadius: 50,
+                    justifyContent: "center",
+                    marginVertical: '5%'
+                  }}>
+                    <ActivityIndicator size="large" color="#FFF"/>
+                  </Pressable>}
               </SpacerView>
               <SpacerView height={55}/>
   
@@ -122,6 +168,7 @@ export default function Forgot() {
               onPress={() => {
                 router.replace({
                   pathname: "/otp",
+                  params: {}
                 });
               }}
             />

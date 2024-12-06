@@ -17,7 +17,6 @@ import { utility } from "@/styles/utility";
 import { router } from "expo-router";
 
 import { Collapsible } from "@/components/Collapsible";
-import { ExternalLink } from "@/components/ExternalLink";
 
 import { ThemedInput } from "@/components/ThemedInput";
 import { ThemedText } from "@/components/ThemedText";

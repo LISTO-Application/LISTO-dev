@@ -68,7 +68,7 @@ export default function newReports({ navigation }: { navigation: any }) {
               style={webstyles.dropdown}
               onPress={() => setIsDropdownVisible(!isDropdownVisible)}
             >
-              <Text style={webstyles.selectedText}>
+              <Text>
                 {selectedValue || "Select Crime Type"}
               </Text>
               <Ionicons name="chevron-down" size={24} color="gray" />
@@ -117,7 +117,9 @@ export default function newReports({ navigation }: { navigation: any }) {
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}
-                onPress={() => navigation.navigate("ViewReports")}
+                onPress={() => router.replace({
+                  pathname: "/viewReports"
+                })}
               >
                 <Text style={webstyles.buttonTexteditReport}>CANCEL</Text>
               </TouchableOpacity>

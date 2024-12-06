@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "1019470933970",
     "project_id": "listo-dev-18c26",
-    "storage_bucket": "listo-dev-18c26.appspot.com"
+    "storage_bucket": "listo-dev-18c26.firebasestorage.app"
   },
   "client": [
     {
