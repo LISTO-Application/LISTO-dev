@@ -78,7 +78,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
           try {
             const newCrime = {
               ...report,
-              status: true,
+              status: "VALID",
             };
             console.log(newCrime);
             const crimeRef = collection(database, "crimes");

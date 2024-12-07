@@ -757,33 +757,6 @@ export default function ViewAdminEmergencyList({
             isAlignedRight={isAlignedRight}
           />
         </Animated.View>
-        <TouchableOpacity
-          style={webstyles.fab}
-          onPress={() => navigation.navigate("newAdminReports")}
-        >
-          <View
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: 20,
-            }}
-          >
-            <Text
-              style={{
-                alignSelf: "center",
-                color: "white",
-                fontWeight: "bold",
-                fontSize: 20,
-              }}
-            >
-              Add a crime
-            </Text>
-            <View style={{ alignSelf: "center" }}>
-              <Ionicons name="add" size={30} color="white" />
-            </View>
-          </View>
-        </TouchableOpacity>
       </View>
     );
   }
