@@ -3,11 +3,7 @@
     "name": "LISTO-dev",
     "slug": "LISTO-dev",
     "version": "1.0.0",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -51,7 +47,6 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow LISTO to use your location."
         }
-        
       ],
       [
         "expo-camera",
@@ -109,11 +104,14 @@
               }
             },
             "timePicker": {
-              "background": {"light": "#FFF", "dark": "#FFF"},
-              "numbersBackgroundColor": {"light": "#115272", "dark": "#115272"},
-              "numbersTextColor": {"light": "#FFF", "dark": "#FFF"},
-              "numbersSelectorColor": {"light": "#DA4B46", "dark": "#DA4B46"},
-              "headerBackground": {"light": "#115272", "dark": "#115272"}
+              "background": { "light": "#FFF", "dark": "#FFF" },
+              "numbersBackgroundColor": {
+                "light": "#115272",
+                "dark": "#115272"
+              },
+              "numbersTextColor": { "light": "#FFF", "dark": "#FFF" },
+              "numbersSelectorColor": { "light": "#DA4B46", "dark": "#DA4B46" },
+              "headerBackground": { "light": "#115272", "dark": "#115272" }
             }
           }
         }
@@ -125,7 +123,7 @@
       "@react-native-firebase/perf",
       "expo-share-intent",
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
       [
         "expo-build-properties",
         {
@@ -133,7 +131,7 @@
             "useFrameworks": "static"
           }
         }
-      ],
+      ]
     ],
     "experiments": {
       "typedRoutes": true

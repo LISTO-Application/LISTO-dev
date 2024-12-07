@@ -7,8 +7,8 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import 'react-native-reanimated'
-import 'react-native-gesture-handler'
+import "react-native-reanimated";
+import "react-native-gesture-handler";
 
 // Expo Imports
 import { useFonts } from "expo-font";
@@ -26,7 +26,6 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-
 
 const isLoggedIn = true; // Replace with actual login state
 
@@ -46,22 +45,35 @@ export default function RootLayout() {
     return null;
   }
   return (
-
     <SessionProvider>
-        <GestureHandlerRootView>
-          <PortalProvider>
-            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-            <Stack screenOptions={{headerShown: false}}>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
-                <Stack.Screen name="changeAdminInformation" options={{ headerShown: false }} />
-                <Stack.Screen name="changeUserInformation" options={{ headerShown: false }} />
-                <Stack.Screen name="changepass" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" options={{ headerShown: false }} />
-              </Stack>
-            </ThemeProvider>
-          </PortalProvider>
-        </GestureHandlerRootView>
+      <GestureHandlerRootView>
+        <PortalProvider>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <Stack screenOptions={{ headerShown: false }}>
+              {/* <Stack.Screen name="(auth)" options={{ headerShown: false }} /> */}
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="changeAdminInformation"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="changeUserInformation"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="changepass"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="+not-found"
+                options={{ headerShown: false }}
+              />
+            </Stack>
+          </ThemeProvider>
+        </PortalProvider>
+      </GestureHandlerRootView>
     </SessionProvider>
-  )
+  );
 }
