@@ -211,33 +211,33 @@ export default function CrimeMap() {
     return
   }, []);
 
-  // useEffect(() => {
-  //   if(session != null) {
-  //       setHeatmapData([])
-  //       console.log("Fetching all data...");
-  //       setTimeout(async () => {
-  //         await firebase.firestore().collection("crimes")
-  //         .get()
-  //         .then((querySnapshot) => {
-  //           let heatmapData:SetStateAction<FirebaseFirestoreTypes.DocumentData[]> = [];
-  //           querySnapshot.forEach((doc) => {
-  //             heatmapData.push(doc.data());
-  //           });
-  //           setTimeout(() => {
-  //             setHeatmapData(heatmapData);
-  //           }, 2000);
-  //         })
-  //         .catch((error) => {
-  //           console.log("Error getting documents: ", error);
-  //           if (error.code == "firestore/permission-denied") {
-  //             Alert.alert("Permission Denied", "You do not have permission to access this data.");
-  //           } else {
-  //             Alert.alert("Could not get crime data", "There was an issue with getting the crime data, please try again.")
-  //           } 
-  //         })
-  //       }, 5000);
-  //     } 
-  // }, []);
+  useEffect(() => {
+    if(session != null) {
+        setHeatmapData([])
+        console.log("Fetching all data...");
+        setTimeout(async () => {
+          await firebase.firestore().collection("crimes")
+          .get()
+          .then((querySnapshot) => {
+            let heatmapData:SetStateAction<FirebaseFirestoreTypes.DocumentData[]> = [];
+            querySnapshot.forEach((doc) => {
+              heatmapData.push(doc.data());
+            });
+            setTimeout(() => {
+              setHeatmapData(heatmapData);
+            }, 2000);
+          })
+          .catch((error) => {
+            console.log("Error getting documents: ", error);
+            if (error.code == "firestore/permission-denied") {
+              Alert.alert("Permission Denied", "You do not have permission to access this data.");
+            } else {
+              Alert.alert("Could not get crime data", "There was an issue with getting the crime data, please try again.")
+            } 
+          })
+        }, 5000);
+      } 
+  }, []);
 
   const detailsRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["50%"], []);
