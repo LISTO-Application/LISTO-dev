@@ -233,55 +233,66 @@ export default function Report() {
           reports.map((report, index) => {
             return (
               <MotiView from = {{translateX: 500}} animate={{translateX: 0}} key={index}>
-                <TouchableOpacity style = {{width: "98%", height: "auto", flexDirection: "row", backgroundColor: "#115272", borderColor: "#115272", borderWidth: 5, borderRadius: 5, marginHorizontal: "auto", marginVertical: "0.5%"}} onPress={() => {
-                  setLoading(true);
-                  if(report.data().image.uri != "") {
-                    fetchReportImage(reports[index].data().image.uri)
-                    .then((url) => {
+                <TouchableOpacity style = {{width: "98%", height: "auto", flexDirection: "row", backgroundColor: "#115272", borderColor: "#115272", borderWidth: 5, borderRadius: 5, marginHorizontal: "auto", marginVertical: "0.5%"}} 
+                onPress={() => {
+                  if(report.data().status == 1) {
+                    setLoading(true);
+                    if(report.data().image.uri != "") {
+                      fetchReportImage(reports[index].data().image.uri)
+                      .then((url) => {
+                        setGeoLocation({coords: {latitude: report.data().coordinate.latitude, longitude: report.data().coordinate.longitude, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null}, timestamp: 0});
+                        setSelectedValue({label: report.data().category, value: report.data().category});
+                        setLocation(report.data().location);
+                        setDate(report.data().timeOfCrime.toDate());
+                        setUploadImage(url);
+                        setTime(report.data().timeOfCrime.toDate());
+                        setAdditionalInfo(report.data().additionalInfo);
+                        setDetailID(report.id);
+                        setDetails({...report.data(), image: {uri: url, filename: ""}});
+                        setLoading(false);
+                    });
+                    } else {
                       setGeoLocation({coords: {latitude: report.data().coordinate.latitude, longitude: report.data().coordinate.longitude, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null}, timestamp: 0});
                       setSelectedValue({label: report.data().category, value: report.data().category});
                       setLocation(report.data().location);
                       setDate(report.data().timeOfCrime.toDate());
-                      setUploadImage(url);
+                      setUploadImage("");
                       setTime(report.data().timeOfCrime.toDate());
                       setAdditionalInfo(report.data().additionalInfo);
                       setDetailID(report.id);
-                      setDetails({...report.data(), image: {uri: url, filename: ""}});
+                      setDetails({...report.data()});
                       setLoading(false);
-                  });
+                    }
                   } else {
-                    setGeoLocation({coords: {latitude: report.data().coordinate.latitude, longitude: report.data().coordinate.longitude, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null}, timestamp: 0});
-                    setSelectedValue({label: report.data().category, value: report.data().category});
-                    setLocation(report.data().location);
-                    setDate(report.data().timeOfCrime.toDate());
-                    setUploadImage("");
-                    setTime(report.data().timeOfCrime.toDate());
-                    setAdditionalInfo(report.data().additionalInfo);
-                    setDetailID(report.id);
-                    setDetails({...report.data()});
-                    setLoading(false);
+                    Alert.alert("Report Moderated", "You cannot view a report that has been moderated.");
                   }
                 }}>
-                  <View style = {{width: "25%", aspectRatio: 1/1, justifyContent: "center", alignItems: "center", backgroundColor: "#DA4B46", borderRadius: 5, marginRight: "2.5%"}}>
-                    <Image style = {{width: "50%", height: "50%", aspectRatio: 1/1,}} source={categories[report.data().category as keyof typeof categories]}/>
+                  <View style = {{width: "25%",  aspectRatio: 1/1, justifyContent: "center", alignItems: "center", backgroundColor: "#DA4B46", borderRadius: 5, marginRight: "2.5%", marginVertical: "auto"}}>
+                    <Image style = {{width: "50%", height: "50%", aspectRatio: 1/1, marginVertical:"auto"}} source={categories[report.data().category as keyof typeof categories]}/>
                   </View>
-                  <View style = {{width: "100%", flexDirection: "row", justifyContent: "space-between"}}>
-                    <View style = {{width: "65%"}}>
+                  <View style = {{width: "75%", flexDirection: "row", justifyContent: "flex-start"}}>
+                    <View style = {{width: "55%"}}>
                       <Text style = {{fontSize: 20, color: "#FFF", fontWeight: "bold", }}>{report.data().category.charAt(0).toUpperCase() + report.data().category.slice(1)}</Text>
                       <View style = {{flexDirection: "row"}}><Ionicons style = {{marginRight: "2.5%"}} name="time"  size={24} color="#FFF"/><Text style = {{fontSize: 10, color: "#FFF", fontWeight: "bold", textAlignVertical: "center"}}>{formatDate(report.data().timeOfCrime.toDate(),"MMMM dd, yyyy") + " at " + formatDate(report.data().timeReported.toDate(), "hh:mma")}</Text></View>
                       <View style = {{flexDirection: "row"}}><Ionicons style = {{marginRight: "2.5%"}} name="location"  size={24} color="#FFF"/><Text style = {{fontSize: 10, color: "#FFF", fontWeight: "bold", textAlignVertical: "center"}}>{report.data().location}</Text></View>
                     </View>
-                    <View style = {{width: "35%", height: "auto", justifyContent: "center", alignItems: "center", flexDirection: "column"}}>
+                    <View style = {{width: "20%", justifyContent: "center", alignItems: "center", flexDirection: "column", marginLeft: "15%"}}>
+                      {report.data().status == 0 && (
+                          <>
+                            <MaterialIcons name="save" size={36} color="#FFF" />
+                            <Text style={{ fontSize: small, color: "#FFF", fontWeight: "bold" }}>Archived</Text>
+                          </>
+                        )}
                       {report.data().status == 1 && (
                         <>
                           <MaterialIcons name="pending" size={36} color="#FFF" />
-                          <Text style={{ fontSize: 12, color: "#FFF", fontWeight: "bold" }}>Pending</Text>
+                          <Text style={{ fontSize: small, color: "#FFF", fontWeight: "bold" }}>Pending</Text>
                         </>
                       )}
                       {report.data().status == 2 && (
                         <>
                           <Ionicons name="checkmark-circle" size={36} color="#FFF" />
-                          <Text style={{ fontSize: 12, color: "#FFF", fontWeight: "bold" }}>Validated</Text>
+                          <Text style={{ fontSize: small, color: "#FFF", fontWeight: "bold" }}>Validated</Text>
                         </>
                       )}
                     </View>
