@@ -19,7 +19,7 @@ export default function ValidateReportCard({
 }: {
   report: any;
   handleTitlePress: any;
-  handleStatusChange: (reportId: string, newStatus: boolean) => void;
+  handleStatusChange: (reportId: string, newStatus: number) => void;
 }) {
   const [isImageZoomVisible, setIsImageZoomVisible] = useState(false);
   const parsedDate = format(report.date, "yyyy-MM-dd");
@@ -66,8 +66,7 @@ export default function ValidateReportCard({
                   color: "#115272",
                 }}
               >
-                {report.category.charAt(0).toUpperCase() +
-                  report.category.slice(1)}
+                {report.category.charAt(0).toUpperCase() + report.category.slice(1)}
               </Text>
             </TouchableOpacity>
             <Text
@@ -92,75 +91,75 @@ export default function ValidateReportCard({
       </View>
       {/* Action Buttons */}
       <View
+  style={{
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    alignSelf: "flex-end",
+    marginTop: 10,
+  }}
+>
+  {report.status === 1 ? (
+    <>
+      <TouchableOpacity
         style={{
-          flexDirection: "row",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          alignSelf: "flex-end",
-          marginTop: 10,
+          backgroundColor: "#28a745",
+          paddingVertical: 5,
+          paddingHorizontal: 10,
+          borderRadius: 5,
+          marginLeft: 5,
         }}
+        onPress={() => handleStatusChange(report.uid, 2)} // Validate: Change status to 2 (valid)
       >
-        {report.status === false ? (
-          <>
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#28a745",
-                paddingVertical: 5,
-                paddingHorizontal: 10,
-                borderRadius: 5,
-                marginLeft: 5,
-              }}
-              onPress={() => handleStatusChange(report.uid, true)}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontSize: 20,
-                  textAlign: "center",
-                }}
-              >
-                Validate
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#dc3545",
-                paddingVertical: 5,
-                paddingHorizontal: 10,
-                borderRadius: 5,
-                marginLeft: 5,
-              }}
-              onPress={() => handleStatusChange(report.uid, false)}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontSize: 20,
-                  textAlign: "center",
-                }}
-              >
-                Penalize
-              </Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <Text
-            style={{
-              color:
-                report.status === true
-                  ? "#28a745"
-                  : report.status === false
-                    ? "#dc3545"
-                    : "#6c757d",
-              fontWeight: "bold",
-              fontSize: 20,
-              textAlign: "right",
-            }}
-          >
-            {report.status === true ? "Valid" : "Invalid"}
-          </Text>
-        )}
-      </View>
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 20,
+            textAlign: "center",
+          }}
+        >
+          Validate
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={{
+          backgroundColor: "#dc3545",
+          paddingVertical: 5,
+          paddingHorizontal: 10,
+          borderRadius: 5,
+          marginLeft: 5,
+        }}
+        onPress={() => handleStatusChange(report.uid, 0)} // Archive: Change status to 0 (archived)
+      >
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 20,
+            textAlign: "center",
+          }}
+        >
+          Archive
+        </Text>
+      </TouchableOpacity>
+    </>
+  ) : (
+    <Text
+      style={{
+        color:
+          report.status === 2
+            ? "#28a745"
+            : report.status === 0
+            ? "#6c757d"
+            : "#6c757d",
+        fontWeight: "bold",
+        fontSize: 20,
+        textAlign: "right",
+      }}
+    >
+      {report.status === 2 ? "Valid" : "Archived"}
+    </Text>
+  )}
+</View>
       <Modal
         visible={isImageZoomVisible}
         animationType="fade"
@@ -206,7 +205,6 @@ export default function ValidateReportCard({
     </View>
   );
 }
-
 const style = StyleSheet.create({
   imageContainer: {
     alignItems: "center",

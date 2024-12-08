@@ -12,6 +12,29 @@ import DropDownPicker from "react-native-dropdown-picker";
 import ClearFilter from "./ClearFilter";
 import { useRoute } from "@react-navigation/native";
 
+type Report = {
+  id: string;
+  additionalInfo: string;
+  category: string;
+  location: string;
+  coordinate: {
+    latitude: number;
+    longitude: number;
+  };
+  image: {
+    filename: string;
+    uri: string;
+  };
+  name: string | null;
+  phone: string;
+  status: number;
+  time: string;
+  timeOfCrime: Date;  // Ensure it's a Date object
+  timeReported: Date; // Ensure it's a Date object
+  unixTOC: number;
+  uid: string;
+};
+
 export default function SearchSort({
   reports,
   setCategoryModalVisible,
@@ -25,7 +48,7 @@ export default function SearchSort({
   uploading,
   uploadToFirestore,
 }: {
-  reports: any;
+  reports: Report[];
   setCategoryModalVisible: any;
   setFilteredReports: any;
   isAlignedRight: any;
@@ -57,31 +80,30 @@ export default function SearchSort({
 
   // Sort reports by date (ascending/descending)
   const sortReportsByDateAsc = () => {
-    setFilteredReports((prevReports: any) => {
+    setFilteredReports((prevReports: Report[]) => {
       const sortedReports = [...prevReports];
       sortedReports.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateA.getTime() - dateB.getTime();
+        const dateA = a.timeOfCrime ? new Date(a.timeOfCrime).getTime() : 0;
+        const dateB = b.timeOfCrime ? new Date(b.timeOfCrime).getTime() : 0;
+        return dateA - dateB; // Ascending order
       });
       return sortedReports;
     });
-    setIsSortedAsc((prev) => !prev); // Toggle sorting order
+    setIsSortedAsc(true); // Set sorting state to ascending
   };
-
+  
   const sortReportsByDateDesc = () => {
-    setFilteredReports((prevReports: any) => {
+    setFilteredReports((prevReports: Report[]) => {
       const sortedReports = [...prevReports];
       sortedReports.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateB.getTime() - dateA.getTime();
+        const dateA = a.timeOfCrime ? new Date(a.timeOfCrime).getTime() : 0;
+        const dateB = b.timeOfCrime ? new Date(b.timeOfCrime).getTime() : 0;
+        return dateB - dateA; // Descending order
       });
       return sortedReports;
     });
-    setIsSortedAsc((prev) => !prev); // Toggle sorting order
+    setIsSortedAsc(false); // Set sorting state to descending
   };
-
   // Sort reports alphabetically by title
   const sortReportsByAlphabetAsc = () => {
     setFilteredReports((prevReports: any) => {

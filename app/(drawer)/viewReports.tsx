@@ -36,6 +36,7 @@ import {
   getDocs,
   getFirestore,
 } from "@react-native-firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 import { AuthContext } from "../AuthContext";
 import SideBar from "@/components/SideBar";
@@ -47,15 +48,16 @@ import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
 import dayjs from "dayjs";
 import { format, formatDate, fromUnixTime } from "date-fns";
+import { v4 as uuidv4 } from "uuid";
 import { Icon } from "@expo/vector-icons/build/createIconSet";
 import firestore from "@react-native-firebase/firestore";
-
+import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
   const [currentStatusSort, setCurrentStatusSort] = useState<
-    "PENDING" | "VALID" | "PENALIZED"
-  >("PENDING");
+    "1" | "0" | "2"
+  >("1");
   const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
   const [isSortedAsc, setIsSortedAsc] = useState(true); // State for sorting direction
@@ -64,54 +66,68 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   //FETCH REPROTS
   const fetchReports = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, "reports"));
-      const reportList: Report[] = querySnapshot.docs.map((doc) => {
-        const imageData = doc.data().image || {};
-        const date = doc.data().date;
-
-        const newDate = new Date(date._seconds * 1000);
-
+      const reportsCollectionRef = collection(db, 'reports');
+      const reportsSnapshot = await getDocs(reportsCollectionRef);
+  
+      if (reportsSnapshot.empty) {
+        console.log('No reports found in Firestore.');
+        return;
+      }
+  
+      // Process records from Firestore
+      const reportsArray = reportsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+  
+        // Handle GeoPoint for coordinates
+        let coordinate = data.coordinate;
+        if (coordinate instanceof FirestoreGeoPoint) {
+          // If it's a Firestore GeoPoint, use it directly
+          coordinate = coordinate;
+        } else {
+          // Default to GeoPoint(0, 0) if no coordinate or invalid GeoPoint
+          coordinate = new FirestoreGeoPoint(0, 0);
+        }
+  
         return {
           uid: doc.id,
-          phone: doc.data().phone || "Unknown Number",
-          category: doc.data().category || "Unknown",
-          additionalInfo: doc.data().additionalInfo || "Unknown Report",
-          coordinate: doc.data().coordinate,
-          location: doc.data().location || "Unknown Location",
-          name: doc.data().name || "Anonymous",
-          date: newDate || ["Unknown Date: ", new Date().toDateString()],
-          time: doc.data().time || [
-            "Unknown Time: ",
-            new Date().toTimeString(),
-          ],
-          image: {
-            filename: imageData.filename || "Unknown Filename",
-            uri: imageData.uri || "Unknown Uri",
-          },
-          status: doc.data().status,
-          timestamp: doc.data().timestamp || new Date().toLocaleString(),
+          additionalInfo: data.additionalInfo || 'No additional info',
+          category: data.category || 'Unknown',
+          location: data.location || 'Unknown location',
+          coordinate: coordinate,  // FirestoreGeoPoint directly from Firestore
+          image: data.image || { filename: '', uri: '' }, // Handle image data
+          name: data.name || 'Anonymous',
+          phone: data.phone || 'No phone',
+          status: data.status || 1, // Default to 1
+          time: data.time || 'Unknown time',
+          timeOfCrime: data.timeOfCrime instanceof Timestamp ? data.timeOfCrime.toDate() : new Date(data.timeOfCrime || null),
+          timeReported: data.timeReported instanceof Timestamp ? data.timeReported.toDate() : new Date(data.timeReported || null),
+          unixTOC: data.unixTOC || 0,
+          accountid: data.accountid || 'Unknown account',
+          date: data.date || new Date(),
+          timestamp: data.timestamp || Date.now(),
         };
       });
-
-      // Sort the reports by date after fetching
-      const sortedReports = reportList.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateA.getTime() - dateB.getTime(); // Sort in ascending order
-      });
-
-      setReports(sortedReports); // Update the state with sorted reports
-      setFilteredReports(sortedReports);
+  
+      console.log('Mapped Reports:', reportsArray);
+      setReports(reportsArray);
+      setFilteredReports(reportsArray);
     } catch (error) {
-      console.error("Error fetching reports:", error);
+      console.error('Error fetching reports:', error);
     }
   };
+  
+  
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       fetchReports();
     });
     return unsubscribe;
   }, [navigation]);
+  
+  
+  
+  
+  
 
   //PAGINATIONS
   const [currentPage, setCurrentPage] = useState(1);
@@ -417,59 +433,53 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     </View>
                   </View>
                   <View
-                    style={[
-                      {
-                        borderWidth: 2,
-                        borderRadius: 10,
-                        borderColor: "black",
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        { borderWidth: 5, borderRadius: 10 },
-                        report.status === true
-                          ? { borderColor: "green" }
-                          : report.status === false
-                            ? { borderColor: "orange" }
-                            : null,
-                      ]}
-                    ></View>
-                  </View>
-                  <View style={webstyles.reportActions}>
-                    <TouchableOpacity
-                      style={[
-                        webstyles.editIcon,
-                        report.status === true && webstyles.disabledIcon,
-                      ]}
-                      onPress={() =>
-                        report.status !== true && handleEditReport(report)
-                      }
-                      disabled={report.status === true}
-                    >
-                      <Ionicons
-                        name="create-outline"
-                        size={30}
-                        color={report.status !== false ? "gray" : "white"}
-                        style={
-                          report.status !== false && {
-                            textDecorationLine: "line-through",
-                          }
-                        }
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={webstyles.editIcon}
-                      onPress={() => handleDeleteReport(report.uid)}
-                    >
-                      <Ionicons
-                        name="trash-bin-outline"
-                        size={30}
-                        color="#DA4B46"
-                      />
-                    </TouchableOpacity>
-                    <Text style={webstyles.timeText}>{localTime}</Text>
-                  </View>
+  style={[
+    {
+      borderWidth: 2,
+      borderRadius: 10,
+      borderColor: "black",
+    },
+  ]}
+>
+  <View
+    style={[
+      { borderWidth: 5, borderRadius: 10 },
+      report.status === 2
+        ? { borderColor: "green" } // Status 2 -> Green
+        : report.status === 1
+        ? { borderColor: "yellow" } // Status 1 -> Orange
+        : report.status === 0
+        ? { borderColor: "grey" } // Status 0 -> Grey
+        : null,
+    ]}
+  ></View>
+</View>
+<View style={webstyles.reportActions}>
+  <TouchableOpacity
+    style={[
+      webstyles.editIcon,
+      report.status === 2 && webstyles.disabledIcon, // Disabled when status is 2 (green)
+    ]}
+    onPress={() => report.status !== 2 && handleEditReport(report)} // Only allow edit if status is not 2
+    disabled={report.status === 2} // Disable if status is 2 (green)
+  >
+    <Ionicons
+      name="create-outline"
+      size={30}
+      color={report.status === 0 ? "gray" : report.status === 1 ? "yellow" : "green"} // Set color based on status
+      style={
+        report.status === 0 && { textDecorationLine: "line-through" } // Strike-through when status is 0 (grey)
+      }
+    />
+  </TouchableOpacity>
+  <TouchableOpacity
+    style={webstyles.editIcon}
+    onPress={() => handleDeleteReport(report.uid)}
+  >
+    <Ionicons name="trash-bin-outline" size={30} color="#DA4B46" />
+  </TouchableOpacity>
+  <Text style={webstyles.timeText}>{report.time}</Text>
+</View>
                 </View>
               );
             })}

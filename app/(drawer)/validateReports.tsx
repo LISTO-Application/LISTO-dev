@@ -22,11 +22,13 @@ import { styles } from "@/styles/styles"; // For mobile styles
 import { db } from "../FirebaseConfig";
 import { Report } from "../(tabs)/data/reports";
 import "firebase/database";
+import { GeoPoint as FirestoreGeoPoint, Timestamp } from "@react-native-firebase/firestore";
 import {
   addDoc,
   collection,
   deleteDoc,
   getDocs,
+  getDoc, query, where
 } from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { doc, updateDoc } from "@react-native-firebase/firestore";
@@ -55,126 +57,121 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
       image: report.image,
     });
   };
-  const handleStatusChange = async (reportId: string, newStatus: boolean) => {
+  const handleStatusChange = async (uid: string, newStatus: number) => {
     try {
-      setReports((prevReports) =>
-        prevReports.map((report) =>
-          report.uid === reportId ? { ...report, status: newStatus } : report
-        )
-      );
-      setFilteredReports((prevReports) =>
-        prevReports.map((report) =>
-          report.uid === reportId ? { ...report, status: newStatus } : report
-        )
-      );
-
-      const report = reports.find((r) => r.uid === reportId);
-      if (report) {
-        const reportRef = doc(db, "reports", reportId);
-        await updateDoc(reportRef, { status: newStatus });
-        console.log(`Status updated to ${newStatus} for report ID ${reportId}`);
-
-        if (newStatus === true) {
-          try {
-            const newCrime = {
-              ...report,
-              status: true,
-            };
-            console.log(newCrime);
-            const crimeRef = collection(database, "crimes");
-            await addDoc(crimeRef, newCrime);
-            console.log(
-              `Report ${report.uid} transferred to incidents from ${report}`
-            );
-          } catch (error) {
-            console.error("Error transferring report:", error);
-          }
-        }
-        if (newStatus === true) {
-          try {
-            await deleteDoc(doc(db, "reports", reportId));
-            setReports((prevReports) =>
-              prevReports.filter((r) => r.uid !== reportId)
-            );
-            setFilteredReports((prevReports) =>
-              prevReports.filter((r) => r.uid !== reportId)
-            );
-            console.log(`Report ${report.uid} removed from reports.`);
-          } catch (error) {
-            alert(
-              `Error deleting the report ${report.category} by ${report.name} on ${report.date}`
-            );
-          }
-        }
-
-        // Re-sort the reports based on the new status
-        setFilteredReports((prevReports) => {
-          const sortedReports = [...prevReports].sort((a, b) => {
-            const statusOrder = [true, false];
-            return (
-              statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
-            );
-          });
-          return sortedReports;
-        });
+      // Query the "reports" collection where the `uid` field matches the provided `uid`
+      const reportsCollection = collection(db, "reports");
+      const q = query(reportsCollection, where("uid", "==", uid)); // Query by `uid` field
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        console.error(`No report found with UID: ${uid}`);
+        return;
       }
+  
+      // Get the first document (assuming the uid is unique)
+      const reportDoc = querySnapshot.docs[0]; // Get the first matched document
+      const reportRef = reportDoc.ref; // Reference to the document
+  
+      // Update the status in Firestore
+      await updateDoc(reportRef, { status: newStatus });
+      console.log(`Status updated to ${newStatus} for report UID ${uid}`);
+  
+      // If status is 2 (valid), transfer to "crimes"
+      if (newStatus === 2) {
+        const newCrime = reportDoc.data(); // Get the data of the report
+        const crimeRef = collection(db, "crimes");
+        await addDoc(crimeRef, newCrime);
+        console.log(`Report ${uid} transferred to crimes.`);
+  
+        // Delete the report from "reports" collection after transferring it to "crimes"
+        await deleteDoc(reportRef);
+        console.log(`Report ${uid} removed from reports.`);
+      }
+  
+      // If status is 0 (archived), just log the action
+      if (newStatus === 0) {
+        console.log(`Report ${uid} archived.`);
+      }
+  
+      // Re-sort the reports (optional)
+      setFilteredReports((prevReports) => {
+        const sortedReports = [...prevReports].sort((a, b) => a.status - b.status);
+        return sortedReports;
+      });
     } catch (error) {
       console.error("Error updating status:", error);
     }
   };
-
+  
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "reports"));
-        const reportList: Report[] = querySnapshot.docs.map((doc) => {
-          const imageData = doc.data().image || {};
-          const date = doc.data().date;
-
-          const newDate = new Date(date._seconds * 1000);
+        const reportsCollectionRef = collection(db, 'reports');
+        const reportsSnapshot = await getDocs(reportsCollectionRef);
+  
+        if (reportsSnapshot.empty) {
+          console.log('No reports found in Firestore.');
+          return;
+        }
+  
+        const reportsArray = reportsSnapshot.docs.map((doc) => {
+          const data = doc.data();
+  
+          // Handle GeoPoint for coordinates
+          let coordinate = data.coordinate;
+          if (coordinate instanceof FirestoreGeoPoint) {
+            coordinate = coordinate;
+          } else {
+            coordinate = new FirestoreGeoPoint(0, 0);
+          }
+  
           return {
-            uid: doc.data().uid,
-            phone: doc.data().phone || "Unknown Number",
-            category: doc.data().category || "Unknown",
-            additionalInfo: doc.data().additionalInfo || "Unknown Report",
-            location: doc.data().location || "Unknown Location",
-            coordinate: doc.data().coordinate,
-            name: doc.data().name || "Anonymous",
-            date: newDate || ["Unknown Date: ", new Date().toDateString()],
-            time: doc.data().time || [
-              "Unknown Time: ",
-              new Date().toTimeString(),
-            ],
-            image: {
-              filename: imageData.filename || "Unknown Filename",
-              uri: imageData.uri || "Unknown Uri",
-            },
-            status: doc.data().status,
-            timestamp: doc.data().timestamp || new Date().toISOString(),
+            id: doc.id,
+            additionalInfo: data.additionalInfo || 'No additional info',
+            category: data.category || 'Unknown',
+            location: data.location || 'Unknown location',
+            coordinate,
+            image: data.image || { filename: '', uri: '' },
+            name: data.name || 'Anonymous',
+            phone: data.phone || 'No phone',
+            status: data.status || 1,
+            time: data.time || 'Unknown time',
+            timeOfCrime: data.timeOfCrime instanceof Timestamp ? data.timeOfCrime.toDate() : new Date(data.timeOfCrime || null),
+            timeReported: data.timeReported instanceof Timestamp ? data.timeReported.toDate() : new Date(data.timeReported || null),
+            unixTOC: data.unixTOC || 0,
+            uid: data.uid || 'Unknown UID',
+            date: data.date || new Date(),
+            timestamp: data.timestamp || Date.now(),
           };
         });
-        setReports(reportList);
-        setFilteredReports(reportList);
+  
+        console.log('Mapped Reports:', reportsArray);
+        setReports(reportsArray);
+        setFilteredReports(reportsArray);
       } catch (error) {
-        console.error("Error fetching reports:", error);
+        console.error('Error fetching reports:', error);
       }
     };
-
-    fetchReports();
-  }, []);
+  
+    const unsubscribe = navigation.addListener("focus", fetchReports);
+  
+    return unsubscribe;
+  }, [navigation]);
+  
 
   const [reports, setReports] = useState<Report[]>([]);
 
-  const getStatusStyle = (status: string) => {
+  const getStatusStyle = (status: number) => {
     switch (status) {
-      case "VALID":
-        return { backgroundColor: "#115272", color: "red" };
-      case "PENDING":
-        return { backgroundColor: "grey", color: "blue" };
-      case "PENALIZED":
-        return { backgroundColor: "#dc3545", color: "green" };
+      case 0:  // Archived
+        return { backgroundColor: "gray", color: "white" };
+      case 1:  // Pending or Default
+        return { backgroundColor: "yellow", color: "black" };
+      case 2:  // Valid
+        return { backgroundColor: "green", color: "white" };
       default:
-        return { backgroundColor: "#6c757d", color: "" };
+        return { backgroundColor: "white", color: "black" };
     }
   };
 
@@ -389,9 +386,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             onRequestClose={() => setCategoryModalVisible(false)}
           >
             {/* TouchableWithoutFeedback to close the modal when clicking outside */}
-            <TouchableWithoutFeedback
-              onPress={() => setCategoryModalVisible(false)}
-            >
+            <TouchableWithoutFeedback onPress={() => setCategoryModalVisible(false)}>
               <View style={webstyles.modalContainer}>
                 <View style={webstyles.modalContent}>
                   <Text style={webstyles.modalHeader}>
@@ -416,39 +411,43 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             </TouchableWithoutFeedback>
           </Modal>
           <ScrollView
-            contentContainerStyle={[
-              webstyles.reportList,
-              isAlignedRight && { width: "75%" },
-            ]}
-          >
-            {currentReports.length > 0 ? (
-              currentReports.map((report) => (
-                <View
-                  key={report.uid}
-                  style={{
-                    marginBottom: 20,
-                    padding: 15,
-                    borderRadius: 8,
-                    backgroundColor: "#f9f9f9",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                  }}
-                >
-                  <ValidateReportCard
-                    report={report}
-                    handleTitlePress={handleTitlePress}
-                    handleStatusChange={handleStatusChange}
-                  />
-                </View>
-              ))
-            ) : (
-              <Text style={{ textAlign: "center", marginTop: 20 }}>
-                No reports available.
-              </Text>
-            )}
-          </ScrollView>
+  contentContainerStyle={[
+    webstyles.reportList,
+    isAlignedRight && { width: "75%" },
+  ]}
+>
+  {/* Filtered reports that have status = 1 */}
+  {currentReports.length > 0 ? (
+    currentReports
+      .filter((report) => report.status === 1) // Only show reports with status 1 (pending)
+      .map((report) => (
+        <View
+          key={report.id}
+          style={{
+            marginBottom: 20,
+            padding: 15,
+            borderRadius: 8,
+            backgroundColor: "#f9f9f9",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+          }}
+        >
+          <ValidateReportCard
+            report={report}
+            handleTitlePress={handleTitlePress}
+            handleStatusChange={(reportId, newStatus) => handleStatusChange(reportId, newStatus)} // Pass the correct status value
+          />
+        </View>
+      ))
+  ) : (
+    <Text style={{ textAlign: "center", marginTop: 20 }}>
+      No reports available.
+    </Text>
+  )}
+</ScrollView>
+
           <PaginationReport
             filteredReports={filteredReports}
             reportsPerPage={reportsPerPage}

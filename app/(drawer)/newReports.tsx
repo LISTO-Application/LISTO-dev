@@ -25,7 +25,7 @@ import {
   collection,
   addDoc,
   firebase,
-  GeoPoint,
+  GeoPoint as FirestoreGeoPoint,
   setDoc,
   doc,
 } from "@react-native-firebase/firestore";
@@ -132,7 +132,7 @@ export default function NewReports({
 
   const geocodeAddress = async (
     address: string
-  ): Promise<GeoPoint | string | null | undefined> => {
+  ): Promise<FirestoreGeoPoint | string | null | undefined> => {
     if (!address || address.trim() === "") return null;
     const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
     const bounds = {
@@ -166,7 +166,7 @@ export default function NewReports({
         console.log(data.results[0].geometry.bounds);
 
         if (isWithinBounds) {
-          return new firebase.firestore.GeoPoint(lat, lng);
+          return new FirestoreGeoPoint(lat, lng);
         }
       } else {
         console.error("Geocoding error:", data.status);
@@ -195,17 +195,26 @@ export default function NewReports({
 
   const handleSubmit = async () => {
     let resizedImage = null;
+    let fileName = ""; // Define fileName here
+  
+    console.log("Starting handleSubmit function...");
+  
     if (selectedImage) {
       try {
+        console.log("Resizing image...");
         // Resize the image
         resizedImage = await ImageManipulator.manipulateAsync(
           selectedImage,
           [{ resize: { width: 800 } }],
           { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
-
-        // If on Web, use FileReader to convert image to base64
+  
         if (resizedImage !== null) {
+          // Firebase storage reference
+          fileName = Date.now() + ".jpg"; // Generate a unique file name
+          console.log("Resized image:", resizedImage);
+  
+          // Web Platform: Use FileReader to convert image to base64
           if (Platform.OS === "web") {
             const base64Image = await new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
@@ -213,40 +222,28 @@ export default function NewReports({
                 resolve(reader.result as string);
               };
               reader.onerror = reject;
-
-              // Create a temporary image element and load the file into it
+  
               fetch(resizedImage.uri)
                 .then((response) => response.blob())
                 .then((blob) => reader.readAsDataURL(blob));
             });
-
-            // Prepare the Firebase storage reference
-            const reference = firebase
-              .storage()
-              .ref("/reportImages/" + Date.now() + ".jpg");
-
-            // Upload the base64 image
+  
+            const reference = storage().ref("/reportImages/" + fileName);
             await reference.putString(base64Image.split(",")[1], "base64", {
               contentType: "image/jpeg",
             });
+            console.log("Image uploaded to Firebase Storage (Web).");
           } else {
-            // For native platforms (iOS/Android)
-            const base64Image = await FileSystem.readAsStringAsync(
-              resizedImage.uri,
-              {
-                encoding: FileSystem.EncodingType.Base64,
-              }
-            );
-
-            // Prepare the Firebase storage reference
-            const reference = firebase
-              .storage()
-              .ref("/reportImages/" + Date.now() + ".jpg");
-
-            // Upload the base64 image
+            // Native (iOS/Android) Platform
+            const base64Image = await FileSystem.readAsStringAsync(resizedImage.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+  
+            const reference = storage().ref("/reportImages/" + fileName);
             await reference.putString(base64Image, "base64", {
               contentType: "image/jpeg",
             });
+            console.log("Image uploaded to Firebase Storage (Native).");
           }
           alert("Image uploaded successfully!");
         } else {
@@ -260,65 +257,72 @@ export default function NewReports({
     } else {
       alert("No image selected, proceeding to create report.");
     }
-
+  
+    // Geocode address to get Firestore GeoPoint
     const locationString = location;
-    const geoPoint = await geocodeAddress(locationString);
-
-    if (!geoPoint) {
+    console.log("Geocoding location:", locationString);
+    const firestoreGeoPoint = await geocodeAddress(locationString);
+  
+    if (!firestoreGeoPoint) {
       console.warn("Skipping invalid location:", locationString);
       alert(`Does not accept locations beyond Quezon City: ${locationString}`);
       return;
     }
-
+  
     if (!selectedValue) {
       alert("Select a valid category!");
       return;
     }
+  
+    // Default image if no image selected
     const defaultImage = require("../../assets/images/default-image.jpg");
     const defaultURI = Asset.fromModule(defaultImage).uri;
-
+  
     const timestamp = new Date();
     const unixTimestamp = Math.floor(timestamp.getTime() / 1000);
-    console.log(defaultURI);
+  
     const newReport = {
-      uid: uuidv4(),
-      phone: phone,
-      name: name,
-      category: selectedValue.toLowerCase(),
-      location: location,
-      coordinate: geoPoint,
+      accountid: "anonymous",
+      phone: phone || 'No phone',
+      name: name || 'Anonymous',
+      category: selectedValue ? selectedValue.toLowerCase() : 'Unknown',
+      location: location || 'Unknown location',
+      coordinate: firestoreGeoPoint || new FirestoreGeoPoint(0, 0), // GeoPoint fallback
       additionalInfo: additionalInfo || "Undescribed Report",
-      date: new Date(date) || ["Unknown Date: ", new Date().toDateString()],
-      time: time || ["Unknown Time: ", new Date().toTimeString()],
       image: resizedImage
-        ? { filename: imageFilename, uri: resizedImage.uri }
+        ? { filename: fileName, uri: resizedImage.uri }
         : { filename: "Untitled Image", uri: defaultURI },
-      // imageUrl,
-      // selectedImage && imageFilename
-      //   ? { filename: imageFilename, uri: selectedImage }
-      //   : undefined,
-      status: false,
+      status: 1, // Default to 1
+      time: time || 'Unknown time',
+      timeOfCrime: timestamp,
+      timeReported: timestamp,
+      date: new Date(date) || new Date(),
+      unixTOC: unixTimestamp,
       timestamp: unixTimestamp,
     };
-
+  
+    console.log("New report to be saved:", newReport);
+  
     try {
-      console.log(newReport);
-      const reportRef = collection(database, "reports"); // Ensure 'database' is the Firestore instance
+      const reportRef = collection(database, "reports");
       await addDoc(reportRef, newReport);
+      console.log("Report successfully saved to Firestore.");
       navigation.navigate("ViewReports", { updatedReport: newReport });
     } catch (error) {
       console.error("Error saving report:", error);
       alert("Failed to save report. Please try again.");
     }
   };
-
-  //Dropdown Values
+  
+  
+  // Dropdown Values
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState(crimeType);
-  //Date
+  
+  // Date
   const [startDate, setStartDate] = useState<Date | null>(new Date());
-
+  
   useEffect(() => {
     const dateInput = dayjs(startDate).format("YYYY-MM-DD");
     const timeInput = dayjs(startDate).format("hh:mm A");
@@ -326,16 +330,17 @@ export default function NewReports({
     setDate(dateInput);
     setTime(timeInput);
   }, [startDate]);
-  const minDate =
-    value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
-  //Image
+  
+  const minDate = value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
+  
+  // Image Picker
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
-
+  
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
       setImageFileName(result.assets[0].fileName);
@@ -343,6 +348,7 @@ export default function NewReports({
       alert("You did not select any image.");
     }
   };
+  
   const PlaceholderImage = require("../../assets/images/background-image.jpg");
 
   const Button = ({ label, theme, onPress }: ImageProps) => {

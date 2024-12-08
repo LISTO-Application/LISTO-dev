@@ -16,13 +16,17 @@ export interface Report {
   date: Date;
   additionalInfo: string;
   location: string;
-  coordinate: GeoPoint;
-  name: string;
-  time: string;
+  coordinate: GeoPoint
   image: {
     filename: string;
     uri: string;
   };
-  status: boolean;
-  timestamp: number;
-}
+  name: string | null;
+  
+  status: number;
+  time: string;
+  timeOfCrime: Date;  // Ensure it's a Date object
+  timeReported: Date; // Ensure it's a Date object
+  unixTOC: number;
+ 
+};

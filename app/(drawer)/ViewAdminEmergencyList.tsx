@@ -16,14 +16,10 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { db } from "../FirebaseConfig";
-import { GeoPoint, Timestamp } from "@react-native-firebase/firestore";
+import { Timestamp } from "@react-native-firebase/firestore";
+import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
 import "firebase/database";
-import {
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-} from "@react-native-firebase/firestore";
+import { collection, getDocs, deleteDoc,doc, addDoc, onSnapshot,firebase} from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { styles } from "@/styles/styles";
 import TitleCard from "@/components/TitleCard";
@@ -36,8 +32,7 @@ import * as XLSX from "xlsx";
 import * as DocumentPicker from "expo-document-picker"; // For mobile file selection
 import { v4 as uuidv4 } from "uuid";
 import { crimeImages, CrimeType } from "../(tabs)/data/marker";
-import RNFS from "react-native-fs";
-import firestore from "@react-native-firebase/firestore";
+import { Asset } from "expo-asset";
 
 export default function ViewAdminEmergencyList({
   navigation,
@@ -45,6 +40,7 @@ export default function ViewAdminEmergencyList({
   navigation: any;
 }) {
   const [crimes, setCrimes] = useState<Report[]>([]);
+
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
@@ -53,60 +49,273 @@ export default function ViewAdminEmergencyList({
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchIncidents = async () => {
-      try {
-        // Fetch the incidents collection from Firestore
-        const crimesSnapshot = await getDocs(collection(db, "crimes"));
-
-        console.log("Fetched Incidents Snapshot:", crimesSnapshot); // Debugging log
-
-        if (crimesSnapshot.empty) {
-          console.log("No incidents found in Firestore.");
-          return; // No incidents, so return early
-        }
-        const crimesArray: Report[] = crimesSnapshot.docs.map((doc) => {
-          const imageData = doc.data().image || {};
-          let date = doc.data().date;
-
-          if (date && date._seconds) {
-            date = dayjs(date._seconds * 1000);
-          } else {
-            date = dayjs(date, ["MM/DD/YYYY", "MM-DD-YYYY"], true);
-          }
-          return {
-            id: doc.id,
-            icon: doc.data().icon,
-            name: doc.data().name,
-            title: doc.data().title,
-            status: doc.data().status || "PENDING",
-            location: doc.data().location,
-            coordinate: doc.data().coordinate || {
-              _latitude: 0,
-              _longitude: 0,
-            }, // Fallback if coordinates are not available
-            image: {
-              filename: imageData.filename || "Unknown Filename",
-              uri: imageData.uri || "Unknown Uri",
-            },
-            date: date || "No date",
-            time: doc.data().time,
-            category: doc.data().category || "No type",
-            additionalInfo: doc.data().additionalInfo || "No info",
-            timeStamp: doc.data().timeStamp,
-          };
-        });
-
-        console.log("Mapped Incidents:", crimesArray); // Debugging log
-        setCrimes(crimesArray); // Update state with incidents
-        setFilteredReports(crimesArray);
-      } catch (error) {
-        console.error("Error fetching incidents:", error);
-      }
-    };
-
-    fetchIncidents(); // Fetch incidents when the component mounts
+    fetchIncidents();
   }, []);
 
+  const fetchIncidents = async () => {
+  try {
+    const crimesCollectionRef = collection(db, 'crimes');
+    const crimesSnapshot = await getDocs(crimesCollectionRef);
+
+    if (crimesSnapshot.empty) {
+      console.log('No incidents found in Firestore.');
+      return;
+    }
+
+    // Process records from Firestore without geocoding.
+    const crimesArray = crimesSnapshot.docs.map((doc) => {
+      const data = doc.data();
+      
+      // Handle GeoPoint or plain object coordinates
+      let coordinate = data.coordinate;
+      if (coordinate instanceof FirestoreGeoPoint) {
+        // If the coordinate is a GeoPoint (Firestore GeoPoint)
+        coordinate = {
+          latitude: coordinate.latitude,
+          longitude: coordinate.longitude,
+        };
+      } else {
+        // If it's a plain object or not available, use default coordinates
+        coordinate = coordinate || { latitude: 0, longitude: 0 };
+      }
+
+      return {
+        id: doc.id,
+        additionalInfo: data.additionalInfo || 'No additional info',
+        category: data.category || 'Unknown',
+        location: data.location || 'Unknown location',
+        coordinate: coordinate,  // Updated coordinates based on GeoPoint or plain object
+        time: data.time || '00:00',
+        timeOfCrime: data.timeOfCrime instanceof Timestamp ? data.timeOfCrime.toDate() : new Date(data.timeOfCrime || null),
+        timeReported: data.timeReported instanceof Timestamp ? data.timeReported.toDate() : new Date(data.timeReported || null),
+        unixTOC: data.unixTOC || 0,
+      };
+    });
+
+    console.log('Mapped Incidents:', crimesArray);
+    setCrimes(crimesArray);
+    setFilteredReports(crimesArray);
+  } catch (error) {
+    console.error('Error fetching incidents:', error);
+  }
+};
+
+const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null> => {
+  if (!address || address.trim() === '') {
+    console.warn('Empty or invalid address provided.');
+    return null;
+  }
+
+  const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"; // Replace with your API key
+  const encodedAddress = encodeURIComponent(address);
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&region=PH&key=${apiKey}`;
+
+  console.log(`Geocoding request for address: ${address}`);
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`Geocoding API request failed with status ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log("Geocoding API response:", data);
+
+    if (data.status === 'OK' && data.results.length > 0) {
+      const { lat, lng } = data.results[0].geometry.location;
+      console.log(`Geocoding succeeded, coordinates: Latitude ${lat}, Longitude ${lng}`);
+      return new firebase.firestore.GeoPoint(lat, lng);
+    } else {
+      console.error('Geocoding failed or returned no results:', data);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error occurred during geocoding:', error);
+    return null;
+  }
+};
+  const parseTime = (timeString: string | null | undefined): Date => {
+    // Check if the timeString is missing or null/undefined
+    if (!timeString) {
+      console.warn("Time of Crime missing, using current time.");
+      return new Date(); // Return the current time
+    }
+  
+    // Clean up the time string to handle spaces and case-insensitive matching
+    const cleanedTimeString = timeString.trim().toLowerCase();
+  
+    // Regex for 12/25/2024 12:30 pm format (handles space between time and am/pm)
+    const regex = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{1,2}):(\d{2})\s*(am|pm)$/i;
+    const match = cleanedTimeString.match(regex);
+  
+    if (!match) {
+      console.warn(`Invalid time format: ${timeString}, using current time.`);
+      return new Date(); // Return the current time if the format is invalid
+    }
+  
+    // Extract date components from matched groups
+    const month = parseInt(match[1], 10) - 1; // JavaScript months are 0-based
+    const day = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+    let hour = parseInt(match[4], 10);
+    const minute = parseInt(match[5], 10);
+    const period = match[6]; // 'am' or 'pm'
+  
+    // Adjust the hour for 12-hour format (AM/PM)
+    if (period === 'pm' && hour !== 12) {
+      hour += 12;
+    } else if (period === 'am' && hour === 12) {
+      hour = 0; // Midnight case
+    }
+  
+    // Create a Date object using the parsed values
+    const date = new Date(year, month, day, hour, minute, 0, 0);
+  
+    // Check for invalid date
+    if (isNaN(date.getTime())) {
+      console.warn(`Invalid time format: ${timeString}, using current time.`);
+      return new Date(); // Return the current time if the date is invalid
+    }
+  
+    // Convert to UTC and apply Philippine Standard Time (PST) offset
+    const utcDate = new Date(date.toUTCString());
+    const phOffset = 8 * 60; // Philippines is UTC +8
+    utcDate.setMinutes(utcDate.getMinutes() + phOffset);
+  
+    return utcDate;
+  };
+  const handleImport = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'text/csv',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ],
+      });
+  
+      if (result.canceled) {
+        console.log('File selection was canceled.');
+        return;
+      }
+  
+      const file = result.assets?.[0];
+      if (!file?.uri) {
+        console.error('No URI found for the selected file.');
+        return;
+      }
+  
+      const response = await fetch(file.uri);
+      const data = await response.blob();
+      const reader = new FileReader();
+  
+      reader.onload = async (event) => {
+        const binaryData = event.target?.result;
+        if (!binaryData) {
+          console.error('Failed to read the file.');
+          return;
+        }
+  
+        const workbook = XLSX.read(binaryData, { type: 'binary' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+  
+        const importedReports = await Promise.all(jsonData.map(async (item: any) => {
+          let timeOfCrime = item['Time of Crime'] ? parseTime(item['Time of Crime']) : null;
+          let timeReported = item['Time Reported'] ? parseTime(item['Time Reported']) : null;
+  
+          if (!timeOfCrime) {
+            timeOfCrime = new Date(); // Default to current time
+            console.warn("Time of Crime missing or invalid, using current time.");
+          }
+  
+          if (!timeReported) {
+            timeReported = new Date(); // Default to current time
+            console.warn("Time Report missing or invalid, using current time.");
+          }
+  
+          let coordinate: FirestoreGeoPoint | null = null;
+          const lat = item['Latitude'] ? parseFloat(item['Latitude']) : null;
+          const lng = item['Longitude'] ? parseFloat(item['Longitude']) : null;
+  
+          // Check if latitude and longitude exist in the file
+          if (lat && lng) {
+            coordinate = new FirestoreGeoPoint(lat, lng);
+          } else if (item["Location"]) {
+            // Geocode the address if coordinates aren't available
+            coordinate = await geocodeAddress(item["Location"]);
+          }
+  
+          if (!coordinate) {
+            console.warn("Geocoding failed or no coordinates provided, using default coordinates for Barangay Holy Spirit.");
+            coordinate = new FirestoreGeoPoint(14.6522, 121.0633); // Default coordinates
+          }
+  
+          // Log coordinate values for debugging
+          console.log("Coordinates before formatting:", {
+            latitude: coordinate.latitude, 
+            longitude: coordinate.longitude
+          });
+  
+          // Format the coordinates for display or usage
+  
+          // Convert the time to Firestore Timestamp
+          const timestampOfCrime = Timestamp.fromMillis(timeOfCrime.getTime());
+          const timestampReported = Timestamp.fromMillis(timeReported.getTime());
+  
+          const report = {
+            id: uuidv4(),
+            additionalInfo: item['Additional Info'] || "No additional info",
+            category: item['Category'] || "Unknown",
+            location: item['Location'] || "Unknown location",
+            time: item['Time'] || "00:00",
+            timeOfCrime: timestampOfCrime,
+            timeReported: timestampReported,
+            coordinate,  // Store GeoPoint directly
+           
+          };
+  
+          console.log("Imported Report Details:", report);
+          return report;
+        }));
+  
+        console.log("Total Reports Imported: ", importedReports.length);
+        console.log("Imported Reports: ", importedReports);
+  
+        const crimesCollection = collection(db, "crimes");
+  
+        try {
+          const addReportsPromises = importedReports.map(async (report) => {
+            console.log("Adding report to Firestore:", report);
+            try {
+              await addDoc(crimesCollection, report);
+            } catch (error) {
+              console.error("Error adding report to Firestore:", error);
+            }
+          });
+  
+          await Promise.all(addReportsPromises);
+  
+          alert("Reports successfully added.");
+          await fetchIncidents();
+        } catch (error) {
+          console.error("Error adding reports to Firestore:", error);
+          alert("Failed to add reports. Please try again.");
+        }
+      };
+  
+      reader.readAsBinaryString(data);
+    } catch (error) {
+      console.error("Error during file import:", error);
+      alert("An error occurred during file import. Please check the file format.");
+    }
+  };
+  
+  // Helper function to parse the date format in the CSV
+  
+  
+  
   // const formatDate = (date: Date | null): string => {
   //   if (date && date._seconds) {
   //     date = dayjs(date._seconds * 1000);
@@ -115,12 +324,7 @@ export default function ViewAdminEmergencyList({
   //   }
   //   return format(date.toLocaleString(), "yyyy-MM-dd");
   // };
-
-  const formatCoordinates = (
-    coordinates: GeoPoint | { latitude: number; longitude: number }
-  ): string => {
-    return `Latitude: ${coordinates.latitude}, Longitude: ${coordinates.longitude}`;
-  };
+ 
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -175,20 +379,24 @@ export default function ViewAdminEmergencyList({
     // Prepare data for export
     const dataToExport = filteredReports.map((report, index) => {
       let formattedDate = "N/A"; // Default to N/A if date is invalid
-      let date = report.date;
-      console.log(format(date, "yyyy-MM-dd"));
+      let date = report.timeOfCrime || null;
+      if (date) {
+        console.log(format(date, "yyyy-MM-dd"));
+      } else {
+        console.log("Date is null");
+      }
       if (date) {
         if (typeof date === "object") {
           formattedDate = format(date, "yyyy-MM-dd");
-        } else if (report.date instanceof Timestamp) {
+        } else if (report.timeOfCrime instanceof Timestamp) {
           formattedDate = format(date, "yyyy-MM-dd");
         }
       }
 
       // Ensure report.coordinate is a GeoPoint
-      let geoPoint = report.coordinate;
-      if (geoPoint && !(geoPoint instanceof GeoPoint)) {
-        geoPoint = new GeoPoint(geoPoint.latitude, geoPoint.longitude);
+      let FirestoregeoPoint = report.coordinate;
+      if (FirestoregeoPoint && !(FirestoregeoPoint instanceof FirestoreGeoPoint)) {
+        FirestoregeoPoint = new FirestoreGeoPoint(FirestoregeoPoint.latitude, FirestoregeoPoint.longitude);
       }
 
       // Ensure the location is available or default to 'Unknown'
@@ -200,13 +408,13 @@ export default function ViewAdminEmergencyList({
         Category:
           report.category.charAt(0).toUpperCase() + report.category.slice(1),
         Date: formattedDate,
-        Coordinates: geoPoint
-          ? `${geoPoint.latitude}, ${geoPoint.longitude}`
+        Coordinates: FirestoregeoPoint
+          ? `${FirestoregeoPoint.latitude}, ${FirestoregeoPoint.longitude}`
           : "N/A", // Show coordinates as string
         Location: location, // Add the location field here
-        Title: report.title || "N/A", // Assuming there's a title field
+  
         Description: report.additionalInfo || "N/A", // Assuming there's a description field
-        Status: report.status || "N/A", // Assuming there's a status field
+        
       };
     });
 
@@ -270,105 +478,24 @@ export default function ViewAdminEmergencyList({
 
   interface Report {
     id: string;
+    additionalInfo: string;
     category: string;
-    date: string | Date;
     coordinate: {
       latitude: number;
       longitude: number;
     };
-    icon: string; // Icon is a string
-    title: string;
     location: string;
-    name: string;
-    time: string | Date;
-    image: {
-      filename: string;
-      uri: string;
-    };
-    status: string;
-    timestamp: number;
-    additionalInfo: string;
+    time: string;
+    timeOfCrime: Date | null;
+    timeReported: Date | null;
+    unixTOC: number;
   }
-
-  const handleImport = async () => {
-    try {
-      // Step 1: Pick a document using DocumentPicker
-      const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          "text/csv",
-          "application/vnd.ms-excel",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        ],
-      });
-
-      // Handle cancellation
-      if (result.canceled) {
-        console.log("File selection was canceled.");
-        return;
-      }
-
-      const file = result.assets?.[0]; // Access the first file if multiple are supported
-      if (!file?.uri) {
-        console.error("No URI found for the selected file.");
-        return;
-      }
-
-      console.log("File selected:", file.name);
-
-      // Step 2: Fetch the file and convert it to a blob
-      const response = await fetch(file.uri);
-      const data = await response.blob();
-
-      // Step 3: Read the file using FileReader
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const binaryData = event.target?.result;
-        if (!binaryData) {
-          console.error("Failed to read the file.");
-          return;
-        }
-
-        // Step 4: Parse the binary data into a workbook
-        const workbook = XLSX.read(binaryData, { type: "binary" });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-
-        // Step 5: Convert the worksheet data into JSON
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        console.log("Parsed Data:", jsonData);
-
-        // Step 6: Map the data to match the Report type
-        const importedReports: Report[] = jsonData.map((item: any) => ({
-          id: uuidv4(),
-          category: item["Category"] || "Unknown",
-          date: item["Date"] || "N/A",
-          coordinate: {
-            latitude: parseFloat(item["Latitude"] || "0"),
-            longitude: parseFloat(item["Longitude"] || "0"),
-          },
-          icon: "No Icon",
-          title: item["Title"] || "Untitled Report",
-          additionalInfo: item["Additional Info"] || "No additional info",
-          location: item["Location"] || "Unknown location",
-          name: item["Name"] || "Unknown name",
-          time: item["Time"] || "00:00",
-          image: item["Image"] || "default-image-url",
-          status: item["Status"] || "Valid",
-          timestamp: item["Timestamp"] || new Date().toISOString(),
-        }));
-
-        // Step 7: Update the state with the imported reports
-        setCrimes((prevCrimes) => [...prevCrimes, ...importedReports]);
-      };
-
-      // Read the file data as binary string
-      reader.readAsBinaryString(data);
-    } catch (error) {
-      console.error("Error during file import:", error);
-      alert("An error occurred during file import.");
-    }
-  };
-
+  
+ 
+  
+  
+  
+  
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10;
   const currentReports = filteredReports.slice(
@@ -532,6 +659,10 @@ export default function ViewAdminEmergencyList({
             filterReports={filterReports}
             handleExport={handleExport}
             handleImport={handleImport}
+            pickFile={() => {}} // Add appropriate function or state
+            excelData={[]} // Add appropriate state
+            uploading={false} // Add appropriate state
+            uploadToFirestore={() => {}} // Add appropriate function
           />
 
           <Modal
@@ -568,137 +699,128 @@ export default function ViewAdminEmergencyList({
             </TouchableWithoutFeedback>
           </Modal>
           <ScrollView
-            contentContainerStyle={[
-              webstyles.reportList,
-              isAlignedRight && { width: "75%" },
-            ]}
-          >
-            {currentReports.length > 0 ? (
-              currentReports.map((incident, index) => {
-                const date = incident.date;
-                const formattedDate = format(date, "yyyy-MM-dd");
-                return (
-                  <View
-                    key={index}
-                    style={{
-                      marginBottom: 20,
-                      padding: 15,
-                      borderRadius: 8,
-                      backgroundColor: "#f9f9f9",
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 3.84,
-                    }}
-                  >
-                    {/* Row: Title, Date, and Delete Button */}
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      {/* Left side: Title and Date */}
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 18,
-                            fontWeight: "bold",
-                            color: "#115272",
-                          }}
-                        >
-                          {incident.category.charAt(0).toUpperCase() +
-                            incident.category.slice(1)}
-                        </Text>
-                        <Text
-                          style={{
-                            color: "#115272",
-                            fontSize: 14,
-                            marginLeft: 10, // Space between title and date
-                          }}
-                        >
-                          {formattedDate}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        style={{ padding: 10 }}
-                        onPress={() => handleDeleteRequest(incident.id)}
-                      >
-                        Unread
-                      </TouchableOpacity>
-                      {/* Right side: Delete Button */}
-                      <Modal
-                        visible={isDeleteModalVisible}
-                        animationType="fade"
-                        transparent={true}
-                        onRequestClose={() => setDeleteModalVisible(false)}
-                      >
-                        <TouchableWithoutFeedback
-                          onPress={() => setDeleteModalVisible(false)}
-                        >
-                          <View
-                            style={[
-                              webstyles.modalContainer,
-                              { backgroundColor: "transparent" },
-                            ]}
-                          >
-                            <TouchableWithoutFeedback>
-                              <View style={webstyles.modalContent}>
-                                <Text style={webstyles.modalHeader}>
-                                  Confirm Read?
-                                </Text>
-                                <Text style={webstyles.modalText}>
-                                  Do you acknowledge this
-                                </Text>
-                                <View style={webstyles.modalActions}>
-                                  <TouchableOpacity
-                                    style={[
-                                      webstyles.modalButton,
-                                      { backgroundColor: "#ccc" },
-                                    ]}
-                                    onPress={() => setDeleteModalVisible(false)}
-                                  >
-                                    <Text style={webstyles.modalButtonText}>
-                                      Cancel
-                                    </Text>
-                                  </TouchableOpacity>
-                                  <TouchableOpacity
-                                    style={[
-                                      webstyles.modalButton,
-                                      { backgroundColor: "#DA4B46" },
-                                    ]}
-                                    onPress={() => setDeleteModalVisible(false)}
-                                  >
-                                    <Text style={webstyles.modalButtonText}>
-                                      Confirm
-                                    </Text>
-                                  </TouchableOpacity>
-                                </View>
-                              </View>
-                            </TouchableWithoutFeedback>
-                          </View>
-                        </TouchableWithoutFeedback>
-                      </Modal>
-                    </View>
+  contentContainerStyle={[
+    webstyles.reportList,
+    isAlignedRight && { width: "75%" },
+  ]}
+>
+  {currentReports.length > 0 ? (
+    currentReports.map((incident, index) => {
+      // Destructure coordinates (_lat, _long) from incident.coordinate
+      const { latitude, longitude } = incident.coordinate;
+      const isValidCoordinate = latitude && longitude;
 
-                    {/* Coordinates */}
-                    <Text
-                      style={{ color: "#115272", fontSize: 14, marginTop: 10 }}
-                    >
-                      {formatCoordinates(incident.coordinate)}
-                    </Text>
-                  </View>
-                );
-              })
-            ) : (
-              <Text style={{ textAlign: "center", marginTop: 20 }}>
-                No incidents available.
+      return (
+        <View
+          key={index}
+          style={{
+            marginBottom: 20,
+            padding: 15,
+            borderRadius: 8,
+            backgroundColor: "#f9f9f9",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+          }}
+        >
+          {/* Title, Date, and Unread Button */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            {/* Left side: Title and Date */}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  color: "#115272",
+                }}
+              >
+                {incident.category.charAt(0).toUpperCase() + incident.category.slice(1)}
               </Text>
-            )}
-          </ScrollView>
+              <Text
+                style={{
+                  color: "#115272",
+                  fontSize: 14,
+                  marginLeft: 10, // Space between title and date
+                }}
+              >
+                {format(new Date(incident.timeOfCrime || new Date()), "yyyy-MM-dd")}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={{ padding: 10 }}
+              onPress={() => setDeleteModalVisible(true)}
+            >
+              <Text style={{ color: "#DA4B46" }}>Unread</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Coordinates: Display both latitude/longitude and location */}
+          <Text style={{ color: "#115272", fontSize: 14, marginTop: 10 }}>
+            {/* Always display standard coordinates, even if invalid */}
+            {isValidCoordinate
+              ? `Latitude: ${latitude}, Longitude: ${longitude}`
+              : ""}
+          </Text>
+          <Text style={{ color: "#115272", fontSize: 14, marginTop: 5 }}>
+            {/* Display location if available */}
+            {incident.location ? `Location: ${incident.location}` : "Location not provided"}
+          </Text>
+
+          {/* Modal for delete confirmation */}
+          <Modal
+            visible={isDeleteModalVisible}
+            animationType="fade"
+            transparent={true}
+            onRequestClose={() => setDeleteModalVisible(false)}
+          >
+            <TouchableWithoutFeedback onPress={() => setDeleteModalVisible(false)}>
+              <View
+                style={[
+                  webstyles.modalContainer,
+                  { backgroundColor: "transparent" },
+                ]}
+              >
+                <TouchableWithoutFeedback>
+                  <View style={webstyles.modalContent}>
+                    <Text style={webstyles.modalHeader}>Confirm Read?</Text>
+                    <Text style={webstyles.modalText}>
+                      Do you acknowledge this report as read?
+                    </Text>
+                    <View style={webstyles.modalActions}>
+                      <TouchableOpacity
+                        style={[webstyles.modalButton, { backgroundColor: "#ccc" }]}
+                        onPress={() => setDeleteModalVisible(false)}
+                      >
+                        <Text style={webstyles.modalButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[webstyles.modalButton, { backgroundColor: "#DA4B46" }]}
+                        onPress={() => handleDeleteRequest(incident.id)} // Handle the confirm action here
+                      >
+                        <Text style={webstyles.modalButtonText}>Confirm</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+        </View>
+      );
+    })
+  ) : (
+    <Text style={{ textAlign: "center", marginTop: 20 }}>
+      No incidents available.
+    </Text>
+  )}
+</ScrollView>
 
           <PaginationReport
             filteredReports={filteredReports}

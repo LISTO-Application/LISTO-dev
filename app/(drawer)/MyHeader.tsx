@@ -83,7 +83,7 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
   // Fetch the count and titles of new reports whenever the component mounts or updates
   useEffect(() => {
     const reportsCollection = collection(db, "reports");
-    const q = query(reportsCollection, where("status", "==", "PENDING"));
+    const q = query(reportsCollection, where("status", "==", 1));
     const fetchReports = async () => {
       try {
         const snapshot = await getDocs(q);
