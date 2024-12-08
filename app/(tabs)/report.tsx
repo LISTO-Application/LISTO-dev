@@ -801,7 +801,7 @@ export default function Report() {
                           .doc(detailID)
                           .update({
                             "category" : selectedValue.value as string,
-                            "coordinate": {latitude: geoLocation?.coords.latitude, longitude: geoLocation?.coords.longitude} as FirebaseFirestoreTypes.GeoPoint,
+                            "coordinate": new GeoPoint(geoLocation?.coords.latitude ?? 0, geoLocation?.coords.longitude ?? 0) as GeoPoint,
                             "location" : location as string,
                             "timeOfCrime" : date as Date,
                             "unixTOC":  getTime(date) as number,
@@ -849,7 +849,7 @@ export default function Report() {
                     .doc(detailID)
                     .update({
                       "category" : selectedValue.value as string,
-                      "coordinate": {latitude: geoLocation?.coords.latitude, longitude: geoLocation?.coords.longitude} as FirebaseFirestoreTypes.GeoPoint,
+                      "coordinate": new GeoPoint(geoLocation?.coords.latitude ?? 0, geoLocation?.coords.longitude ?? 0) as GeoPoint,
                       "location" : location as string,
                       "timeOfCrime" : date as Date,
                       "unixTOC": getTime(date) as number,
