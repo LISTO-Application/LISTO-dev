@@ -13,7 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 //Auth Imports
 //import { useSession } from '@/auth/auth'; (LEGACY)
 import { firebase } from '@react-native-firebase/auth';
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { FirebaseFirestoreTypes, GeoPoint } from '@react-native-firebase/firestore';
 
 // Firebase Imports
 import storage from '@react-native-firebase/storage';
@@ -35,6 +35,7 @@ import { AnimatePresence, MotiView, ScrollView, useDynamicAnimation } from 'moti
 import Thanks from "@/assets/images/thanks.svg"
 import Archive from "@/assets/images/archive.svg"
 import Check from "@/assets/images/check.svg"
+import Create from "@/assets/images/create.svg"
 
 //Style Imports
 import { styles } from '@/styles/styles'; // Adjust the path if necessary
@@ -58,8 +59,8 @@ export default function adminReport() {
   // AUTHENTICATION STATE
   const session = firebase.auth().currentUser;
   session?.getIdTokenResult().then((idTokenResult) => {
-    if( idTokenResult.claims.admin) {
-
+    if(!idTokenResult.claims.admin) {
+      router.replace("../(auth)/login");
     }
   })
   if(session == null) {
@@ -104,12 +105,13 @@ export default function adminReport() {
   const [loading, setLoading] = useState(false);
   const [validated, setValidated] = useState(false);
   const [archived, setArchived] = useState(false);
+  const [crimeMade, setCrimeMade] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
 
   // MODAL STATES
   const [addReportVisible, AddReportVisible] = useState(false);
   const [geoLocateVisible, setGeoLocateVisible] = useState(false);
-  const [addReport, setAddReport] = useState(false);
+  const [addCrime, setAddCrime] = useState(false);
 
   // FORM INPUTS
   const [selectedValue, setSelectedValue] = useState({ label: 'Select Crime Type', value: '' });
@@ -137,6 +139,15 @@ export default function adminReport() {
   function resetData() {
     setSelectedValue({ label: 'Select Crime Type', value: '' });
     setLocation('Tap to locate the incident');
+    setGeoLocation({
+      coords: {
+      latitude: 14.677680, longitude: 121.082830,
+      altitude: null,
+      accuracy: null,
+      altitudeAccuracy: null,
+      heading: null,
+      speed: null
+    }, timestamp: 0});
     setDate(new Date(Date.now()));
     setUploadImage("");
     setTime(new Date(Date.now()));
@@ -179,6 +190,7 @@ export default function adminReport() {
     const fetchData = async () => {
       if(session != null) {
         await firebase.firestore().collection("reports")
+          .where("status", "==", 1)
           .get()
           .then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
@@ -216,16 +228,9 @@ export default function adminReport() {
     }
   }, []);
 
-  // ANIMATIONS
-  const addAnim = useDynamicAnimation(() => {
-    return {
-      rotateX: "0deg",
-    }
-  });
-
   return (
     <GestureHandlerRootView>
-      <View style={styles.mainContainer}>
+      <View style={[styles.mainContainer, {opacity: loading ? 0.5 : 1}]}>
         <View style={styles.headerContainer}>
           <Text style={styles.headerText}>User Reports</Text>
           <SpacerView height={80} />
@@ -236,55 +241,44 @@ export default function adminReport() {
           <ScrollView contentContainerStyle = {{width: "100%", height: "auto", justifyContent: "center"}}>{
           reports.map((report, index) => {
             return (
-              <MotiView from = {{scale: 0}} animate={{scale:1}} key={index}>
+              <MotiView from = {{translateX: 500}} animate={{translateX: 0}} key={index}>
                 <TouchableOpacity style = {{width: "98%", height: "auto", flexDirection: "row", backgroundColor: "#115272", borderColor: "#115272", borderWidth: 5, borderRadius: 5, marginHorizontal: "auto", marginVertical: "0.5%"}} onPress={() => {
-                  if(report.data().image.uri) {
-                    console.log(report.data().image.uri)
+                  setLoading(true);
+                  if(report.data().image.uri != "") {
                     fetchReportImage(reports[index].data().image.uri)
                     .then((url) => {
                       setGeoLocation({coords: {latitude: report.data().coordinate.latitude, longitude: report.data().coordinate.longitude, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null}, timestamp: 0});
                       setSelectedValue({label: report.data().category, value: report.data().category});
                       setLocation(report.data().location);
-                      setDate(report.data().date.toDate());
+                      setDate(report.data().timeOfCrime.toDate());
                       setUploadImage(url);
-                      setTime(parse((formatDate(report.data().date.toDate(), "yyyy-MM-dd") + " " + report.data().time), "yyyy-MM-dd hh:mmaaaa", new Date()));
+                      setTime(report.data().timeOfCrime.toDate());
                       setAdditionalInfo(report.data().additionalInfo);
                       setDetailID(report.id);
                       setDetails({...report.data(), image: {uri: url, filename: ""}});
+                      setLoading(false);
                     });
                   } else {
                     setGeoLocation({coords: {latitude: report.data().coordinate.latitude, longitude: report.data().coordinate.longitude, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null}, timestamp: 0});
                       setSelectedValue({label: report.data().category, value: report.data().category});
                       setLocation(report.data().location);
                       setDate(report.data().date.toDate());
-                      setTime(parse((formatDate(report.data().date.toDate(), "yyyy-MM-dd") + " " + report.data().time), "yyyy-MM-dd hh:mmaaaa", new Date()));
+                      setUploadImage("");
+                      setTime(report.data().timeOfCrime.toDate());
                       setAdditionalInfo(report.data().additionalInfo);
                       setDetailID(report.id);
                       setDetails({...report.data()});
+                      setLoading(false);
                   }
                 }}>
-                  <View style = {{width: "25%", aspectRatio: 1/1, justifyContent: "center", alignItems: "center", backgroundColor: "#DA4B46", borderRadius: 5, marginRight: "2.5%"}}>
-                    <Image style = {{width: "50%", height: "50%", aspectRatio: 1/1,}} source={categories[report.data().category as keyof typeof categories]}/>
+                  <View style = {{width: "25%",  aspectRatio: 1/1, justifyContent: "center", alignItems: "center", backgroundColor: "#DA4B46", borderRadius: 5, marginRight: "2.5%", marginVertical: "auto"}}>
+                    <Image style = {{width: "50%", height: "50%", aspectRatio: 1/1, marginVertical:"auto"}} source={categories[report.data().category as keyof typeof categories]}/>
                   </View>
-                  <View style = {{width: "100%", flexDirection: "row", justifyContent: "space-between"}}>
+                  <View style = {{width: "75%", flexDirection: "row", justifyContent: "flex-start"}}>
                     <View style = {{width: "65%"}}>
-                      <Text style = {{fontSize: 20, color: "#FFF", fontWeight: "bold", }}>{report.data().category.charAt(0).toUpperCase() + report.data().category.slice(1)}</Text>
-                      <View style = {{flexDirection: "row"}}><Ionicons style = {{marginRight: "2.5%"}} name="time"  size={24} color="#FFF"/><Text style = {{fontSize: 10, color: "#FFF", fontWeight: "bold", textAlignVertical: "center"}}>{formatDate(report.data().date.toDate(), "MMMM dd,yyyy") + " at " + report.data().time}</Text></View>
+                      <Text style = {{fontSize: body + 4, color: "#FFF", fontWeight: "bold", }}>{report.data().category.charAt(0).toUpperCase() + report.data().category.slice(1)}</Text>
+                      <View style = {{flexDirection: "row"}}><Ionicons style = {{marginRight: "2.5%"}} name="time"  size={24} color="#FFF"/><Text style = {{fontSize: 10, color: "#FFF", fontWeight: "bold", textAlignVertical: "center"}}>{formatDate(report.data().timeOfCrime.toDate(),"MMMM dd, yyyy") + " at " + formatDate(report.data().timeReported.toDate(), "hh:mma")}</Text></View>
                       <View style = {{flexDirection: "row"}}><Ionicons style = {{marginRight: "2.5%"}} name="location"  size={24} color="#FFF"/><Text style = {{fontSize: 10, color: "#FFF", fontWeight: "bold", textAlignVertical: "center"}}>{report.data().location}</Text></View>
-                    </View>
-                    <View style = {{width: "35%", height: "auto", justifyContent: "center", alignItems: "center", flexDirection: "column"}}>
-                      {report.data().status == "PENDING" && (
-                        <>
-                          <MaterialIcons name="pending" size={36} color="#FFF" />
-                          <Text style={{ fontSize: 12, color: "#FFF", fontWeight: "bold" }}>Pending</Text>
-                        </>
-                      )}
-                      {report.data().status == "VALIDATED" && (
-                        <>
-                          <Ionicons name="checkmark-circle" size={36} color="#FFF" />
-                          <Text style={{ fontSize: 12, color: "#FFF", fontWeight: "bold" }}>VALIDATED</Text>
-                        </>
-                      )}
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -301,12 +295,12 @@ export default function adminReport() {
         </View>
         }
         
-        {/* FAB ADD REPORT BUTTON */}
+        {/* FAB ADD CRIME BUTTON */}
         <AnimatedTouchable
-          state={addAnim}
           from={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{opacity: 0,}}
+          onPress={() => setAddCrime(true)}
           transition={{ duration: 1 }}
             style = {[{
               position: 'absolute',
@@ -314,13 +308,6 @@ export default function adminReport() {
               right: 25,
               marginVertical: 'auto'
             }]}
-            onPressIn={() => {
-              addAnim.animateTo((current) => ({...current, scale: 1.2}))
-            }}
-            onPressOut={() => {
-              setAddReport(true)
-              addAnim.animateTo((current) => ({...current, scale: 1.0}))
-            }}
             >
               <Image style={{
               width: 50,
@@ -330,16 +317,16 @@ export default function adminReport() {
         </AnimatedTouchable>
 
         {/* ADD REPORT MODAL */}
-        {addReport && 
-        <Modal statusBarTranslucent visible = {addReport} hardwareAccelerated>
-          <View style={styles.headerContainer}>
+        {addCrime && 
+        <Modal statusBarTranslucent visible = {addCrime} hardwareAccelerated>
+          <View style={[styles.headerContainer, {opacity: loading ? 0.5 : 1}]}>
             <Text style={styles.headerText}>Submit a Report</Text>
             <SpacerView height={80} />
           </View>
 
-        <ScrollView>
+        <ScrollView style = {{opacity: loading ? 0.5 : 1}}>
             <View style={styles.formContainer}>
-                
+
               {/* Crime Type */}
               <TouchableOpacity style={styles.dropdown} onPress={() => AddReportVisible(true)}>
                 <Text style={styles.selectedText}>{selectedValue.label}</Text>
@@ -416,82 +403,45 @@ export default function adminReport() {
                 value={additionalInfo}
                 onChangeText={setAdditionalInfo}
                 multiline={true}/>
-
-              {/* Image Upload */}
-              <TouchableOpacity style={styles.imageUpload} onPress={
-                () => {
-                  pickImage();
-                }
-              }>
-                {!uploadImage ?
-                <>
-                  <Ionicons name="image-outline" size={24} color="#115272" />
-                  <Text style={{width: "100%", color: "#115272", marginHorizontal: "2.5%"}}>Add file</Text>
-                </> :
-                  <Image style={{width: "100%", height: "100%", aspectRatio: 1/1}} source={{uri: uploadImage}}/>
-                }
-              </TouchableOpacity>
               
             </View>
             {/* Action Buttons */}
             <View style={styles.buttonContainerReport}>
+            {!loading ? 
               <TouchableOpacity style={styles.cancelButtonReport} onPress={() => {
                 setDetails(null);
-                setGeoLocation({
-                  coords: {
-                  latitude: 14.677680, longitude: 121.082830,
-                  altitude: null,
-                  accuracy: null,
-                  altitudeAccuracy: null,
-                  heading: null,
-                  speed: null
-                }, timestamp: 0});
                 resetData();
-                setAddReport(false)}
+                setAddCrime(false)
+                setLoading(false);}
                 }>
                 <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
+              :
+              <TouchableOpacity style={styles.cancelButtonReport}><ActivityIndicator color="#115272" size="large"/></TouchableOpacity>
+              }
               <TouchableOpacity
                   style={styles.submitButton}
                   onPress={async () => {
-                    const docID = uuid.v4();
-                    const reference = storage().ref("/reportImages/" + session?.uid +"/"+ docID);
-                    await reference.putFile(uploadImage).then((snapshot) => {
-                      setLoading(true);
-                      if(snapshot.state == "success") {
-                        firebase.firestore().collection("reports")
-                          .add({
-                            "category" : selectedValue.value as string,
-                            "coordinate": {latitude: geoLocation?.coords.latitude, longitude: geoLocation?.coords.longitude} as FirebaseFirestoreTypes.GeoPoint,
-                            "location" : location as string,
-                            "date" : date as Date,
-                            "time" : formatDate(time, "hh:mmaa") as string,
-                            "additionalInfo" : additionalInfo as string,
-                            "image" :  {filename : "", uri: snapshot.metadata.fullPath} as {filename: string, uri: string},
-                            "timestamp" : getTime(Date.now()) as number,
-                            "status" : false as boolean,
-                            "uid" : session?.uid as string,
-                            "phone" : session?.phoneNumber as string,
-                            "name" : session?.displayName as string,
+                    setLoading(true);
+                      firebase.firestore().collection("crime")
+                        .add({
+                          "category" : selectedValue.value as string,
+                          "coordinate": new GeoPoint(geoLocation?.coords.latitude ?? 0, geoLocation?.coords.longitude ?? 0) as GeoPoint,
+                          "location" : location as string,
+                          "timeOfCrime" : date as Date,
+                          "time" : formatDate(time, "hh:mmaa") as string,
+                          "additionalInfo" : additionalInfo as string,
+                          "timeReported" : getTime(Date.now()) as number,
                         })
                         .catch((error) => {
                           setLoading(false);
                           console.log(error);
                         });
-                      } else {
-                        setLoading(false);
-                        Alert.alert("Upload Failed", "Please try again.");
-                        console.log("Image upload failed");
-                      }
                       setLoading(false);
-                      setAddReport(false);
-                      setArchived(true);
-                    })
-                      .catch((error) => {
-                        console.log(error);
-                      });
-                  }}
-                >
+                      setAddCrime(false);
+                      setCrimeMade(true);
+                  }}>
+
                   {!loading ?
                   <Text style={[styles.buttonText, { color: '#FFF' }]}>Submit</Text>
                   :
@@ -536,7 +486,7 @@ export default function adminReport() {
                 <View style = {{width: "85%", flexDirection: "row", alignItems: "center", paddingVertical: "2.5%", borderRadius: 10, borderWidth: 5, borderColor: "#115272", marginVertical: "2.5%"}}>
                   <Ionicons style = {{marginHorizontal: "2.5%"}} name="clipboard-outline"  size={title} color="#115272"/>
                   <ScrollView>
-                    <TextInput style = {{ color: "#115272", fontWeight: 'bold', fontSize: subtitle, marginHorizontal: "2.5%"}} value={additionalInfo} placeholderTextColor="#115272" multiline onChangeText={setAdditionalInfo}/>
+                    <Text style = {{ color: "#115272", fontWeight: 'bold', fontSize: subtitle, marginHorizontal: "2.5%"}}> {additionalInfo} </Text>
                   </ScrollView>
                 </View>
                 
@@ -556,7 +506,7 @@ export default function adminReport() {
                     .then(async () => {
                       firebase.firestore().collection("archives").add({
                         "category" : selectedValue.value as string,
-                        "coordinate": {latitude: geoLocation?.coords.latitude, longitude: geoLocation?.coords.longitude} as FirebaseFirestoreTypes.GeoPoint,
+                        "coordinate": new GeoPoint(geoLocation?.coords.latitude ?? 0, geoLocation?.coords.longitude ?? 0) as GeoPoint,
                         "location" : location as string,
                         "timeOfCrime" : date as Date,
                         "time" : formatDate(time, "hh:mmaa") as string,
@@ -567,10 +517,10 @@ export default function adminReport() {
                       })
                     })
                     .then(async () => {
-                      setReports([]);
                       if(session != null) {
+                        setReports([]);
                         await firebase.firestore().collection("reports")
-                          .where("uid", "==", session.uid)
+                          .where("status", "==", 1)
                           .get()
                           .then((querySnapshot) => {
                             querySnapshot.forEach((doc) => {
@@ -608,7 +558,7 @@ export default function adminReport() {
                   .then(async () => {
                     firebase.firestore().collection("crimes").add({
                       "category" : selectedValue.value.toLowerCase() as string,
-                      "coordinate": {latitude: geoLocation?.coords.latitude, longitude: geoLocation?.coords.longitude} as FirebaseFirestoreTypes.GeoPoint,
+                      "coordinate": new GeoPoint(geoLocation?.coords.latitude ?? 0, geoLocation?.coords.longitude ?? 0) as GeoPoint,
                       "location" : location as string,
                       "timeOfCrime" : date as Date,
                       "time" : formatDate(time, "hh:mmaa") as string,
@@ -617,10 +567,10 @@ export default function adminReport() {
                     })
                   })
                   .then(async () => {
-                    setReports([]);
                     if(session != null) {
+                      setReports([]);
                       await firebase.firestore().collection("reports")
-                        .where("uid", "==", session.uid)
+                        .where("status", "==", 1)
                         .get()
                         .then((querySnapshot) => {
                           querySnapshot.forEach((doc) => {
@@ -685,6 +635,19 @@ export default function adminReport() {
               <MotiView from = {{scale: 0}} animate={{scale: 1}}><Archive width={150} height={150} color="#FFF" style = {{backgroundColor: "#DA4B46", borderWidth: 5, borderRadius: 100, marginBottom: "5%"}}/></MotiView>
               <Text style = {{color: "#FFF", fontWeight: 'bold', fontSize: title, textAlign: "center"}}>Report Invalidated and Archived!</Text>
               <TouchableOpacity style={{width: "50%", marginTop: "5%", backgroundColor: "#DA4B46", justifyContent: "center", borderRadius: 50, paddingVertical: "2.5%"}} onPress={() => setArchived(false)}>
+                <Text style={{color: "#FFF",fontSize: subtitle, fontWeight: "bold", textAlign: "center"}}>
+                  OK
+                </Text>
+              </TouchableOpacity>
+            </MotiView>
+          </>}
+
+          {crimeMade && 
+          <>
+            <MotiView style = {{position: "absolute", width: '100%', height: '100%', flexDirection: "column", backgroundColor: '#115272', justifyContent: 'center', alignItems: 'center'}} from = {{opacity: 0}} animate={{opacity: 1}}>
+              <MotiView from = {{scale: 0}} animate={{scale: 1}}><Create width={150} height={150} color="#FFF" style = {{backgroundColor: "#DA4B46", borderWidth: 5, borderRadius: 100, marginBottom: "5%"}}/></MotiView>
+              <Text style = {{color: "#FFF", fontWeight: 'bold', fontSize: title, textAlign: "center"}}>Crime Recorded!</Text>
+              <TouchableOpacity style={{width: "50%", marginTop: "5%", backgroundColor: "#DA4B46", justifyContent: "center", borderRadius: 50, paddingVertical: "2.5%"}} onPress={() => setCrimeMade(false)}>
                 <Text style={{color: "#FFF",fontSize: subtitle, fontWeight: "bold", textAlign: "center"}}>
                   OK
                 </Text>

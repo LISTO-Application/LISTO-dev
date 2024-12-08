@@ -156,7 +156,7 @@ export default function CrimeMap() {
   const maxDate = formatDate(initialDate.date, "yyyy-MM-dd");
   const calendarSheetRef = useRef<BottomSheet>(null);
   const calendarSnapPoints = useMemo(() => ["65%"], []);
-  const [dateMode, setDateMode] = useState("day");
+  const [dateMode, setDateMode] = useState("month");
   const [current, setCurrent] = useState(Timestamp.now().toDate());
   const [isCalendarSheetOpen, setIsCalendarSheetOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(formatDate(initialDate.date, "yyyy-MM-dd").toString());
@@ -186,6 +186,7 @@ export default function CrimeMap() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       if(session != null) {
         await firebase.firestore().collection("crimes")
           .where("unixTOC", ">", getTime(startOfMonth(initialDate.date)))
@@ -200,6 +201,7 @@ export default function CrimeMap() {
               fetchedCrimeData.push(data);
             });
             setCrimeData(fetchedCrimeData);
+            setIsLoading(false);
           });
       }
     };
@@ -217,15 +219,12 @@ export default function CrimeMap() {
   //         await firebase.firestore().collection("crimes")
   //         .get()
   //         .then((querySnapshot) => {
-  //           let heatmapData = [] as LatLng[];
+  //           let heatmapData:SetStateAction<FirebaseFirestoreTypes.DocumentData[]> = [];
   //           querySnapshot.forEach((doc) => {
-  //             console.log("Adding data..." + doc.data().category);
-  //             heatmapData.push({latitude: doc.data().coordinate.latitude, longitude: doc.data().coordinate.longitude});
+  //             heatmapData.push(doc.data());
   //           });
   //           setTimeout(() => {
-  //             console.log("SETTING HEATMAP DATA");
   //             setHeatmapData(heatmapData);
-  //             console.log("HEATMAP DATA SET");
   //           }, 2000);
   //         })
   //         .catch((error) => {
@@ -254,7 +253,7 @@ export default function CrimeMap() {
   }, []);
 
   const [crimeData, setCrimeData] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
-  const [coordinates, setHeatmapData] = useState<LatLng[]>([]);
+  const [coordinates, setHeatmapData] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
   const [detailsData, setDetailsData] = useState<FirebaseFirestoreTypes.DocumentData>();
 
   const [isHeatMapOn, setIsHeatMapOn] = useState(false);
@@ -264,6 +263,19 @@ export default function CrimeMap() {
       const categoryIndex = categories.findIndex(category => category.name.toLowerCase() === crime.category.toLowerCase());
       return categoryStates[categoryIndex];
     }), [categoryStates, crimeData])
+
+    const filteredHeatMapData = useMemo<LatLng[]>(() => 
+      coordinates
+        .filter(crime => {
+          const categoryIndex = categories.findIndex(category => category.name.toLowerCase() === crime.category.toLowerCase());
+          return categoryStates[categoryIndex];
+        })
+        .map(crime => ({
+          latitude: crime.coordinate.latitude,
+          longitude: crime.coordinate.longitude
+        })),
+      [categoryStates, coordinates]
+    );
 
   const load = useDynamicAnimation(() => {
     return {
@@ -303,8 +315,8 @@ export default function CrimeMap() {
             googleMapId= {isHeatMapOn ? "e34d889a373119e6" : "5cc51025f805d25d"}
             
           >
-            {isHeatMapOn && coordinates && (
-              <Heatmap points={coordinates} radius={40}></Heatmap>
+            {isHeatMapOn && coordinates && categoryStates.some(state => state) && (
+              <Heatmap points={filteredHeatMapData} radius={40}></Heatmap>
             )}
 
             {
@@ -429,6 +441,8 @@ export default function CrimeMap() {
             </TouchableOpacity>
           )}
 
+          {/* DATE PANEL */}
+          {!loading && 
           <View
             style={{
               position: "absolute",
@@ -463,21 +477,19 @@ export default function CrimeMap() {
                 {dateMode != "day" ? formatDate(selectedDate, "MMMM, yyyy") : formatDate(selectedDate, "MMMM dd, yyyy")}
               </Text>
             </TouchableOpacity>
-
-          </View>
+          </View>}
         </MotiView>
 
         <Portal>
           {/* CRIME CATEGORIES */}
           <BottomSheet ref={filterSheetRef} index={-1} snapPoints={filterSnapPoints} onChange={handleFilterSheetChange} backgroundStyle={{ backgroundColor: "#115272" }} handleIndicatorStyle={{ backgroundColor: "#FFF", width: "40%" }} enablePanDownToClose={true}>
-            <View style={{ width: "100%", height: "100%" }}>
-              <BottomSheetScrollView
-                contentContainerStyle={{
-                  alignItems: "center",
-                  padding: "2.5%",
-                }}
-                horizontal={true}
-              >
+            <BottomSheetScrollView
+              contentContainerStyle={{
+                padding: "2.5%",
+              }}
+              horizontal={true}
+            >
+              <View style={{flexDirection: "row", width: "100%" }}>
                 {categories.map((category, index) => (
                   <Pressable
                     key={category.id}
@@ -506,8 +518,8 @@ export default function CrimeMap() {
                     </View>
                   </Pressable>
                 ))}
+              </View>
               </BottomSheetScrollView>
-            </View>
           </BottomSheet>
 
           {/* CALENDAR SHEET */}
