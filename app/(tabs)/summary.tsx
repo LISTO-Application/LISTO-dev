@@ -38,9 +38,9 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedInput } from "@/components/ThemedInput";
 
 //Image Imports
-const texture = require("../assets/images/texture.png");
-const user = require("../assets/images/user-icon.png");
-const backArrow = require("../assets/images/back-button-white.png");
+const texture = require("../../assets/images/texture.png");
+const user = require("../../assets/images/user-icon.png");
+const backArrow = require("../../assets/images/back-button-white.png");
 
 export default function UserAccount() {
   //Incident Object Interface
@@ -727,7 +727,7 @@ export default function UserAccount() {
                       title="Login"
                       onPress={() => {
                         router.replace({
-                          pathname: "/emergency",
+                          pathname: "../(login)/emergency",
                         });
                       }}
                     />
@@ -772,7 +772,7 @@ export default function UserAccount() {
                       title="Delete Account"
                       onPress={() => {
                         router.replace({
-                          pathname: "/emergency",
+                          pathname: "../(auth)/login",
                         });
                       }}
                     />
@@ -782,7 +782,7 @@ export default function UserAccount() {
                       title="Logout"
                       onPress={() => {
                         router.replace({
-                          pathname: "/emergency",
+                          pathname: "../(auth)/emergency",
                         });
                       }}
                     />

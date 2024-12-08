@@ -20,7 +20,7 @@ const DrawerScreenOptions = ({
       size: number;
     }) => {
       let iconName;
-      if (route.name === "Report Incident") {
+      if (route.name === "CrimeMap") {
         iconName = focused ? "megaphone" : "megaphone-outline";
       } else if (route.name === "Emergency") {
         iconName = focused ? "call" : "call-outline";

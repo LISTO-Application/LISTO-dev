@@ -15,9 +15,8 @@ import { createDrawerNavigator } from "@react-navigation/drawer";
 import { NavigationContainer } from "@react-navigation/native";
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
-import Emergency from "./emergency";
 import CrimeMap from "./crimemap";
-import UserAccount from "./[id]";
+import UserAccount from "./account";
 import ValidateReports from "../(drawer)/validateReports";
 import { AuthContext, AuthProvider } from "../AuthContext";
 
@@ -37,27 +36,29 @@ export default function TabLayout() {
   if (Platform.OS === "web") {
     return (
       <AuthProvider>
-        <NavigationContainer independent={true}>
-          <Drawer.Navigator
-            initialRouteName="Report Incident"
-            screenOptions={({ route, navigation }) =>
-              DrawerScreenOptions({ route, navigation })
-            }
-            drawerContent={(props) => {
-              return <UserBanner {...props} />;
+        <Drawer.Navigator
+          initialRouteName="CrimeMap"
+          screenOptions={({ route, navigation }) =>
+            DrawerScreenOptions({ route, navigation })
+          }
+          drawerContent={(props) => {
+            return <UserBanner {...props} />;
+          }}
+        >
+          <Drawer.Screen
+            name="CrimeMap"
+            component={CrimeMap}
+            options={{ title: "Report Incident" }}
+          />
+          <Drawer.Screen name="Account" component={UserAccount} />
+          <Drawer.Screen
+            name="Reports"
+            component={RootReports}
+            options={{
+              title: "View Reports",
             }}
-          >
-            <Drawer.Screen name="Report Incident" component={CrimeMap} />
-            <Drawer.Screen name="Account" component={UserAccount} />
-            <Drawer.Screen
-              name="Reports"
-              component={RootReports}
-              options={{
-                title: "View Reports",
-              }}
-            />
-          </Drawer.Navigator>
-        </NavigationContainer>
+          />
+        </Drawer.Navigator>
       </AuthProvider>
     );
   } else if (Platform.OS === "android") {

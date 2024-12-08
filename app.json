@@ -3,11 +3,7 @@
     "name": "LISTO-dev",
     "slug": "LISTO-dev",
     "version": "1.0.0",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -19,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pingusbingus.LISTOdev"
+      "bundleIdentifier": "com.pingusbingus.LISTOdev",
+      "googleServicesFile": "./google-services.json"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,9 +29,7 @@
           "apiKey": "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"
         }
       },
-      "permissions": [
-        "android.permission.WRITE_EXTERNAL_STORAGE"
-      ],
+      "permissions": ["android.permission.WRITE_EXTERNAL_STORAGE"],
       "package": "com.pingusbingus.LISTOdev",
       "googleServicesFile": "./google-services.json"
     },
@@ -55,6 +50,10 @@
       ],
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
+      "@react-native-firebase/crashlytics",
+      // "@react-native-firebase/firestore",
+      // "@react-native-firebase/functions",
+      // "@react-native-firebase/storage",
       "expo-asset"
     ],
     "experiments": {

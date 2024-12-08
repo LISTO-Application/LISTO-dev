@@ -238,7 +238,7 @@ export default function adminLogin() {
               title="Sign in"
               onPress={() => {
                 router.replace({
-                  pathname: "/otp",
+                  pathname: "../(auth)/otp",
                 });
               }}
             />

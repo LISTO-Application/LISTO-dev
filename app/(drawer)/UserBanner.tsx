@@ -2,7 +2,7 @@ import {
   DrawerContentComponentProps,
   DrawerItemList,
 } from "@react-navigation/drawer";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "../AuthContext";
 import { router } from "expo-router";
 import {
@@ -15,6 +15,8 @@ import {
   Text,
 } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
+import { onAuthStateChanged } from "firebase/auth";
+import { authWeb } from "../(auth)";
 
 interface UserBannerProps extends DrawerContentComponentProps {}
 
@@ -27,10 +29,25 @@ const UserBanner: React.FC<UserBannerProps> = (props) => {
   }
   const { setIsLoggedIn } = authContext;
 
+  useEffect(() => {
+    // Listen to authentication state changes
+    const unsubscribe = onAuthStateChanged(authWeb, (user) => {
+      if (user) {
+        setIsLoggedIn(true); // Update context to reflect logged-in state
+      } else {
+        setIsLoggedIn(false); // Update context to reflect logged-out state
+        router.replace("/login"); // Redirect to login page
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup listener on component unmount
+  }, [setIsLoggedIn, router]);
+
   const handleLogout = () => {
     setIsLoggedIn(false);
-    router.push("/");
+    router.push("/login");
   };
+
   return (
     <SafeAreaView>
       <ImageBackground

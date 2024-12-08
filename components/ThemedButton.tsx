@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
 
   default: {
     backgroundColor: "#DA4B46",
+    borderWidth: 2,
   },
 
   red: {

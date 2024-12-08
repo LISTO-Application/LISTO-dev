@@ -566,7 +566,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
         const querySnapshot = await getDocs(collection(db, "crimes"));
         const crimeList: MarkerType[] = await Promise.all(
           querySnapshot.docs.map(async (doc) => {
-            const coordinate = doc.data().coordinate;
+            let coordinate = doc.data().coordinate;
             const location = doc.data().location;
             let date = doc.data().date;
 
@@ -581,6 +581,18 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               console.warn("Skipping invalid location:", location);
               return null;
             }
+
+            if (coordinate instanceof GeoPoint) {
+              // If it's already a GeoPoint, keep it as is
+              coordinate = coordinate;
+            } else if (coordinate && coordinate._lat && coordinate._long) {
+              // If it's an object with _lat and _long, convert it to GeoPoint
+              coordinate = new GeoPoint(coordinate._lat, coordinate._long);
+            } else if (coordinate && coordinate._lat && coordinate._long) {
+              // If it's from coordinates (old format), convert to GeoPoint
+              coordinate = new GeoPoint(coordinate._lat, coordinate._long);
+            }
+            console.log(coordinate);
             return {
               id: doc.id,
               title: doc.data().title,

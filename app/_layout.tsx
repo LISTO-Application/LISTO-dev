@@ -18,6 +18,9 @@ import { PortalProvider } from "@gorhom/portal";
 
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { authWeb } from "./(auth)";
+import { SessionProvider } from "@/auth";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -27,8 +30,6 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-
-  const isLoggedIn = true; // Replace with actual login state
 
   useEffect(() => {
     if (loaded) {
@@ -40,32 +41,41 @@ export default function RootLayout() {
     return null;
   }
 
-  console.log(
-    "Rendering Stack with initialRouteName:",
-    isLoggedIn ? "(tabs)" : "index"
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(authWeb, (user) => {
+      setIsLoggedIn(!!user);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (isLoggedIn === null) {
+    return null;
+  }
   return (
-    <GestureHandlerRootView>
-      <PortalProvider>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <Stack initialRouteName={isLoggedIn ? "(tabs)" : "index"}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="register" options={{ headerShown: false }} />
-            <Stack.Screen name="forgot" options={{ headerShown: false }} />
-            <Stack.Screen name="emergency" options={{ headerShown: false }} />
-            <Stack.Screen name="otp" options={{ headerShown: false }} />
-            <Stack.Screen name="[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="changepass" options={{ headerShown: false }} />
-            <Stack.Screen name="adminLogin" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" options={{ headerShown: false }} />
-            
-          </Stack>
-        </ThemeProvider>
-      </PortalProvider>
-    </GestureHandlerRootView>
+    <SessionProvider>
+      <GestureHandlerRootView>
+        <PortalProvider>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <Stack initialRouteName={isLoggedIn ? "(tabs)" : "(auth)"}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="adminLogin"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="+not-found"
+                options={{ headerShown: false }}
+              />
+            </Stack>
+          </ThemeProvider>
+        </PortalProvider>
+      </GestureHandlerRootView>
+    </SessionProvider>
   );
 }
