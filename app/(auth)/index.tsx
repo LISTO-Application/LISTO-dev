@@ -9,6 +9,7 @@ import { firebase } from "@react-native-firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { getFirestore } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
+import { getStorage } from "firebase/storage";
 const firebaseConfig = {
   apiKey: "AIzaSyAzZ7B0faWwYTNHO3swEUErpD5UaWnMYGo",
   authDomain: "listo-dev-18c26.firebaseapp.com",
@@ -24,7 +25,8 @@ const app = initializeApp(firebaseConfig);
 const authWeb = getAuth(app);
 const functionWeb = getFunctions(app, "asia-east1");
 const dbWeb = getFirestore(app);
-export { authWeb, app, dbWeb, functionWeb };
+const strWeb = getStorage(app);
+export { authWeb, app, dbWeb, functionWeb, strWeb };
 
 export default function Index() {
   if (Platform.OS === "web") {

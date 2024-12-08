@@ -13,20 +13,17 @@ export interface Report {
     | "rape"
     | "carnapping"
     | "theft";
-  date: Date;
   additionalInfo: string;
   location: string;
-  coordinate: GeoPoint
+  coordinate: GeoPoint;
   image: {
     filename: string;
     uri: string;
   };
   name: string | null;
-  
   status: number;
   time: string;
-  timeOfCrime: Date;  // Ensure it's a Date object
+  timeOfCrime: Date; // Ensure it's a Date object
   timeReported: Date; // Ensure it's a Date object
   unixTOC: number;
- 
-};
+}

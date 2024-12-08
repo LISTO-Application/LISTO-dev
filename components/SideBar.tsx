@@ -20,6 +20,8 @@ import {
   where,
   getDocs,
 } from "@react-native-firebase/firestore";
+import { signOut } from "firebase/auth";
+import { authWeb } from "@/app/(auth)";
 
 export const SideBar = ({
   sideBarPosition,
@@ -29,10 +31,13 @@ export const SideBar = ({
   navigation: any;
 }) => {
   //Assets
-  const id = "John Doe";
+  const auth = authWeb;
+  const id = auth.currentUser?.displayName;
   const image = require("../assets/images/texture.svg");
+
   const handleLogout = () => {
-    router.push("/");
+    signOut(authWeb);
+    console.log(auth.currentUser);
   };
 
   //Icon assets
@@ -91,7 +96,7 @@ export const SideBar = ({
         resizeMode="cover"
         style={webstyles.userSection}
       >
-        <TouchableOpacity onPress={() => router.push(`/${id}`)}>
+        <TouchableOpacity onPress={() => navigation.navigate("Account")}>
           <Image
             source={require("../assets/images/user-icon.png")}
             style={webstyles.userImage}

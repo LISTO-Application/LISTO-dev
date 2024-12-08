@@ -64,7 +64,9 @@ const UserBanner: React.FC<UserBannerProps> = (props) => {
       >
         {" "}
         <View style={layoutStyles.drawer}>
-          <TouchableOpacity onPress={() => router.push("/account")}>
+          <TouchableOpacity
+            onPress={() => props.navigation.navigate("Account")}
+          >
             <Image source={require("../../assets/images/user-icon.png")} />
             <ThemedText>{username}</ThemedText>
           </TouchableOpacity>
