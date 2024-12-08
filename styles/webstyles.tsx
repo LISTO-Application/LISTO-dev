@@ -76,8 +76,9 @@ const webstyles = StyleSheet.create({
   },
 
   scrollViewContent: {
-    display: "block",
-    padding: "10px 20px",
+
+    paddingHorizontal: 10,
+    paddingVertical: 20,
   },
 
   reportIcon: {
@@ -92,16 +93,16 @@ const webstyles = StyleSheet.create({
   },
   reportTextContainer: {
     flex: 1,
-    paddingLeft: "10px",
+    paddingLeft: 10,
   },
   reportTitleValidate: {
     fontWeight: "bold",
-    fontSize: "16px",
+    fontSize: 16,
     color: "#115272", // Blue color for the title
   },
   // Updated details to blue
   reportDetails: {
-    fontSize: "14px",
+    fontSize: 14,
     color: "#115272", // Blue color for the details
   },
   timeText: {
@@ -128,13 +129,13 @@ const webstyles = StyleSheet.create({
     fontSize: 14, // Adjust font size if needed
   },
   validateIcon: {
-    paddingLeft: "5px",
+    paddingLeft: 5,
     color: "#115272",
   },
   horizontalLine: {
-    height: "1px",
+    height: 1,
     backgroundColor: "#d3d3d3",
-    marginVertical: "10px",
+    marginVertical: 10,
   },
 
   item: {
@@ -191,7 +192,7 @@ const webstyles = StyleSheet.create({
     padding: 12,
     borderRadius: 4,
     color: "#FFF",
-    border: "none",
+    borderWidth: 0,
     cursor: "pointer",
   },
   submitButton: {
@@ -199,7 +200,7 @@ const webstyles = StyleSheet.create({
     padding: 12,
     borderRadius: 4,
     color: "#FFF",
-    border: "none",
+    borderWidth: 0,
     cursor: "pointer",
   },
   buttonText: {

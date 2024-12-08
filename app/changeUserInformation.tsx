@@ -299,7 +299,7 @@ export default function ChangeUserAccount() {
           {/* Home Button */}
           <ThemedButton
             title="Home"
-            onPress={() => router.replace({ pathname: "/report" })} //might change
+            onPress={() => router.replace({ pathname: "/" })} //might change
           />
         </ThemedView>
 

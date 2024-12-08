@@ -55,15 +55,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   display: {
-    fontSize: 64,
+    fontSize: 54,
     fontWeight: 'bold',
-    lineHeight: 64,
+    lineHeight: 54,
   },
   
   subDisplay: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: 'bold',
-    lineHeight: 48,
+    lineHeight: 42,
   },
 
   title: {

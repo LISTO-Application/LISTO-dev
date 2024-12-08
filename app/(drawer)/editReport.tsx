@@ -214,7 +214,7 @@ export default function EditReport({ navigation }: { navigation: any }) {
 
             <Text>Select Crime Type:</Text>
             <TouchableOpacity style={webstyles.dropdown} onPress={handleSelect}>
-              <Text style={webstyles.selectedText}>{selectedValue}</Text>
+              <Text>{selectedValue}</Text>
               <Ionicons name="chevron-down" size={24} color="gray" />
             </TouchableOpacity>
 
@@ -245,7 +245,9 @@ export default function EditReport({ navigation }: { navigation: any }) {
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}
-                onPress={() => navigation.navigate("ViewReports")}
+                onPress={() => router.replace({
+                  pathname:"/viewReports"
+                })}
               >
                 <Text style={webstyles.buttonTexteditReport}>CANCEL</Text>
               </TouchableOpacity>
