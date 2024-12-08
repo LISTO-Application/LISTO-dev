@@ -50,7 +50,7 @@ import {
   import { FirebaseFirestoreTypes, Timestamp } from "@react-native-firebase/firestore";
 
   // FN Imports
-   import { addMonths, endOfDay, endOfMonth, formatDate, getMonth, getTime, isAfter, isBefore, isMatch, isThisYear, max, min, set, setDate, startOfDay, startOfMonth, subMonths, subYears } from "date-fns";
+   import { addMonths, endOfDay, endOfMonth, formatDate, getDate, getMonth, getTime, isAfter, isBefore, isMatch, isThisYear, max, min, set, setDate, startOfDay, startOfMonth, subMonths, subYears } from "date-fns";
   
   //Image Imports
   
@@ -156,8 +156,8 @@ import {
     const maxDate = formatDate(initialDate.date, "yyyy-MM-dd");
     const calendarSheetRef = useRef<BottomSheet>(null);
     const calendarSnapPoints = useMemo(() => ["65%"], []);
-    const [dateMode, setDateMode] = useState("month");
-    const [current, setCurrent] = useState(initialDate.date);
+    const [dateMode, setDateMode] = useState("day");
+    const [current, setCurrent] = useState(Timestamp.now().toDate());
     const [isCalendarSheetOpen, setIsCalendarSheetOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(formatDate(initialDate.date, "yyyy-MM-dd").toString());
     const [markedDates, setMarkedDates] = useState<{
@@ -188,16 +188,16 @@ import {
       const fetchData = async () => {
         if(session != null) {
           await firebase.firestore().collection("crimes")
-            .where("timeStamp", ">", getTime(startOfMonth(initialDate.date)))
-            .where("timeStamp", "<", getTime(endOfMonth(initialDate.date)))
+            .where("unixTOC", ">", getTime(startOfMonth(initialDate.date)))
+            .where("unixTOC", "<", getTime(endOfMonth(initialDate.date)))
             .get()
             .then((querySnapshot) => {
+              console.log("WATDAPAK")
               const fetchedCrimeData: SetStateAction<FirebaseFirestoreTypes.DocumentData[]> = [];
-              const fetchedCoordinates: ((prevState: LatLng[]) => LatLng[]) | { latitude: any; longitude: any; }[] = [];
               querySnapshot.forEach((doc) => {
+                console.log("WAW")
                 const data = doc.data();
                 fetchedCrimeData.push(data);
-                fetchedCoordinates.push({ latitude: data.coordinate.latitude, longitude: data.coordinate.longitude });
               });
               setCrimeData(fetchedCrimeData);
             });
@@ -209,36 +209,36 @@ import {
       return
     }, []);
 
-    useEffect(() => {
-      if(session != null) {
-          setHeatmapData([])
-          console.log("Fetching all data...");
-          setTimeout(async () => {
-            await firebase.firestore().collection("crimes")
-            .get()
-            .then((querySnapshot) => {
-              let heatmapData = [] as LatLng[];
-              querySnapshot.forEach((doc) => {
-                console.log("Adding data..." + doc.data().category);
-                heatmapData.push({latitude: doc.data().coordinate.latitude, longitude: doc.data().coordinate.longitude});
-              });
-              setTimeout(() => {
-                console.log("SETTING HEATMAP DATA");
-                setHeatmapData(heatmapData);
-                console.log("HEATMAP DATA SET");
-              }, 2000);
-            })
-            .catch((error) => {
-              console.log("Error getting documents: ", error);
-              if (error.code == "firestore/permission-denied") {
-                Alert.alert("Permission Denied", "You do not have permission to access this data.");
-              } else {
-                Alert.alert("Could not get crime data", "There was an issue with getting the crime data, please try again.")
-              } 
-            })
-          }, 5000);
-        } 
-    }, []);
+    // useEffect(() => {
+    //   if(session != null) {
+    //       setHeatmapData([])
+    //       console.log("Fetching all data...");
+    //       setTimeout(async () => {
+    //         await firebase.firestore().collection("crimes")
+    //         .get()
+    //         .then((querySnapshot) => {
+    //           let heatmapData = [] as LatLng[];
+    //           querySnapshot.forEach((doc) => {
+    //             console.log("Adding data..." + doc.data().category);
+    //             heatmapData.push({latitude: doc.data().coordinate.latitude, longitude: doc.data().coordinate.longitude});
+    //           });
+    //           setTimeout(() => {
+    //             console.log("SETTING HEATMAP DATA");
+    //             setHeatmapData(heatmapData);
+    //             console.log("HEATMAP DATA SET");
+    //           }, 2000);
+    //         })
+    //         .catch((error) => {
+    //           console.log("Error getting documents: ", error);
+    //           if (error.code == "firestore/permission-denied") {
+    //             Alert.alert("Permission Denied", "You do not have permission to access this data.");
+    //           } else {
+    //             Alert.alert("Could not get crime data", "There was an issue with getting the crime data, please try again.")
+    //           } 
+    //         })
+    //       }, 5000);
+    //     } 
+    // }, []);
 
     const detailsRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ["50%"], []);
@@ -300,7 +300,6 @@ import {
               loadingEnabled={true}
               loadingBackgroundColor="#115272"
               loadingIndicatorColor="#FFF"
-              loadingFallback={<LoadingScreen/>}
               googleMapId= {isHeatMapOn ? "e34d889a373119e6" : "5cc51025f805d25d"}
               
             >
@@ -327,9 +326,12 @@ import {
                             setIsDetailsLoading(true);
                             setTimeout(async () => {
                               handleSnapPress(0);
-                              await setDetailsData(crime);
+                            }, 500)
+                            setDetailsData(crime);
+                            setTimeout(async () => {
+                              console.log(crime);
                               setIsDetailsLoading(false);
-                            }, 1000);
+                            }, 2000);
                           }}
                           icon={crimeMarkers[crime.category as keyof typeof crimeMarkers]}
                           tracksViewChanges={false}
@@ -466,6 +468,7 @@ import {
           </MotiView>
   
           <Portal>
+            {/* CRIME CATEGORIES */}
             <BottomSheet ref={filterSheetRef} index={-1} snapPoints={filterSnapPoints} onChange={handleFilterSheetChange} backgroundStyle={{ backgroundColor: "#115272" }} handleIndicatorStyle={{ backgroundColor: "#FFF", width: "40%" }} enablePanDownToClose={true}>
               <View style={{ width: "100%", height: "100%" }}>
                 <BottomSheetScrollView
@@ -475,7 +478,6 @@ import {
                   }}
                   horizontal={true}
                 >
-                  {/* CRIME CATEGORIES */}
                   {categories.map((category, index) => (
                     <Pressable
                       key={category.id}
@@ -591,8 +593,8 @@ import {
                       setCrimeData([]);
                       console.log("Fetching month data: " + formatDate(selectedDate, "yyyy-MM-dd"));
                       await firebase.firestore().collection("crimes")
-                      .where("timeStamp", ">", getTime(startOfMonth(selectedDate)))
-                      .where("timeStamp", "<", getTime(endOfMonth(selectedDate)))
+                      .where("unixTOC", ">", getTime(startOfMonth(selectedDate)))
+                      .where("unixTOC", "<", getTime(endOfMonth(selectedDate)))
                       .get()
                       .then((querySnapshot) => {
                         let data = [] as FirebaseFirestoreTypes.DocumentData[];
@@ -619,8 +621,8 @@ import {
                     } else if(dateMode == "day") {
                         setCrimeData([]);
                         firebase.firestore().collection("crimes")
-                          .where("timeStamp", ">", getTime(startOfDay(selectedDate)))
-                          .where("timeStamp", "<", getTime(endOfDay(selectedDate)))
+                          .where("unixTOC", ">", getTime(startOfDay(selectedDate)))
+                          .where("unixTOC", "<", getTime(endOfDay(selectedDate)))
                           .get()
                           .then((querySnapshot) => {
                             let data = [] as FirebaseFirestoreTypes.DocumentData[];
@@ -684,112 +686,17 @@ import {
                       {loadingDetails && <View style = {{height: "5%"}}/>}
                       {!loadingDetails ? <View style = {{backgroundColor: "#FFF", marginVertical: "2.5%", paddingHorizontal: "1.5%", paddingVertical: "1.5%", flexDirection: 'row', borderRadius: 50,}}>
                         <Ionicons name="calendar" size={24} color="#115272" />
-                        <Text style = {{color: "#115272", fontWeight: "bold", fontSize: 14, textAlignVertical: "center", marginHorizontal: "2.5%"}}>{detailsData?.date}</Text>
+                        <Text style = {{color: "#115272", fontWeight: "bold", fontSize: 14, textAlignVertical: "center", marginHorizontal: "2.5%"}}>{detailsData?.timeOfCrime.toDate().toDateString()}</Text>
                       </View> : 
                       <Skeleton colorMode="light" width="100%" height={36} show={loadingDetails} radius={20}/>}
                       {loadingDetails && <View style = {{height: "5%"}}/>}
                       {!loadingDetails ? <Text style = {{color: "#FFF", fontWeight: "bold", fontSize: 14, borderTopWidth: 5, borderColor: "#FFF", marginVertical: "5%" ,paddingVertical: "5%"}}>{detailsData?.additionalInfo}</Text> : <Skeleton colorMode="light" width="100%" height={100} show={loadingDetails} radius={20}/>}
                     </View>
             </BottomSheet>
-
           </Portal>
         </GestureHandlerRootView>
       );
-    } else if (Platform.OS === "web") {
-      const [toggleModal, setToggleModal] = useState(false);
-      const position = { lat: 14.685992094228787, lng: 121.07589171824928 };
-      return (
-        <GestureHandlerRootView>
-          <SpacerView
-            height="100%"
-            width="100%"
-            justifyContent="center"
-            alignItems="center"
-            backgroundColor="#115272"
-          >
-            <APIProvider apiKey={"AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"}>
-              <Map
-                style={style.map}
-                defaultCenter={position}
-                disableDoubleClickZoom={true}
-                defaultZoom={15}
-                mapId="5cc51025f805d25d"
-                mapTypeControl={false}
-                streetViewControl={false}
-                mapTypeId="roadmap"
-                restriction={{
-                  latLngBounds: {
-                    north: 14.693963,
-                    south: 14.669975,
-                    west: 121.069508,
-                    east: 121.087376,
-                  },
-                }}
-                minZoom={15}
-                maxZoom={18}
-              >
-                <PlacesLibrary />
-              </Map>
-            </APIProvider>
-  
-            <Modal
-              animationType="fade"
-              transparent={true}
-              visible={toggleModal}
-              onRequestClose={() => setToggleModal(false)}
-            >
-              <DateModal setToggleModal={setToggleModal} />
-            </Modal>
-  
-            {!isFilterSheetOpen && (
-              <Pressable
-                style={{
-                  position: "absolute",
-                  top: 120,
-                  right: 20,
-                }}
-                // onPress={() => handleFilterSnapPress(1)
-                onPress={() => {router.replace({
-                  pathname: "/(drawer)/viewReports"
-                })}  
-              }
-              >
-                <Image
-                  style={{
-                    width: 50,
-                    height: 50,
-                  }}
-                  source={filter}
-                />
-              </Pressable>
-            )}
-  
-            {isFilterSheetOpen && (
-              <Pressable
-                style={{
-                  position: "absolute",
-                  top: 120,
-                  right: 20,
-                }}
-                onPress={() => handleFilterClosePress()}
-              >
-                <Image
-                  style={{
-                    width: 50,
-                    height: 50,
-                  }}
-                  source={filter}
-                />
-              </Pressable>
-            )}
-  
-            <DateDisplay setToggleModal={setToggleModal} />
-  
-            <FilterHeatMap heatmap={heatmap} />
-          </SpacerView>
-        </GestureHandlerRootView>
-      );
-    }
+    } 
   }
   
   const style = StyleSheet.create({

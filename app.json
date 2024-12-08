@@ -4,7 +4,6 @@
     "slug": "LISTO-dev",
     "version": "1.0.0",
     "platforms": [
-      "ios",
       "android",
       "web"
     ],
@@ -24,7 +23,6 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
-        "bundleIdentifier": "com.pingusbingus.LISTOdev",
         "backgroundColor": "#115272"
       },
       "config": {
@@ -126,14 +124,6 @@
       "expo-share-intent",
       "expo-secure-store",
       "expo-asset"
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          }
-        }
-      ],
     ],
     "experiments": {
       "typedRoutes": true

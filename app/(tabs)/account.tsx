@@ -14,6 +14,8 @@ import {
   Text,
 } from "react-native";
 import { useEffect } from "react";
+import { useState } from "react";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 //Expo Imports
 import { Redirect, router} from "expo-router";
@@ -33,19 +35,13 @@ import { styles } from "@/styles/styles";
 import { utility } from "@/styles/utility";
 
 //Component Imports
-import { ThemedText } from "@/components/ThemedText";
-import { SpacerView } from "@/components/SpacerView";
-import { ThemedButton } from "@/components/ThemedButton";
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedIcon } from "@/components/ThemedIcon";
-import { ThemedInput } from "@/components/ThemedInput";
-import { ThemedImageBackground } from "@/components/ThemedImageBackground";
-import { useState } from "react";
+import { ThemedText, SpacerView, ThemedButton, ThemedView, ThemedIcon, ThemedInput } from "@/components/";
 import DeleteModal from "@/components/modal/DeleteModal";
 import LogoutModal from "@/components/modal/LogoutModal";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import { Skeleton } from 'moti/skeleton'
 import { LoadingScreen } from "@/components";
+import { AnimatePresence, MotiView } from "moti";
+import Email from "@/assets/images/email.svg";
 
 export default function Account() {
 
@@ -77,10 +73,11 @@ export default function Account() {
   const [isLoading, setIsLoading] = useState(false);
   const [emailReauth, setEmailReauth] = useState("");
   const [password, setPassword] = useState("");
+  const [verifyEmail, setVerifyEmail] = useState(false);
 
   //Edit Information
-  const [editEmail, setEditEmail] = useState("");
-  const [editPassword, setEditPassword] = useState("");
+  const [editEmail, setEditEmail] = useState<string | null>("");
+  const [editPassword, setEditPassword] = useState<string | null>("");
 
   //Account Functions
   const [updating, setUpdating] = useState(false);
@@ -98,6 +95,9 @@ export default function Account() {
       prevStates.map((state, i) => (i === index ? !state : state))
     );
   };
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Email validation
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$^*.[\]{}()?"!@#%&/\\,><':;|_~])[A-Za-z\d$^*.[\]{}()?"!@#%&/\\,><':;|_~]{6,}$/; // Minimum eight characters, at least one letter and one number
 
   // Handle user state changes
   useEffect(() => {
@@ -174,14 +174,18 @@ function deleteAccount(email: string, phone: string, uid: string) {
   ]);
 }
 
-async function updateDetails (userDetails: {email: string | null, password: string | null}) {
+async function updateDetails (userDetails: {email?: string | null, password?: string | null}) {
   console.log("Updating user details...");
   // Create an update object dynamically
   console.log("Checking for email...");
-  if (userDetails.email != null) {
+  if (userDetails.email != null && userDetails.email != "") {
     console.log("Updating email...");
-    await session?.updateEmail(userDetails.email)
+    await session?.verifyBeforeUpdateEmail(userDetails.email)
+    .then(() => {
+      setVerifyEmail(true);
+    })
     .catch((error) => {
+      console.log(error);
       if(error.code === 'auth/invalid-email') {
         Alert.alert("Invalid email",'Please enter a valid email address.' , [{text: "OK"}], {cancelable: true});
       }
@@ -195,9 +199,16 @@ async function updateDetails (userDetails: {email: string | null, password: stri
           setUpdating(true);
         }}], {cancelable: true});
       }
+      if(error.code === 'auth/operation-not-allowed') {
+        console.log("Re-authentication required");
+        Alert.alert("Re-authentication required",'Please sign in again to update email.' , [{text: "Cancel"}, {text: "OK", onPress: () => {
+          setReauthenticating(true)
+          setUpdating(true);
+        }}], {cancelable: true});
+      }
     });
   }
-  if (userDetails.password != null) {
+  if (userDetails.password != null && userDetails.password != "") {
     console.log("Updating password...");
     await firebase.auth().currentUser?.updatePassword(userDetails.password)
     .catch((error) => {
@@ -223,11 +234,11 @@ async function updateDetails (userDetails: {email: string | null, password: stri
             <Image source={image}></Image>
             <SpacerView height={20} />
             {!loading ? 
-            <Text style = {{width: "100%", fontSize: title, color: "#FFF", textAlign:"center"}}>
+            <Text style = {{width: "100%", fontSize: title, fontWeight: "bold", color: "#FFF", textAlign:"center"}}>
               {fname} {lname}
             </Text> :                 
             <View style = {{opacity: 0.1}}>
-              <Skeleton colorMode="light" width={320} height={36} show={loading} radius={20}/>
+              <Skeleton colorMode="light" width={display * 5} height={36} show={loading} radius={20}/>
             </View>}
             <SpacerView height={20} />
           </ImageBackground>
@@ -248,94 +259,6 @@ async function updateDetails (userDetails: {email: string | null, password: stri
                 Personal Information
               </ThemedText>
             </SpacerView>
-
-            {reauthenticating && <Modal
-            animationType="fade"
-            transparent={true}
-            >
-              <View 
-              style = {{backgroundColor: 'rgba(0,0,0, 0.5)', width: '100%', height: '100%'}}>
-                <View             
-                style = {accountStyle.modal}>
-                  <TouchableOpacity style = {{width:'auto', alignSelf:'flex-start', justifyContent:'center', borderRadius: 50, backgroundColor: '#FFF'}}>
-                    <Pressable onPress={() => {
-                      setReauthenticating(false)
-                      setDeleting(false)
-                      setUpdating(false)
-                    }}>
-                      <Image style= {{width: 36, height: 36,}} source={exit}/>
-                    </Pressable>
-                  </TouchableOpacity>
-                  {deleting && <ThemedText style = {{marginVertical: '5%', alignSelf: 'center'}} lightColor="#FFF" darkColor="#FFF" type="title">
-                    Confirm Deletion
-                  </ThemedText>}
-                  {updating && <ThemedText style = {{marginVertical: '5%', alignSelf: 'center'}} lightColor="#FFF" darkColor="#FFF" type="title">
-                    Confirm Update
-                  </ThemedText>}
-                  <TextInput style = {accountStyle.textInput} placeholder="Email" placeholderTextColor = "#BBB" onChangeText={setEmailReauth}/>
-                  <TextInput style = {accountStyle.textInput} placeholder="Password"   placeholderTextColor = "#BBB" onChangeText={setPassword} secureTextEntry />
-                  {!isLoading && <ThemedButton
-                    title="Submit"
-                    width='75%'
-                    marginHorizontal='auto'
-                    marginVertical='2.5%'
-                    onPress={() => {
-                      var credentials = firebase.auth.EmailAuthProvider.credential(emailReauth, password);
-                      session?.reauthenticateWithCredential(credentials)
-                      .then(result => {
-                        if(deleting) {
-                          result.user.delete()
-                          .then(() => {
-                            setReauthenticating(false);
-                            setDeleting(false);
-                            router.replace("../(auth)/login");
-                          }).catch(error => {
-                            console.error(error);
-                          })
-                        }
-                        else if(updating) {
-                          updateDetails({email: editEmail, password: editPassword})
-                          .then(() => {
-                            setReauthenticating(false);
-                            setUpdating(false);
-                            router.replace("../(tabs)/account");
-                          }).catch(error => {
-                            console.error(error);
-                          })
-                        }
-                      })
-                      .catch((error) => {
-                        if (error.code === 'auth/too-many-requests') {
-                          Alert.alert("Too many requests",'Too many subsequent login attempts, please try again in a few seconds!',  [{text: "OK"}], {cancelable: true});
-                        }
-                  
-                        if (error.code === 'auth/invalid-credential') {
-                          Alert.alert("Incorrect credentials",'The email or password is incorrect.' , [{text: "OK"}], {cancelable: true});
-                        }
-                  
-                        if (error.code === 'auth/network-request-failed') {
-                          Alert.alert("Poor connection",'Connection error, please try again later.' , [{text: "OK"}], {cancelable: true});
-                        }
-                        console.error(error);
-                      })
-                    }}
-
-                  />}
-
-                  {isLoading && 
-                  <Pressable
-                    style={{
-                      backgroundColor: "#DA4B46",
-                      height: 36,
-                      width: "75%",
-                      borderRadius: 50,
-                      justifyContent: "center",
-                    }}>
-                      <ActivityIndicator size="large" color="#FFF"/>
-                    </Pressable>}
-                  </View>
-                </View>
-            </Modal>}
 
             <SpacerView
               height='auto'
@@ -414,8 +337,10 @@ async function updateDetails (userDetails: {email: string | null, password: stri
                     handleFieldPress(0);
                   }}/>
                 }
-                {fieldState[0] && !loading && <ThemedIcon name="close" color='#115272' style = {accountStyle.editIcon} onPress={() => {
-                    handleFieldPress(0);
+                {fieldState[0] && !loading && <ThemedIcon name="close" color='#115272' style = {accountStyle.editIcon} onPress={() => {{
+                  handleFieldPress(0);
+                  setEditEmail(null);
+                }
                   }}/>
                 }
               </View>
@@ -454,8 +379,10 @@ async function updateDetails (userDetails: {email: string | null, password: stri
                     handleFieldPress(1);
                   }}/>
                 }
-                {fieldState[1] && !loading && <ThemedIcon name="close" color='#115272' style = {accountStyle.editIcon} onPress={() => {
-                    handleFieldPress(1);
+                {fieldState[1] && !loading && <ThemedIcon name="close" color='#115272' style = {accountStyle.editIcon} onPress={() => {{
+                  handleFieldPress(1);
+                  setEditPassword(null);
+                }
                   }}/>
                 }
               </View>
@@ -565,7 +492,8 @@ async function updateDetails (userDetails: {email: string | null, password: stri
               </View>}
             </SpacerView>
 
-            {(fieldState[0] || fieldState[1]) && (editEmail || editPassword) && <ThemedButton
+            {(fieldState[0] || fieldState[1]) && (editEmail || editPassword) && 
+            <ThemedButton
                 title="Update"
                 width="50%"
                 height="auto"
@@ -574,7 +502,15 @@ async function updateDetails (userDetails: {email: string | null, password: stri
                 marginHorizontal='auto'
                 marginVertical='5%'
                 onPress={() => {
-                  updateDetails({email: editEmail, password: editPassword})
+                  if (editEmail != null && editEmail != "" && !emailRegex.test(editEmail)) {
+                    Alert.alert("Invalid email", "Please enter a valid email address.", [{text: "OK"}], {cancelable: true});
+                  } else if (editEmail != "" && editEmail == email) {
+                    Alert.alert("Invalid email", "Please enter a different email address.", [{text: "OK"}], {cancelable: true});
+                  } else if (editPassword != null && editPassword != "" && !passwordRegex.test(editPassword)) {
+                    Alert.alert("Weak password", "Password must contain 1 uppercase letter, 1 lowercase letter, 1 special character, and 1 numeric character.", [{text: "OK"}], {cancelable: true});
+                  } else {
+                    updateDetails({email: editEmail, password: editPassword})
+                  }
                 }}
               /> }
 
@@ -582,6 +518,114 @@ async function updateDetails (userDetails: {email: string | null, password: stri
 
           <SpacerView height={80} />
         </ScrollView>
+
+        <AnimatePresence>
+        {verifyEmail && 
+        <Modal>
+            <MotiView style = {{width: "100%", height: "100%", flexDirection: "column", backgroundColor:"#115272", justifyContent: 'center', alignItems:'center',}} from = {{opacity: 0}} animate={{opacity: 1}} exit = {{opacity: 0}}>
+              <Email width="25%" height="25%" style = {{backgroundColor: 'rgba(0,0,0,0)', borderRadius: 200, marginBottom: "5%", aspectRatio: 1/1}}></Email>
+              <Text style = {[{width: '75%', color: "#FFF", borderRadius: 10, textAlign: "center", marginBottom: "5%", fontWeight: "900"}, {fontSize: subtitle}]}>An email has been sent to your current email for verification to complete the email change process. {"\n\n"} Please log in again after verifying to continue!</Text>
+            <TouchableOpacity
+              style = {{width: "100%", height: "auto", backgroundColor: "#FFF", borderRadius: 50, justifyContent: "center", paddingVertical: "2.5%"}}
+              onPress={() => {
+                setVerifyEmail(false)
+                auth.signOut();
+                }}>
+              <Text style = {[{width: '75%', color: "#115272", borderRadius: 10, textAlign: "center", fontWeight: "900", paddingHorizontal: "25%"}, {fontSize: subtitle}]}>OK</Text>
+            </TouchableOpacity>
+          </MotiView>
+        </Modal>}
+        </AnimatePresence>
+
+        {reauthenticating && <Modal
+            animationType="fade"
+            transparent={true}
+            >
+              <View 
+              style = {{backgroundColor: 'rgba(0,0,0, 0.5)', width: '100%', height: '100%'}}>
+                <View             
+                style = {accountStyle.modal}>
+                  <TouchableOpacity style = {{width:'auto', alignSelf:'flex-start', justifyContent:'center', borderRadius: 50, backgroundColor: '#FFF'}}>
+                    <Pressable onPress={() => {
+                      setReauthenticating(false)
+                      setDeleting(false)
+                      setUpdating(false)
+                    }}>
+                      <Image style= {{width: 36, height: 36,}} source={exit}/>
+                    </Pressable>
+                  </TouchableOpacity>
+                  {deleting && <Text style = {{marginVertical: '5%', alignSelf: 'center', fontSize: title, fontWeight: "bold", color: "#FFF"}} >
+                    Confirm Deletion
+                  </Text>}
+                  {updating && <Text style = {{marginVertical: '5%', alignSelf: 'center', fontSize: title, fontWeight: "bold", color: "#FFF"}} >
+                    Confirm Update
+                  </Text>}
+                  <TextInput style = {accountStyle.textInput} placeholder="Email" placeholderTextColor = "#BBB" onChangeText={setEmailReauth}/>
+                  <TextInput style = {accountStyle.textInput} placeholder="Password"   placeholderTextColor = "#BBB" onChangeText={setPassword} secureTextEntry />
+                  {!isLoading && <ThemedButton
+                    title="Submit"
+                    width='75%'
+                    marginHorizontal='auto'
+                    marginVertical='2.5%'
+                    onPress={() => {
+                      var credentials = firebase.auth.EmailAuthProvider.credential(emailReauth, password);
+                      session?.reauthenticateWithCredential(credentials)
+                      .then(result => {
+                        if(deleting) {
+                          result.user.delete()
+                          .then(() => {
+                            setReauthenticating(false);
+                            setDeleting(false);
+                            router.replace("../(auth)/login");
+                          }).catch(error => {
+                            console.error(error);
+                          })
+                        }
+                        else if(updating) {
+                          updateDetails({email: editEmail, password: editPassword})
+                          .then(() => {
+                            setReauthenticating(false);
+                            setUpdating(false);
+                            router.replace("../(tabs)/account");
+                          }).catch(error => {
+                            console.error(error);
+                          })
+                        }
+                      })
+                      .catch((error) => {
+                        if (error.code === 'auth/too-many-requests') {
+                          Alert.alert("Too many requests",'Too many subsequent login attempts, please try again in a few seconds!',  [{text: "OK"}], {cancelable: true});
+                        }
+                  
+                        if (error.code === 'auth/invalid-credential') {
+                          Alert.alert("Incorrect credentials",'The email or password is incorrect.' , [{text: "OK"}], {cancelable: true});
+                        }
+                  
+                        if (error.code === 'auth/network-request-failed') {
+                          Alert.alert("Poor connection",'Connection error, please try again later.' , [{text: "OK"}], {cancelable: true});
+                        }
+                        console.error(error);
+                      })
+                    }}
+
+                  />}
+
+                  {isLoading && 
+                  <Pressable
+                    style={{
+                      backgroundColor: "#DA4B46",
+                      height: 36,
+                      width: "75%",
+                      borderRadius: 50,
+                      justifyContent: "center",
+                    }}>
+                      <ActivityIndicator size="large" color="#FFF"/>
+                    </Pressable>}
+                  </View>
+                </View>
+            </Modal>}
+
+
       </ThemedView>
     );
   } 
