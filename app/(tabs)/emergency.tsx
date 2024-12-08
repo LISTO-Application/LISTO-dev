@@ -220,15 +220,13 @@ export default function Emergency() {
       <>
       <AnimatePresence>
         {warning && 
-          <MotiView style = {{width: "100%", height: "100%", backgroundColor:"#DA4B46", justifyContent: 'center', alignItems:'center',}} from = {{opacity: 0}} animate={{opacity: 1}} exit = {{opacity: 0}}>
-            <View style = {{width: '75%', height: "50%", flexDirection: 'column', backgroundColor: '#115272', justifyContent: 'center', alignItems: 'center', borderRadius: 25, marginBottom: "5%"}}>
-              <Warning width="50%" height="50%" style = {{backgroundColor: 'rgba(0,0,0,0)', borderRadius: 200, marginBottom: "5%", aspectRatio: 1/1}}></Warning>
-              <Text style = {[{width: '90%', color: "#FFF", borderRadius: 10, textAlign: "center", marginBottom: "5%"}, {fontSize: body}]}>Only send distress messages in an emergency, false alarms will not be tolerated.</Text>
-            </View>
+          <MotiView style = {{width: "100%", height: "100%", flexDirection: "column", backgroundColor:"#DA4B46", justifyContent: 'center', alignItems:'center',}} from = {{opacity: 0}} animate={{opacity: 1}} exit = {{opacity: 0}}>
+              <Warning width="25%" height="25%" style = {{backgroundColor: 'rgba(0,0,0,0)', borderRadius: 200, marginBottom: "5%", aspectRatio: 1/1}}></Warning>
+              <Text style = {[{width: '75%', color: "#FFF", borderRadius: 10, textAlign: "center", marginBottom: "5%", fontWeight: "900"}, {fontSize: subtitle}]}>Only send distress messages in an emergency, false alarms will not be tolerated.</Text>
             <TouchableOpacity
-              style = {{width: "50%", height: "auto", backgroundColor: "#115272", borderRadius: 50, justifyContent: "center", paddingVertical: "2.5%"}}
+              style = {{width: "50%", height: "auto", backgroundColor: "#FFF", borderRadius: 50, justifyContent: "center", paddingVertical: "2.5%"}}
               onPress={() => setWarning(false)}>
-                <Text style = {{color: '#FFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center'}}>OK</Text>
+                <Text style = {{color: '#DA4B42', fontWeight: 'bold', fontSize: 16, textAlign: 'center'}}>OK</Text>
             </TouchableOpacity>
           </MotiView>}
         </AnimatePresence>
@@ -268,7 +266,7 @@ export default function Emergency() {
               >
                 <AnimatedPressable
                   style = {style.scrollViewItem}
-                  state={animation[0]}   
+                  state={animation[0]}
                   onPress={() => {
                     handleBarangayPress(0)
                     animation[0].animateTo((current)=>({...current, backgroundColor: !barangayState[0] ? '#FFF': '#DA4B46', scale: !barangayState[0] ? 1.1: 1.0}))
@@ -292,6 +290,9 @@ export default function Emergency() {
                 </AnimatedPressable>
               </ScrollView>
             </SpacerView>
+
+            <SpacerView height="5%"/>
+
             <ThemedText
               style={{ marginVertical: "2.5%" }}
               lightColor="#FFF"
@@ -697,7 +698,7 @@ const style = StyleSheet.create({
   paddingHorizontal: 25,
   marginHorizontal: 10,
   borderWidth: 3,
-  borderRadius: 50,
+  borderRadius: 10,
   borderColor: "#FFF",
 },
 scrollViewText: {

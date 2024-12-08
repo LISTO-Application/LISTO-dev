@@ -164,7 +164,7 @@ import {
                 }}
                 onPress={() => {
                   router.push({
-                    pathname: "/adminRegister",
+                    pathname: "/register",
                     params: {},
                   });
                 }}

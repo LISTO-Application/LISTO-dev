@@ -52,12 +52,9 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
   if (visible) {
     return (
-      <MotiView from = {{scale: 2.5}} animate={{scale: 1}} transition={{duration: 750, type: "timing"}} style={[styles.tabBar, {height: visible ? "10%" : "15%"}]}>
+      <MotiView from = {{translateY: 200}} animate={{translateY: 0}} transition={{duration: 550, type: "timing"}} style={[styles.tabBar, {height: visible ? "10%" : "15%"}]}>
         {state.routes.map((route: any, index: any) => {
 
-          if(route.name === "summary") {
-            return null;
-          }
           const { options } = descriptors[route.key];
           const label =
             options.tabBarLabel !== undefined

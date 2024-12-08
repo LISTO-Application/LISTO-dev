@@ -190,10 +190,12 @@ const styles = StyleSheet.create({
   },
   item: {
     paddingVertical: 15,
+    
   },
   itemText: {
     fontSize: 18,
-    color: "black",
+    color: "#115272",
+    fontWeight: "bold",
   },
   textInput: {
     borderWidth: 1,
