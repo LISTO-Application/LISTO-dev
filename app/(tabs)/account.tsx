@@ -42,6 +42,7 @@ import { Skeleton } from "moti/skeleton";
 import { router, Redirect } from "expo-router";
 import {
   onAuthStateChanged,
+  signOut,
   updateEmail,
   updatePassword,
   User,
@@ -49,6 +50,7 @@ import {
 import { authWeb, dbWeb, functionWeb } from "../(auth)";
 import { doc, getDoc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
+import ReauthModal from "@/components/modal/ReauthModal";
 
 export default function UserAccount() {
   const texture = require("@/assets/images/texture.svg");
@@ -57,7 +59,6 @@ export default function UserAccount() {
 
   //Track whether authentication is initializing
   const auth = useSession();
-  const [initializing, setInitializing] = useState(true);
   const [reauthenticating, setReauthenticating] = useState(false);
 
   //User Details Display
@@ -84,8 +85,14 @@ export default function UserAccount() {
   const fields = [0, 1];
 
   const [fieldState, setFieldStates] = useState(fields.map(() => false));
+  const handleFieldPress = (index: number) => {
+    setFieldStates((prevStates) =>
+      prevStates.map((state, i) => (i === index ? !state : state))
+    );
+  };
 
   if (Platform.OS === "android") {
+    const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
     const { display, subDisplay, title, subtitle, body, small } =
       useResponsive();
@@ -93,11 +100,6 @@ export default function UserAccount() {
     if (session == null) {
       router.replace("../(auth)/login");
     }
-    const handleFieldPress = (index: number) => {
-      setFieldStates((prevStates) =>
-        prevStates.map((state, i) => (i === index ? !state : state))
-      );
-    };
 
     // Handle user state changes
     useEffect(() => {
@@ -833,22 +835,11 @@ export default function UserAccount() {
     );
   } else if (Platform.OS === "web") {
     const [user, setUser] = useState<User | null>(null);
-    useEffect(() => {
-      const subscriber = onAuthStateChanged(authWeb, (user) => {
-        setUser(user);
-        setInitializing(false);
-      });
-      return subscriber;
-    }, []);
-
-    if (initializing) return null;
-
-    if (user != null) {
-      return <Redirect href="/(tabs)" />;
-    }
+    const [initializing, setInitializing] = useState(true);
     const [modalDelete, setModalDelete] = useState(false);
     const [modalLogout, setModalLogout] = useState(false);
     const [isEditable, setIsEditable] = useState(false);
+
     const handleModalDelete = () => {
       setModalDelete(true);
     };
@@ -860,6 +851,14 @@ export default function UserAccount() {
     const handleEdit = () => {
       setIsEditable((prev) => !prev);
     };
+
+    useEffect(() => {
+      const subscriber = onAuthStateChanged(authWeb, (user) => {
+        setUser(user);
+        setInitializing(false);
+      });
+      return subscriber;
+    }, [authWeb]);
 
     useEffect(() => {
       const fetchUserData = async (user: any) => {
@@ -887,15 +886,21 @@ export default function UserAccount() {
           if (error.code === "permission-denied") {
             handlePermissionDenied(user);
           }
+        } finally {
+          setLoading(false);
         }
       };
 
       if (user) {
-        setTimeout(() => {
-          fetchUserData(user);
-        }, 5000);
+        fetchUserData(user);
       }
-    }, [user]);
+    }, [user, dbWeb]);
+
+    if (initializing) return <LoadingScreen />;
+
+    if (!user) {
+      return <Redirect href="../(auth)/login" />;
+    }
 
     const handlePermissionDenied = async (
       user: { uid: string | null } | null
@@ -925,38 +930,27 @@ export default function UserAccount() {
     const auth = authWeb;
 
     function deleteAccount(email: string, phone: string, uid: string) {
-      Alert.alert(
-        "Are you sure you want to delete your account?",
-        "This action cannot be undone, you will not be able to create a new account with your current phone number and email address for 1 month.",
-        [
-          { text: "Cancel" },
-          {
-            text: "Delete",
-            onPress: async () => {
-              auth.currentUser?.delete().catch((error) => {
-                if (error.code === "auth/requires-recent-login") {
-                  Alert.alert(
-                    "Re-authentication required",
-                    "Enter your credentials to proceed with account deletion",
-                    [
-                      { text: "Cancel" },
-                      {
-                        text: "OK",
-                        onPress: () => {
-                          setReauthenticating(true);
-                          setDeleting(true);
-                        },
-                      },
-                    ],
-                    { cancelable: true }
-                  );
-                }
-                console.error(error);
-              });
-            },
-          },
-        ]
+      const confirmDeletion = window.confirm(
+        `Are you sure you want to delete your account?,
+        This action cannot be undone, you will not be able to create a new account with your current phone number and email address for 1 month.`
       );
+
+      if (confirmDeletion) {
+        auth.currentUser?.delete().catch((error) => {
+          if (error.code === "auth/requires-recent-login") {
+            // Create a custom confirmation dialog for the web
+            const confirmDeletion = window.confirm(
+              "Re-authentication required. Enter your credentials to proceed with account deletion"
+            );
+
+            if (confirmDeletion) {
+              setReauthenticating(true);
+              setDeleting(true);
+            }
+          }
+          console.error(error);
+        });
+      }
     }
 
     async function updateDetails(userDetails: {
@@ -1010,28 +1004,20 @@ export default function UserAccount() {
         try {
           console.log("Updating password...");
           await updatePassword(currentUser, userDetails.password);
-          Alert.alert("Success", "Password updated successfully!");
+          window.confirm("Success. Password updated successfully!");
         } catch (error: any) {
           console.error("Error updating password:", error);
           if (error.code === "auth/weak-password") {
-            Alert.alert(
-              "Weak password",
-              "Password must contain 1 uppercase letter, 1 lowercase letter, 1 special character, and 1 numeric character."
+            window.confirm(
+              "Weak password. Password must contain 1 uppercase letter, 1 lowercase letter, 1 special character, and 1 numeric character."
             );
           } else if (error.code === "auth/requires-recent-login") {
-            Alert.alert(
-              "Re-authentication required",
-              "Please sign in again to update password.",
-              [
-                { text: "Cancel" },
-                {
-                  text: "OK",
-                  onPress: () => {
-                    console.log("Re-authentication flow triggered");
-                  },
-                },
-              ]
+            const reauthConfirm = window.confirm(
+              "Reauthentication Required. Please sign in again to update password."
             );
+            if (reauthConfirm) {
+              console.log("Re-authentication flow triggered");
+            }
           } else {
             Alert.alert(
               "Error",
@@ -1052,22 +1038,6 @@ export default function UserAccount() {
             justifyContent="center"
             alignItems="center"
           >
-            <Modal
-              animationType="fade"
-              transparent={true}
-              visible={modalDelete}
-              onRequestClose={() => setModalDelete(false)}
-            >
-              <DeleteModal setModalDelete={setModalDelete} />
-            </Modal>
-            <Modal
-              animationType="fade"
-              transparent={true}
-              visible={modalLogout}
-              onRequestClose={() => setModalLogout(false)}
-            >
-              <LogoutModal setModalLogout={setModalLogout} />
-            </Modal>
             {/* MIDDLE COLUMN */}
             <SpacerView
               flex={1}
@@ -1104,7 +1074,7 @@ export default function UserAccount() {
                     height: 80,
                     borderRadius: 40, // Make the image circular
                     position: "absolute", // Position it on top of the texture
-                    top: 50, // Adjust this based on how much you want it to overlap
+                    top: 30, // Adjust this based on how much you want it to overlap
                     zIndex: 1, // Ensure it's above the texture
                     borderColor: "#FFF", // Add white border around the image
                     borderWidth: 3, // Adjust the thickness of the border
@@ -1152,6 +1122,28 @@ export default function UserAccount() {
                     </ThemedText>
                   </SpacerView>
 
+                  {reauthenticating && (
+                    <Modal
+                      animationType="fade"
+                      transparent={true}
+                      visible={reauthenticating}
+                      onRequestClose={() => setReauthenticating(false)}
+                    >
+                      <ReauthModal
+                        setReauthenticating={setReauthenticating}
+                        deleting={deleting}
+                        setDeleting={setDeleting}
+                        updating={updating}
+                        setUpdating={setUpdating}
+                        editEmail={editEmail}
+                        editPassword={editPassword}
+                        updateDetails={updateDetails}
+                        accountStyle={accountStyle}
+                        exitIcon={exit}
+                      />
+                    </Modal>
+                  )}
+
                   <SpacerView
                     flex={1}
                     justifyContent="space-between"
@@ -1170,15 +1162,23 @@ export default function UserAccount() {
                         {" "}
                         First Name{" "}
                       </ThemedText>
-                      <ThemedInput
-                        borderRadius={5}
-                        backgroundColor="#FFF"
-                        type="blueOutline"
-                        placeholderTextColor="#115272"
-                        placeholder="John" //where we put the params etc
-                        editable={isEditable}
-                        aria-disabled={!isEditable}
-                      />
+                      <View style={utility.row}>
+                        {!loading ? (
+                          <ThemedText style={accountStyle.info}>
+                            {fname}
+                          </ThemedText>
+                        ) : (
+                          <View style={{ marginBottom: 6 }}>
+                            <Skeleton
+                              colorMode="light"
+                              width={240}
+                              height={24}
+                              show={loading}
+                              radius={20}
+                            />
+                          </View>
+                        )}
+                      </View>
                     </SpacerView>
 
                     <SpacerView
@@ -1195,16 +1195,21 @@ export default function UserAccount() {
                         {" "}
                         Last Name{" "}
                       </ThemedText>
-                      <ThemedInput
-                        borderRadius={5}
-                        backgroundColor="#FFF"
-                        type="blueOutline"
-                        marginVertical="2.5%"
-                        placeholderTextColor="#115272"
-                        placeholder="Doe"
-                        editable={isEditable}
-                        aria-disabled={!isEditable}
-                      />
+                      {!loading ? (
+                        <ThemedText style={accountStyle.info}>
+                          {lname}
+                        </ThemedText>
+                      ) : (
+                        <View style={{ marginBottom: 6 }}>
+                          <Skeleton
+                            colorMode="light"
+                            width={240}
+                            height={24}
+                            show={loading}
+                            radius={20}
+                          />
+                        </View>
+                      )}
                     </SpacerView>
                   </SpacerView>
 
@@ -1214,56 +1219,160 @@ export default function UserAccount() {
                       darkColor="#115272"
                       type="subtitle"
                     >
-                      {" "}
-                      Email{" "}
+                      Email
                     </ThemedText>
-                    <ThemedInput
-                      width="45%"
-                      borderRadius={5}
-                      backgroundColor="#FFF"
-                      type="blueOutline"
-                      marginVertical="2.5%"
-                      placeholderTextColor="#115272"
-                      placeholder="@gmail.com"
-                      editable={isEditable}
-                      aria-disabled={!isEditable}
-                    />
-
+                    <View
+                      style={[utility.row, { justifyContent: "space-between" }]}
+                    >
+                      {loading && (
+                        <View style={{ marginBottom: 6 }}>
+                          <Skeleton
+                            colorMode="light"
+                            width={240}
+                            height={24}
+                            show={loading}
+                            radius={20}
+                          />
+                        </View>
+                      )}
+                      {!fieldState[0] && !loading && (
+                        <ThemedText style={accountStyle.info}>
+                          {email}
+                        </ThemedText>
+                      )}
+                      {fieldState[0] && !loading && (
+                        <TextInput
+                          style={accountStyle.editInfo}
+                          placeholder={email}
+                          placeholderTextColor="#BBB"
+                          onChangeText={setEditEmail}
+                        />
+                      )}
+                      {!fieldState[0] && !loading && (
+                        <ThemedIcon
+                          name="pencil"
+                          color="#115272"
+                          style={accountStyle.editIcon}
+                          onPress={() => {
+                            handleFieldPress(0);
+                          }}
+                        />
+                      )}
+                      {fieldState[0] && !loading && (
+                        <ThemedIcon
+                          name="close"
+                          color="#115272"
+                          style={accountStyle.editIcon}
+                          onPress={() => {
+                            handleFieldPress(0);
+                          }}
+                        />
+                      )}
+                    </View>
+                  </SpacerView>
+                  <SpacerView flexDirection="column" height="auto">
                     <ThemedText
                       lightColor="#115272"
                       darkColor="#115272"
                       type="subtitle"
                     >
-                      {" "}
-                      Phone Number{" "}
+                      Password
                     </ThemedText>
-                    <ThemedInput
-                      width="45%"
-                      borderRadius={5}
-                      backgroundColor="#FFF"
-                      type="blueOutline"
-                      marginVertical="2.5%"
-                      placeholderTextColor="#115272"
-                      placeholder="+63"
-                      editable={isEditable}
-                      aria-disabled={!isEditable}
-                      keyboardType="numeric"
-                      maxLength={11}
-                    />
+                    <View
+                      style={[utility.row, { justifyContent: "space-between" }]}
+                    >
+                      {loading && (
+                        <View style={{ marginBottom: 6 }}>
+                          <Skeleton
+                            colorMode="light"
+                            width={240}
+                            height={24}
+                            show={loading}
+                            radius={20}
+                          />
+                        </View>
+                      )}
+                      {!fieldState[1] && !loading && (
+                        <ThemedText style={accountStyle.info}>
+                          ************
+                        </ThemedText>
+                      )}
+                      {fieldState[1] && !loading && (
+                        <TextInput
+                          style={accountStyle.editInfo}
+                          placeholder="********"
+                          placeholderTextColor="#BBB"
+                          onChangeText={setEditPassword}
+                        />
+                      )}
+                      {!fieldState[1] && !loading && (
+                        <ThemedIcon
+                          name="pencil"
+                          color="#115272"
+                          style={accountStyle.editIcon}
+                          onPress={() => {
+                            handleFieldPress(1);
+                          }}
+                        />
+                      )}
+                      {fieldState[1] && !loading && (
+                        <ThemedIcon
+                          name="close"
+                          color="#115272"
+                          style={accountStyle.editIcon}
+                          onPress={() => {
+                            handleFieldPress(1);
+                          }}
+                        />
+                      )}
+                    </View>
                   </SpacerView>
-
-                  <SpacerView
-                    justifyContent="center"
-                    alignItems="flex-end"
-                    height="auto"
-                    marginTop="5%"
+                  <ThemedText
+                    lightColor="#115272"
+                    darkColor="#115272"
+                    type="subtitle"
                   >
-                    <ThemedButton
-                      width="35%"
-                      title={isEditable ? "Save" : "Edit"}
-                      onPress={handleEdit}
-                    />
-                  </SpacerView>
+                    {" "}
+                    Phone Number{" "}
+                  </ThemedText>
+                  {!loading ? (
+                    <ThemedText
+                      lightColor="#115272"
+                      darkColor="#115272"
+                      type="body"
+                      paddingVertical={2}
+                    >
+                      {phone}
+                    </ThemedText>
+                  ) : (
+                    <View style={{ marginBottom: 6 }}>
+                      <Skeleton
+                        colorMode="light"
+                        width={240}
+                        height={24}
+                        show={true}
+                        radius={20}
+                      />
+                    </View>
+                  )}
+                  {(fieldState[0] || fieldState[1]) &&
+                    (editEmail || editPassword) && (
+                      <ThemedButton
+                        title="Update"
+                        width="50%"
+                        height="auto"
+                        type="blue"
+                        paddingVertical="2.5%"
+                        marginHorizontal="auto"
+                        marginVertical="5%"
+                        onPress={() => {
+                          updateDetails({
+                            email: editEmail,
+                            password: editPassword,
+                          });
+                        }}
+                      />
+                    )}
                 </SpacerView>
 
                 <SpacerView
@@ -1273,6 +1382,7 @@ export default function UserAccount() {
                   flexDirection="column"
                   alignItems="center"
                   justifyContent="center"
+                  borderRadius={20}
                 >
                   <SpacerView
                     borderBottomWidth={5}
@@ -1298,17 +1408,85 @@ export default function UserAccount() {
                     height="auto"
                     width="100%"
                   >
-                    <ThemedButton
-                      width="35%"
-                      title="Delete Account"
-                      onPress={handleModalDelete}
-                    />
+                    {!loading ? (
+                      <TouchableOpacity
+                        style={{
+                          width: "auto",
+                          height: "auto",
+                          borderWidth: 2,
+                          padding: 5,
+                          borderRadius: 20,
+                          backgroundColor: "red",
+                          paddingHorizontal: 30,
+                        }}
+                        onPress={() => {
+                          if (email && phone && user?.uid) {
+                            deleteAccount(email, phone, user?.uid);
+                          } else {
+                            window.confirm("Error. Missing user information.");
+                          }
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 16,
+                            fontWeight: 600,
+                            color: "white",
+                          }}
+                        >
+                          Delete Account
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={{ marginBottom: 6 }}>
+                        <Skeleton
+                          colorMode="light"
+                          width={240}
+                          height={24}
+                          show={loading}
+                          radius={20}
+                        />
+                      </View>
+                    )}
 
-                    <ThemedButton
-                      width="35%"
-                      title="Logout"
-                      onPress={handleModalLogout}
-                    />
+                    {!loading ? (
+                      <Pressable
+                        style={{
+                          width: "auto",
+                          height: "auto",
+                          borderWidth: 2,
+                          padding: 5,
+                          borderRadius: 20,
+                          backgroundColor: "red",
+                          paddingHorizontal: 30,
+                        }}
+                        onPress={() => {
+                          signOut(authWeb);
+                          console.log(auth.currentUser);
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 16,
+                            fontWeight: 600,
+                            color: "white",
+                          }}
+                        >
+                          {" "}
+                          Logout{" "}
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <View style={{ marginBottom: 6 }}>
+                        <Skeleton
+                          colorMode="light"
+                          width={240}
+                          height={24}
+                          show={loading}
+                          radius={20}
+                        />
+                      </View>
+                    )}
                   </SpacerView>
                 </SpacerView>
               </SpacerView>

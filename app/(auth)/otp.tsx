@@ -618,13 +618,6 @@ export default function OTPForgot() {
                   An One-Time Password (OTP) was sent to your email, insert your
                   otp before it expires
                 </ThemedText>
-                <ThemedText
-                  lightColor="#115272"
-                  darkColor="#115272"
-                  type="subDisplay"
-                >
-                  Enter OTP
-                </ThemedText>
                 <View
                   style={{
                     alignSelf: "center",
@@ -652,7 +645,7 @@ export default function OTPForgot() {
                   {!loading && (
                     <ThemedButton
                       title="Submit"
-                      marginVertical="10%"
+                      marginVertical="5%"
                       onPress={async () => {
                         setLoading(true);
                         const result = await register(
@@ -780,7 +773,6 @@ export default function OTPForgot() {
                     <ActivityIndicator size="large" color="#FFF" />
                   </Pressable>
                 )}
-                <SpacerView height="5%" />
                 <ThemedButton
                   width="25%"
                   title="Clear"

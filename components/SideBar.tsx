@@ -37,8 +37,7 @@ export const SideBar = ({
 
   //Icon assets
   const menuItems = [
-    { name: "Emergency Dial", route: "Emergency" },
-    { name: "Report Incident", route: "Report Incident" },
+    { name: "Crime Map", route: "Crimemap" },
     { name: "Account", route: "Account" },
     { name: "View Reports", route: "ViewReports" },
     { name: "Validate Tickets", route: "Validate" },

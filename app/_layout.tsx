@@ -54,6 +54,7 @@ export default function RootLayout() {
   if (isLoggedIn === null) {
     return null;
   }
+  console.log(isLoggedIn);
   return (
     <SessionProvider>
       <GestureHandlerRootView>
@@ -65,7 +66,15 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen
-                name="adminLogin"
+                name="changeAdminInformation"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="changeUserInformation"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="changepass"
                 options={{ headerShown: false }}
               />
               <Stack.Screen

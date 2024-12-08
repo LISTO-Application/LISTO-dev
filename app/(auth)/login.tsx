@@ -210,6 +210,7 @@ export default function Login() {
     );
   } else if (Platform.OS === "web") {
     const [user, setUser] = useState<User | null>(null);
+
     useEffect(() => {
       const subscriber = onAuthStateChanged(authWeb, (user) => {
         setUser(user);
@@ -221,7 +222,7 @@ export default function Login() {
     if (initializing) return null;
 
     if (user != null) {
-      return <Redirect href="/(tabs)" />;
+      return router.replace("/(tabs)");
     }
 
     const handleLogin = async (email: string, password: string) => {

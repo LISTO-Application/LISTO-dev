@@ -2,7 +2,7 @@ import {
   DrawerContentComponentProps,
   DrawerItemList,
 } from "@react-navigation/drawer";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../AuthContext";
 import { router } from "expo-router";
 import {
@@ -15,12 +15,16 @@ import {
   Text,
 } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { authWeb } from "../(auth)";
 
 interface UserBannerProps extends DrawerContentComponentProps {}
 
 const UserBanner: React.FC<UserBannerProps> = (props) => {
+  const auth = authWeb;
+  const currentUser = auth.currentUser;
+  const [user, setUser] = useState<User | null>(null);
+  const [username, setUsername] = useState("");
   const id = "John Doe";
   const image = require("../../assets/images/texture.svg");
   const authContext = useContext(AuthContext);
@@ -33,7 +37,9 @@ const UserBanner: React.FC<UserBannerProps> = (props) => {
     // Listen to authentication state changes
     const unsubscribe = onAuthStateChanged(authWeb, (user) => {
       if (user) {
-        setIsLoggedIn(true); // Update context to reflect logged-in state
+        setIsLoggedIn(true);
+        setUser(user); // Update context to reflect logged-in state
+        setUsername(authWeb.currentUser?.displayName);
       } else {
         setIsLoggedIn(false); // Update context to reflect logged-out state
         router.replace("/login"); // Redirect to login page
@@ -45,7 +51,8 @@ const UserBanner: React.FC<UserBannerProps> = (props) => {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    router.push("/login");
+    signOut(authWeb);
+    console.log(auth.currentUser);
   };
 
   return (
@@ -57,9 +64,9 @@ const UserBanner: React.FC<UserBannerProps> = (props) => {
       >
         {" "}
         <View style={layoutStyles.drawer}>
-          <TouchableOpacity onPress={() => router.push(`/${id}`)}>
+          <TouchableOpacity onPress={() => router.push("/account")}>
             <Image source={require("../../assets/images/user-icon.png")} />
-            <ThemedText>{id}</ThemedText>
+            <ThemedText>{username}</ThemedText>
           </TouchableOpacity>
         </View>
       </ImageBackground>

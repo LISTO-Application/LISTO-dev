@@ -17,14 +17,12 @@ import { NavigationContainer } from "@react-navigation/native";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import CrimeMap from "./crimemap";
 import UserAccount from "./account";
-import ValidateReports from "../(drawer)/validateReports";
 import { AuthContext, AuthProvider } from "../AuthContext";
 
 import UserBanner from "../(drawer)/UserBanner";
 import DrawerScreenOptions from "../(drawer)/DrawerScreenOptions";
 import RootReports from "../(drawer)/RootReports";
-import ChangeUserAccount from "../changeUserInformation";
-import ReportDetails from "../(drawer)/reportDetails";
+import Index from ".";
 
 const report = require("../../assets/images/report-icon.png");
 
@@ -37,7 +35,7 @@ export default function TabLayout() {
     return (
       <AuthProvider>
         <Drawer.Navigator
-          initialRouteName="CrimeMap"
+          initialRouteName="Account"
           screenOptions={({ route, navigation }) =>
             DrawerScreenOptions({ route, navigation })
           }
@@ -46,11 +44,15 @@ export default function TabLayout() {
           }}
         >
           <Drawer.Screen
-            name="CrimeMap"
+            name="Crimemap"
             component={CrimeMap}
             options={{ title: "Report Incident" }}
           />
-          <Drawer.Screen name="Account" component={UserAccount} />
+          <Drawer.Screen
+            name="Account"
+            component={UserAccount}
+            options={{ title: "Account" }}
+          />
           <Drawer.Screen
             name="Reports"
             component={RootReports}
