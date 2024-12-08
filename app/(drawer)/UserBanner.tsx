@@ -3,7 +3,7 @@ import {
   DrawerItemList,
 } from "@react-navigation/drawer";
 import { useContext } from "react";
-import { AuthContext } from "../AuthContext";
+
 import { router } from "expo-router";
 import {
   ImageBackground,
@@ -21,14 +21,8 @@ interface UserBannerProps extends DrawerContentComponentProps {}
 const UserBanner: React.FC<UserBannerProps> = (props) => {
   const id = "John Doe";
   const image = require("../../assets/images/texture.svg");
-  const authContext = useContext(AuthContext);
-  if (!authContext) {
-    throw new Error("UserBanner must be within an AuthProvider");
-  }
-  const { setIsLoggedIn } = authContext;
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
     router.push("/");
   };
   return (

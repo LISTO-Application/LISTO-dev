@@ -104,7 +104,7 @@ export default function ValidateReports() {
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={webstyles.headerText}>Listed Reports (ADMINS)</Text>
-          <SpacerView height="120px" />
+          <SpacerView style = {{height: 120}} />
         </View>
 
         <ScrollView contentContainerStyle={webstyles.scrollViewContent}>

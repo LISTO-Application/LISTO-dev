@@ -6,6 +6,7 @@ const styles = StyleSheet.create({
     height: '100%',
     display: 'flex',
     flex: 1,
+    backgroundColor: '#F0F4F8',
   },
   container: {
     flex: 1,
@@ -17,7 +18,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
   backIcon: {
     marginRight: 10,
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
   dropdown: {
     padding: 15,
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: '#115272',
     borderRadius: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -175,7 +176,8 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     fontSize: 16,
-    color: 'gray',
+    color: '#115272',
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -197,7 +199,9 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: '#115272',
+    color: '#115272',
+    fontWeight: 'bold',
     borderRadius: 5,
     padding: 15,
     fontSize: 16,
@@ -212,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: '#115272',
     borderRadius: 5,
     marginBottom: 20,
   },
@@ -225,23 +229,29 @@ const styles = StyleSheet.create({
   buttonContainerReport: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 20,
+    marginVertical: 20,
   },
   cancelButtonReport: {
     backgroundColor: 'white',
     borderWidth: 1,
     borderColor: 'gray',
     borderRadius: 5,
-    padding: 15,
+    paddingHorizontal: "2.5%",
+    paddingVertical: "1%",
     width: '40%',
+    height: "auto",
     alignItems: 'center',
+    justifyContent: 'center',
   },
   submitButtonReport: {
     backgroundColor: '#0d6efd',
     borderRadius: 5,
-    padding: 15,
+    paddingHorizontal: "2.5%",
+    paddingVertical: "1%",
     width: '40%',
+    height: "auto",
     alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonTextReport: {
     fontSize: 16,

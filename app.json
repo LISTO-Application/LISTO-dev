@@ -25,7 +25,11 @@
           "apiKey": "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"
         }
       },
-      "permissions": ["android.permission.WRITE_EXTERNAL_STORAGE"],
+      "permissions": [
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.SEND_SMS"
+      ],
       "package": "com.pingusbingus.LISTOdev",
       "googleServicesFile": "./google-services.json"
     },
@@ -35,8 +39,85 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow LISTO to use your location."
+        }
+        
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow LISTO to access your camera",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos for use in the LISTO app."
+        }
+      ],
+      [
+        "@react-native-community/datetimepicker",
+        {
+          "android": {
+            "datePicker": {
+              "colorAccent": {
+                "light": "#115272",
+                "dark": "#115272"
+              },
+              "windowBackground": {
+                "light": "#FFFFFF",
+                "dark": "#FFFFFF"
+              },
+              "colorControlActivated": {
+                "light": "#DA4B46",
+                "dark": "#DA4B46"
+              },
+              "colorControlHighlight": {
+                "light": "#FECF1A",
+                "dark": "#FECF1A"
+              },
+              "textColorPrimary": {
+                "light": "#115272",
+                "dark": "#115272"
+              },
+              "textColorSecondary": {
+                "light": "#115272",
+                "dark": "#115272"
+              },
+              "textColor": {
+                "light": "#115272",
+                "dark": "#115272"
+              },
+              "textColorPrimaryInverse": {
+                "light": "#FFF",
+                "dark": "#FFF"
+              },
+              "textColorSecondaryInverse": {
+                "light": "#FFF",
+                "dark": "#FFF"
+              }
+            },
+            "timePicker": {
+              "background": {"light": "#FFF", "dark": "#FFF"},
+              "numbersBackgroundColor": {"light": "#115272", "dark": "#115272"},
+              "numbersTextColor": {"light": "#FFF", "dark": "#FFF"},
+              "numbersSelectorColor": {"light": "#DA4B46", "dark": "#DA4B46"},
+              "headerBackground": {"light": "#115272", "dark": "#115272"}
+            }
+          }
+        }
+      ],
       "expo-router",
-      "@react-native-firebase/app"
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/perf",
+      "expo-share-intent",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

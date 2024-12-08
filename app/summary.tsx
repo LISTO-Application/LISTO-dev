@@ -1,20 +1,22 @@
 //React Imports
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {Image, Platform, ScrollView, ImageBackground, Pressable, TouchableOpacity, View, Text, ActivityIndicator} from 'react-native';
+import {Image, Platform, ScrollView, ImageBackground, Pressable, TouchableOpacity, View, Text, ActivityIndicator, PermissionsAndroid} from 'react-native';
 import  { AnimatedCircularProgress} from 'react-native-circular-progress';
 import { BarChart } from "react-native-gifted-charts";
 
 //Expo Imports
 import {router} from 'expo-router';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from "expo-file-system"
 
 //Firebase Imports
 import firestore from '@react-native-firebase/firestore';
 
 //Date-FNS Imports
-import { toDate, isToday, isThisWeek, isThisMonth } from "date-fns";
+import { toDate, isToday, isThisWeek, isThisMonth, compareDesc, set} from "date-fns";
 
-//Function Imports
-import { toFullDate } from '@/functions/toFullDate';
+//XLSX Imports
+import xlsx from 'xlsx';
 
 //Stylesheet Imports
 import { styles } from '@/styles/styles';
@@ -32,7 +34,7 @@ import { ThemedInput } from '@/components/ThemedInput';
   const user = require('../assets/images/user-icon.png');
   const backArrow = require('../assets/images/back-button-white.png');
   
-export default function UserAccount() {
+export default function Summary() {
 
   //Incident Object Interface
   interface Incident {
@@ -215,6 +217,69 @@ export default function UserAccount() {
   },[incidents, timeRangeState]);
 
 
+  const saveData = async (file: string, filename: string, mimeType: any) => {
+    try {
+      //Calls the File Picker and requests for directory permissions
+      const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (permissions.granted) {
+        const base64 = await file;
+        const uri = await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, filename, mimeType);
+        console.log('File created at:', uri);
+        await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
+        console.log('File written successfully');
+        } else {
+          const localUri = FileSystem.documentDirectory + filename;
+          await FileSystem.writeAsStringAsync(localUri, file, {
+            encoding: FileSystem.EncodingType.Base64
+          });
+          await Sharing.shareAsync(localUri);
+        }
+
+      } catch (e) {
+        console.error('Error saving file:', e);
+        const localUri = FileSystem.documentDirectory + filename;
+        await FileSystem.writeAsStringAsync(localUri, file, {
+          encoding: FileSystem.EncodingType.Base64
+        });
+        await Sharing.shareAsync(localUri);
+    }
+  };
+
+  const exportData = () => {
+    try {
+      // Fetches incidents array
+      let rawIncidents = incidents;
+      // Convert timestamp dates to date object
+      let processedIncidents = rawIncidents.map((incident) => {
+        return {
+          type: incident.type,
+          date: toDate(incident.date.toDate()),
+          longitude: incident.coordinates.longitude,
+          latitude: incident.coordinates.latitude
+        };
+      });
+      // Sorts date from most recent to least
+      let sortedIncidents = processedIncidents.sort((a, b) => compareDesc(a.date, b.date));
+      // Convert JSON objects to sheet
+      const worksheet = xlsx.utils.json_to_sheet(sortedIncidents);
+      // Create a new workbook
+      const workbook = xlsx.utils.book_new();
+      // Configure width to be 10 char
+      const max_width = sortedIncidents.reduce((w, r) => Math.max(w, r.date.length), 10);
+      worksheet["!cols"] = [{ wch: max_width }];
+      // Append sheet to the workbook
+      xlsx.utils.book_append_sheet(workbook, worksheet, 'Incidents');
+      // Configure worksheet headers
+      xlsx.utils.sheet_add_aoa(worksheet, [["Type", "Date", "Latitude", "Longitude"]], { origin: "A1" });
+      // Convert worksheet into base64 string
+      const wbout = xlsx.write(workbook, { bookType: 'xlsx', type: 'base64' });
+      saveData(wbout, "Incidents", 'xlsx');
+    } catch (e) {
+      console.error('Error exporting data:', e);
+    }
+  };
+
+
   //Bar data variables that updates when the incident collection changes
   const barData = 
     [{ value: homicideIncidents, label: 'Homicide', labelTextStyle: { color: '#F07E7F', fontWeight: 'bold' }, frontColor: '#115272' },
@@ -336,11 +401,45 @@ export default function UserAccount() {
             </View>
 
             <TouchableOpacity style = {{width: '50%', height: 'auto', backgroundColor: '#DA4B46', paddingVertical: '1.5%', borderRadius: 50, justifyContent: 'center'}} 
-            onPress={() =>
+            onPress={ async () =>
               {
-                router.replace({
+                try{
+                  // Check for Permission (check if permission is already given or not)
+                  let isPermitedExternalStorage = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
+                  if (!isPermitedExternalStorage) {
+
+                    // Ask for permission
+                    const granted = await PermissionsAndroid.request(
+                        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                        {
+                            title: "Storage permission needed",
+                            message: "This app needs access to your storage to save the report.",
+                            buttonNeutral: "Ask Me Later",
+                            buttonNegative: "Cancel",
+                            buttonPositive: "OK"
+                        }
+                    );
+    
+                    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                        // Permission Granted (calling our writeDataAndDownloadExcelFile function)
+                        exportData();
+                        console.log("Permission granted");
+                    } else {
+                        // Permission denied
+                        console.log("Permission denied");
+                    }
+                } else {
+                    // Already have Permission (calling our writeDataAndDownloadExcelFile function)
+                    exportData();
+                }
+                } catch (e) {
+                  console.log("Error checking permisison");
+                  console.log(e);
+                }
+                {/*router.replace({
                 pathname: "/",
-              });}} >
+              });}*/}
+              } }>
                   <ThemedText style = {{width: "100%", textAlign: 'center'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Generate Reports</ThemedText>
             </TouchableOpacity>
   
@@ -460,9 +559,7 @@ export default function UserAccount() {
                             >
 
                                 <ThemedButton width='35%' title="Login" onPress={() =>
-                                  {router.replace({
-                                    pathname: "/emergency",
-                                  })}} />
+                                  {router.replace("/(tabs)/emergency")}} />
 
                             </SpacerView>
 
@@ -498,14 +595,10 @@ export default function UserAccount() {
                             >
 
                             <ThemedButton width='35%' title="Delete Account" onPress={() =>
-                                  {router.replace({
-                                    pathname: "/emergency",
-                                  })}} />  
+                                  {router.replace("/(auth)/login")}} />  
 
                             <ThemedButton width='35%' title="Logout" onPress={() =>
-                                  {router.replace({
-                                    pathname: "/emergency",
-                                  })}} />  
+                                   {router.replace("/(auth)/login")}} />  
 
                             </SpacerView>
 

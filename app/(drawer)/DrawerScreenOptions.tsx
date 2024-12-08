@@ -1,4 +1,3 @@
-import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import MyHeader from "./MyHeader";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -19,7 +18,7 @@ const DrawerScreenOptions = ({
       focused: boolean;
       size: number;
     }) => {
-      let iconName;
+      let iconName: "megaphone" | "megaphone-outline" | "call" | "call-outline" | "person" | "person-outline" | "ticket" | "ticket-outline" | "bag-check" | "bag-check-outline" | undefined;
       if (route.name === "Report Incident") {
         iconName = focused ? "megaphone" : "megaphone-outline";
       } else if (route.name === "Emergency") {
@@ -30,6 +29,8 @@ const DrawerScreenOptions = ({
         iconName = focused ? "ticket" : "ticket-outline";
       } else if (route.name === "Validate") {
         iconName = focused ? "bag-check" : "bag-check-outline";
+      } else {
+        iconName = "megaphone-outline"; // default icon
       }
       return <Ionicons name={iconName} size={size} color={color} />;
     },
@@ -37,7 +38,7 @@ const DrawerScreenOptions = ({
     header: () => <MyHeader navigation={navigation} />,
     drawerStyle: {
       backgroundColor: "#f0f0f0",
-      width: "20%",
+      width: 1/5,
       shadowColor: "#333333",
       shadowOffset: {
         width: 5,

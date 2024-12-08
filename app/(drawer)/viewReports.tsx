@@ -137,6 +137,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
 
   // Delete report handler
   const handleDeleteReport = (reportId: number) => {
+    router.replace({
+      pathname: "/(tabs)/"
+    }),
     // Show confirmation alert
     Alert.alert(
       "Delete Report",
@@ -148,10 +151,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         },
         {
           text: "Yes",
-          onPress: () => {
-            // Remove the report from the state
-            setReports(reports.filter((report) => report.id !== reportId));
-          },
+          onPress: () => router.replace({
+            pathname: "/(tabs)/"
+          }),
         },
       ]
     );
@@ -160,7 +162,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   // Edit report handler (redirect to editReport.tsx with report ID)
   const handleEditReport = (reportId: number) => {
     // Redirect to the report edit page with the report ID in the query
-    navigation.navigate("EditReports", { id: reportId });
+    router.replace({
+      pathname: "/editReport",
+      params: {reportId}
+    });
   };
 
   // Submit report handler (redirect to new report form)
@@ -280,7 +285,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           {/* Plus Sign Button */}
           <TouchableOpacity
             style={webstyles.fab}
-            onPress={() => navigation.navigate("NewReports")} // Change this to the desired action
+            onPress={() => router.push({
+              pathname: "/validateReports"
+            })} // Change this to the desired action
           >
             <Ionicons name="add" size={30} color="white" />
           </TouchableOpacity>
