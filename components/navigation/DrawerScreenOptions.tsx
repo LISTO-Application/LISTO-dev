@@ -26,7 +26,7 @@ const DrawerScreenOptions = ({
         iconName = focused ? "call" : "call-outline";
       } else if (route.name === "Account") {
         iconName = focused ? "person" : "person-outline";
-      } else if (route.name === "Reports") {
+      } else if (route.name === "ViewReports") {
         iconName = focused ? "ticket" : "ticket-outline";
       } else if (route.name === "Validate") {
         iconName = focused ? "bag-check" : "bag-check-outline";

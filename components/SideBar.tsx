@@ -42,8 +42,8 @@ export const SideBar = ({
 
   //Icon assets
   const menuItems = [
-    { name: "Crime Map", route: "Crimemap" },
-    { name: "Account", route: "Account" },
+    { name: "Crime Map", route: "crimemap" },
+    { name: "Account", route: "account" },
     { name: "View Reports", route: "ViewReports" },
     { name: "Validate Tickets", route: "Validate" },
     { name: "View Admin Emergency List", route: "ViewAdminEmergencyList" },
@@ -96,7 +96,7 @@ export const SideBar = ({
         resizeMode="cover"
         style={webstyles.userSection}
       >
-        <TouchableOpacity onPress={() => navigation.navigate("Account")}>
+        <TouchableOpacity onPress={() => navigation.navigate("account")}>
           <Image
             source={require("../assets/images/user-icon.png")}
             style={webstyles.userImage}

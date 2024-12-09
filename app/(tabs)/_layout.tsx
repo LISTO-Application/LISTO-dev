@@ -22,23 +22,26 @@ import CrimeMap from "./crimemap";
 import UserAccount from "./account";
 import { AuthContext, AuthProvider } from "../AuthContext";
 
-import UserBanner from "../(drawer)/UserBanner";
-import DrawerScreenOptions from "../(drawer)/DrawerScreenOptions";
+import UserBanner from "../../components/navigation/UserBanner";
+import DrawerScreenOptions from "../../components/navigation/DrawerScreenOptions";
 import RootReports from "../(drawer)/RootReports";
-import Index from ".";
+import Index from "./crimemap";
+import { Drawer } from "expo-router/drawer";
+import ViewReports from "../(drawer)/viewReports";
 
 const report = require("../../assets/images/report-icon.png");
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const navigation = useNavigation();
   const Drawer = createDrawerNavigator();
 
   if (Platform.OS === "web") {
     return (
       <AuthProvider>
         <Drawer.Navigator
-          initialRouteName="Account"
+          initialRouteName="Crimemap"
           screenOptions={({ route, navigation }) =>
             DrawerScreenOptions({ route, navigation })
           }

@@ -54,21 +54,21 @@ import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Portal } from "@gorhom/portal";
 import { styles } from "@/styles/styles";
 
-const toggler = require("../../assets/images/toggler.png");
-const filter = require("../../assets/images/filter.png");
-const heatmap = require("../../assets/images/heatmap.png");
-const marker = require("../../assets/images/marker.png");
-const markerRed = require("../../assets/images/marker-red.png");
-const leftArrow = require("../../assets/images/left-arrow-icon.png");
-const rightArrow = require("../../assets/images/right-arrow-icon.png");
+const toggler = require("@/assets/images/toggler.png");
+const filter = require("@/assets/images/filter.png");
+const heatmap = require("@/assets/images/heatmap.png");
+const marker = require("@/assets/images/marker.png");
+const markerRed = require("@/assets/images/marker-red.png");
+const leftArrow = require("@/assets/images/left-arrow-icon.png");
+const rightArrow = require("@/assets/images/right-arrow-icon.png");
 
-const murder = require("../../assets/images/knife-icon.png");
-const homicide = require("../../assets/images/homicide-icon.png");
-const theft = require("../../assets/images/thief-icon.png");
-const carnapping = require("../../assets/images/car-icon.png");
-const injury = require("../../assets/images/injury-icon.png");
-const robbery = require("../../assets/images/robbery-icon.png");
-const rape = require("../../assets/images/rape-icon.png");
+const murder = require("@/assets/images/knife-icon.png");
+const homicide = require("@/assets/images/homicide-icon.png");
+const theft = require("@/assets/images/thief-icon.png");
+const carnapping = require("@/assets/images/car-icon.png");
+const injury = require("@/assets/images/injury-icon.png");
+const robbery = require("@/assets/images/robbery-icon.png");
+const rape = require("@/assets/images/rape-icon.png");
 
 import { addMonths, format, subMonths } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
@@ -106,6 +106,7 @@ import {
   loadMarkersFromFirestore,
   MarkersCollection,
 } from "@/constants/markers";
+import { useNavigation } from "expo-router";
 
 const PlacesLibrary = () => {
   const map = useMap();
@@ -120,7 +121,6 @@ const PlacesLibrary = () => {
 
   return null;
 };
-
 //Interface
 export type CrimeFilter = {
   source: any;
@@ -216,8 +216,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
   });
 
   const [isHeatMapOn, setIsHeatMapOn] = useState(false);
-
-  const position = { lat: 14.685992094228787, lng: 121.07589171824928 };
 
   if (Platform.OS === "android") {
     // return (
@@ -515,6 +513,11 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
   } else if (Platform.OS === "web") {
     //Buttons
     //Modal show
+    const mapRef = useRef<MapView>(null);
+    const mapBoundaries = {
+      northEast: { latitude: 14.693963, longitude: 121.101193 },
+      southWest: { latitude: 14.649732, longitude: 121.067052 },
+    };
     const [toggleModal, setToggleModal] = useState(false);
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 
@@ -593,6 +596,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               coordinate = new GeoPoint(coordinate._lat, coordinate._long);
             }
             console.log(coordinate);
+
             return {
               id: doc.id,
               title: doc.data().title,
@@ -622,11 +626,19 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
       });
       return unsubscribe;
     }, [navigation]);
-
     useEffect(() => {
       loadMarkersFromFirestore().then((data) => setMarkersCollection(data));
     }, []);
 
+    useEffect(() => {
+      filterMarkers();
+    }, [selectedDate, selectedCrimeFilters, allMarkers]);
+
+    useEffect(() => {
+      filterMarkersByMonth();
+    }, [dateFunction, selectedCrimeFilters]);
+
+    const position = { lat: 14.685992094228787, lng: 121.07589171824928 };
     const [filteredCrimeItems, setFilteredCrimeItems] = useState(allMarkers);
 
     const filterMarkers = () => {
@@ -692,13 +704,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     };
 
     // Update filters when relevant state changes
-    useEffect(() => {
-      filterMarkers();
-    }, [selectedDate, selectedCrimeFilters, allMarkers]);
-
-    useEffect(() => {
-      filterMarkersByMonth();
-    }, [dateFunction, selectedCrimeFilters]);
 
     // Handle month navigation
     const handleNextMonth = () => {
@@ -728,6 +733,8 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
         : allMarkers;
 
     console.log(displayMarkers);
+
+    const map = useMap("test");
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -742,12 +749,11 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
             region="PH"
           >
             <Map
+              id="test"
               style={style.map}
               defaultCenter={position}
               disableDoubleClickZoom={true}
               defaultZoom={15}
-              gestureHandling={"greedy"}
-              mapId={isHeatmapVisible ? "7a9e2ebecd32a903" : "5cc51025f805d25d"}
               mapTypeControl={true}
               streetViewControl={false}
               mapTypeId="roadmap"

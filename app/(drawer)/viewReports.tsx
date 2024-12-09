@@ -26,7 +26,7 @@ import { webstyles } from "@/styles/webstyles"; // For web styles
 import { Report } from "../(tabs)/data/reports";
 import { Route } from "expo-router/build/Route";
 import { useRoute } from "@react-navigation/native";
-import { getIconName } from "../../assets/utils/getIconName";
+import { getIconName } from "@/assets/utils/getIconName";
 import { initializeApp } from "firebase/app";
 import {
   collection,
@@ -36,11 +36,11 @@ import {
   getDocs,
   getFirestore,
 } from "@react-native-firebase/firestore";
-import { Timestamp } from "firebase/firestore";
+import { GeoPoint, Timestamp } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 import { AuthContext } from "../AuthContext";
 import SideBar from "@/components/SideBar";
-import ImageViewer from "./ImageViewer";
+import ImageViewer from "@/components/ImageViewer";
 import DropDownPicker from "react-native-dropdown-picker";
 import ClearFilter from "@/components/ClearFilter";
 import PaginationReport from "@/components/PaginationReport";
@@ -52,6 +52,8 @@ import { v4 as uuidv4 } from "uuid";
 import { Icon } from "@expo/vector-icons/build/createIconSet";
 import firestore from "@react-native-firebase/firestore";
 import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { authWeb } from "@/app/(auth)";
 export default function ViewReports({ navigation }: { navigation: any }) {
   const [reports, setReports] = useState<Report[]>([]);
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
@@ -62,8 +64,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
   const [isSortedAsc, setIsSortedAsc] = useState(true); // State for sorting direction
   const [filteredReports, setFilteredReports] = useState<Report[]>([]); // Add this state for filtered reports
-
-  //FETCH REPROTS
+  const auth = authWeb;
+  const authID = auth.currentUser;
+  console.log("AuthID", authID?.uid);
+  //FETCH REPORTS
   const fetchReports = async () => {
     try {
       const reportsCollectionRef = collection(db, "reports");
@@ -73,35 +77,37 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         console.log("No reports found in Firestore.");
         return;
       }
-
       // Process records from Firestore
-      const reportsArray = reportsSnapshot.docs.map((doc) => {
-        const data = doc.data();
+      const reportsArray: Report[] = reportsSnapshot.docs
+        .map((doc) => {
+          const data = doc.data();
+          console.log("doc", doc);
 
-        // Handle GeoPoint for coordinates
-        let coordinate = data.coordinate;
-        if (coordinate instanceof FirestoreGeoPoint) {
-          // If it's a Firestore GeoPoint, use it directly
-          coordinate = coordinate;
-        } else {
-          // Default to GeoPoint(0, 0) if no coordinate or invalid GeoPoint
-          coordinate = new FirestoreGeoPoint(0, 0);
-        }
+          if (data.uid === authID) {
+            // Handle GeoPoint for coordinates
+            let coordinate = data.coordinate;
+            return {
+              uid: data.uid,
+              additionalInfo: data.additionalInfo || "No additional info",
+              category: data.category || "Unknown category",
+              location: data.location || "Unknown location",
+              coordinate: coordinate, // FirestoreGeoPoint directly from Firestore
+              image: data.image || { filename: "", uri: "" }, // Handle image data
+              name: data.name || "Anonymous",
+              phone: data.phone || "No phone",
+              status: data.status || 1, // Default to 1
+              id: doc.id || "Unknown account",
+              timeOfCrime: data.timeOfCrime,
+              timeReported: data.timeReported,
+              time: data.time,
+              unixTOC: data.unixTOC,
+            };
+          }
 
-        return {
-          uid: doc.id,
-          additionalInfo: data.additionalInfo || "No additional info",
-          category: data.category || "Unknown",
-          location: data.location || "Unknown location",
-          coordinate: coordinate, // FirestoreGeoPoint directly from Firestore
-          image: data.image || { filename: "", uri: "" }, // Handle image data
-          name: data.name || "Anonymous",
-          phone: data.phone || "No phone",
-          status: data.status || 1, // Default to 1
-          accountid: data.accountid || "Unknown account",
-        };
-      });
-
+          // Return nothing if authID doesn't match
+          return null;
+        })
+        .filter((report) => report !== null);
       console.log("Mapped Reports:", reportsArray);
       setReports(reportsArray);
       setFilteredReports(reportsArray);
@@ -358,21 +364,21 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             {currentReports.map((report) => {
               let iconSource;
               if (report.category === "carnapping") {
-                iconSource = require("../../assets/images/car-icon.png");
+                iconSource = require("@/assets/images/car-icon.png");
               } else if (report.category === "rape") {
-                iconSource = require("../../assets/images/rape-icon.png");
+                iconSource = require("@/assets/images/rape-icon.png");
               } else if (report.category === "homicide") {
-                iconSource = require("../../assets/images/homicide-icon.png");
+                iconSource = require("@/assets/images/homicide-icon.png");
               } else if (report.category === "murder") {
-                iconSource = require("../../assets/images/knife-icon.png");
+                iconSource = require("@/assets/images/knife-icon.png");
               } else if (report.category === "injury") {
-                iconSource = require("../../assets/images/injury-icon.png");
+                iconSource = require("@/assets/images/injury-icon.png");
               } else if (report.category === "theft") {
-                iconSource = require("../../assets/images/thief-icon.png");
+                iconSource = require("@/assets/images/thief-icon.png");
               } else if (report.category === "robbery") {
-                iconSource = require("../../assets/images/robbery-icon.png");
+                iconSource = require("@/assets/images/robbery-icon.png");
               } else {
-                iconSource = require("../../assets/images/question-mark.png");
+                iconSource = require("@/assets/images/question-mark.png");
               }
 
               // const date = new Date(
@@ -384,9 +390,24 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               // const timestamp = new Date(report.timestamp * 1000);
               // const localTime = dayjs(timestamp).format("hh:mm A");
               // console.log(format(new Date(report.timestamp * 1000), "hh:mm a"));
+              console.log(report.timeReported);
+              const timeReported = new Date(
+                report.timeReported._seconds * 1000 +
+                  report.timeReported._nanoseconds / 1000000
+              );
+              const date = new Date(
+                report.timeOfCrime._seconds * 1000 +
+                  report.timeOfCrime._nanoseconds / 1000000
+              );
+              console.log(date);
+              console.log(timeReported);
+              const parsedDate = format(date, "yyyy-MM-dd");
+              const parsedTimeCrime = format(date, "hh:mm");
+              const parsedTimeReported = format(timeReported, "hh:mm a");
+              console.log(parsedTimeReported);
 
               return (
-                <View key={report.uid} style={webstyles.reportContainer}>
+                <View key={report.id} style={webstyles.reportContainer}>
                   <Image source={iconSource} style={webstyles.reportIcon} />
                   <View style={{ flex: 1, flexDirection: "column" }}>
                     <View style={{ flexDirection: "row" }}>
@@ -402,7 +423,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                           fontWeight: "300",
                         }}
                       >
-                        {/* {parsedDate} &nbsp; {report.time} */}
+                        {parsedDate} &nbsp; {parsedTimeCrime}
                       </Text>
                       <Text
                         style={{ flex: 1, color: "white", fontWeight: "300" }}
@@ -480,7 +501,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                         color="#DA4B46"
                       />
                     </TouchableOpacity>
-                    <Text style={webstyles.timeText}>{report.time}</Text>
+                    <Text style={webstyles.timeText}>{parsedTimeReported}</Text>
                   </View>
                 </View>
               );

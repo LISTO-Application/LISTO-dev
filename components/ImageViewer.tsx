@@ -1,5 +1,4 @@
 import { Image, type ImageSource } from "expo-image";
-import { Report } from "../(tabs)/data/reports";
 import { webstyles } from "@/styles/webstyles";
 
 const ImageViewer = ({ imageSource }: { imageSource: string }) => {

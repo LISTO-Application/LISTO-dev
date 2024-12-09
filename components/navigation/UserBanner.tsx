@@ -3,7 +3,7 @@ import {
   DrawerItemList,
 } from "@react-navigation/drawer";
 import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../AuthContext";
+import { AuthContext } from "../../app/AuthContext";
 import { router } from "expo-router";
 import {
   ImageBackground,
@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { authWeb } from "../(auth)";
+import { authWeb } from "../../app/(auth)";
 
 interface UserBannerProps extends DrawerContentComponentProps {}
 

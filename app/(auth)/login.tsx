@@ -222,7 +222,7 @@ export default function Login() {
     if (initializing) return null;
 
     if (user != null) {
-      return router.replace("/(tabs)");
+      return router.replace("../(tabs)");
     }
 
     const handleLogin = async (email: string, password: string) => {
@@ -235,7 +235,7 @@ export default function Login() {
           if (result?.success) {
             console.log("Login Successful!", user);
             console.log("Redirecting to the home page...");
-            router.replace("/(tabs)"); // Replace with your target route
+            router.replace("../(tabs)"); // Replace with your target route
           }
         } catch (error) {
           const errorMessage = getErrorMessage(error);
@@ -245,7 +245,7 @@ export default function Login() {
       } else {
         // User is already logged in
         window.confirm("Sign in failed. User is already logged in!");
-        router.replace("/(tabs)");
+        router.replace("../(tabs)");
       }
     };
     const getErrorMessage = (error: any) => {

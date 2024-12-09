@@ -6,7 +6,7 @@ import ViewReports from "./viewReports";
 import newReports from "./newReports";
 import editReport from "./editReport";
 import ReportDetails from "./reportDetails";
-import ViewAdminEmergencyList from "./ViewAdminEmergencyList";
+import ViewAdminEmergencyList from "./viewAdminEmergencyList";
 import ValidateReports from "./validateReports";
 import NewAdminReports from "./newAdminReports";
 

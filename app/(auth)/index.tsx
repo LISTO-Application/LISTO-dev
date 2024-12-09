@@ -33,7 +33,7 @@ export default function Index() {
     useEffect(() => {
       const unsubscribe = onAuthStateChanged(authWeb, (user) => {
         if (user) {
-          router.replace("../(tabs)");
+          router.replace("../(tabs)/account");
           console.log(user);
         } else {
           router.replace("/login");

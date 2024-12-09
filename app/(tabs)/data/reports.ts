@@ -26,4 +26,5 @@ export interface Report {
   timeOfCrime: Date; // Ensure it's a Date object
   timeReported: Date; // Ensure it's a Date object
   unixTOC: number;
+  id: string;
 }

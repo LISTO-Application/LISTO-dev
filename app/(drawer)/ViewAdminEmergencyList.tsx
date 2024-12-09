@@ -19,7 +19,15 @@ import { db } from "../FirebaseConfig";
 import { Timestamp } from "@react-native-firebase/firestore";
 import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
 import "firebase/database";
-import { collection, getDocs, deleteDoc,doc, addDoc, onSnapshot,firebase} from "@react-native-firebase/firestore";
+import {
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+  addDoc,
+  onSnapshot,
+  firebase,
+} from "@react-native-firebase/firestore";
 import SideBar from "@/components/SideBar";
 import { styles } from "@/styles/styles";
 import TitleCard from "@/components/TitleCard";
@@ -53,107 +61,119 @@ export default function ViewAdminEmergencyList({
   }, []);
 
   const fetchIncidents = async () => {
-  try {
-    const crimesCollectionRef = collection(db, 'crimes');
-    const crimesSnapshot = await getDocs(crimesCollectionRef);
+    try {
+      const crimesCollectionRef = collection(db, "crimes");
+      const crimesSnapshot = await getDocs(crimesCollectionRef);
 
-    if (crimesSnapshot.empty) {
-      console.log('No incidents found in Firestore.');
-      return;
-    }
-
-    // Process records from Firestore without geocoding.
-    const crimesArray = crimesSnapshot.docs.map((doc) => {
-      const data = doc.data();
-      
-      // Handle GeoPoint or plain object coordinates
-      let coordinate = data.coordinate;
-      if (coordinate instanceof FirestoreGeoPoint) {
-        // If the coordinate is a GeoPoint (Firestore GeoPoint)
-        coordinate = {
-          latitude: coordinate.latitude,
-          longitude: coordinate.longitude,
-        };
-      } else {
-        // If it's a plain object or not available, use default coordinates
-        coordinate = coordinate || { latitude: 0, longitude: 0 };
+      if (crimesSnapshot.empty) {
+        console.log("No incidents found in Firestore.");
+        return;
       }
 
-      return {
-        id: doc.id,
-        additionalInfo: data.additionalInfo || 'No additional info',
-        category: data.category || 'Unknown',
-        location: data.location || 'Unknown location',
-        coordinate: coordinate,  // Updated coordinates based on GeoPoint or plain object
-        time: data.time || '00:00',
-        timeOfCrime: data.timeOfCrime instanceof Timestamp ? data.timeOfCrime.toDate() : new Date(data.timeOfCrime || null),
-        timeReported: data.timeReported instanceof Timestamp ? data.timeReported.toDate() : new Date(data.timeReported || null),
-        unixTOC: data.unixTOC || 0,
-      };
-    });
+      // Process records from Firestore without geocoding.
+      const crimesArray = crimesSnapshot.docs.map((doc) => {
+        const data = doc.data();
 
-    console.log('Mapped Incidents:', crimesArray);
-    setCrimes(crimesArray);
-    setFilteredReports(crimesArray);
-  } catch (error) {
-    console.error('Error fetching incidents:', error);
-  }
-};
+        // Handle GeoPoint or plain object coordinates
+        let coordinate = data.coordinate;
+        if (coordinate instanceof FirestoreGeoPoint) {
+          // If the coordinate is a GeoPoint (Firestore GeoPoint)
+          coordinate = {
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+          };
+        } else {
+          // If it's a plain object or not available, use default coordinates
+          coordinate = coordinate || { latitude: 0, longitude: 0 };
+        }
 
-const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null> => {
-  if (!address || address.trim() === '') {
-    console.warn('Empty or invalid address provided.');
-    return null;
-  }
+        return {
+          id: doc.id,
+          additionalInfo: data.additionalInfo || "No additional info",
+          category: data.category || "Unknown",
+          location: data.location || "Unknown location",
+          coordinate: coordinate, // Updated coordinates based on GeoPoint or plain object
+          time: data.time || "00:00",
+          timeOfCrime:
+            data.timeOfCrime instanceof Timestamp
+              ? data.timeOfCrime.toDate()
+              : new Date(data.timeOfCrime || null),
+          timeReported:
+            data.timeReported instanceof Timestamp
+              ? data.timeReported.toDate()
+              : new Date(data.timeReported || null),
+          unixTOC: data.unixTOC || 0,
+        };
+      });
 
-  const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"; // Replace with your API key
-  const encodedAddress = encodeURIComponent(address);
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&region=PH&key=${apiKey}`;
+      console.log("Mapped Incidents:", crimesArray);
+      setCrimes(crimesArray);
+      setFilteredReports(crimesArray);
+    } catch (error) {
+      console.error("Error fetching incidents:", error);
+    }
+  };
 
-  console.log(`Geocoding request for address: ${address}`);
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Geocoding API request failed with status ${response.status}`);
+  const geocodeAddress = async (
+    address: string
+  ): Promise<FirestoreGeoPoint | null> => {
+    if (!address || address.trim() === "") {
+      console.warn("Empty or invalid address provided.");
       return null;
     }
 
-    const data = await response.json();
-    console.log("Geocoding API response:", data);
+    const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"; // Replace with your API key
+    const encodedAddress = encodeURIComponent(address);
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&region=PH&key=${apiKey}`;
 
-    if (data.status === 'OK' && data.results.length > 0) {
-      const { lat, lng } = data.results[0].geometry.location;
-      console.log(`Geocoding succeeded, coordinates: Latitude ${lat}, Longitude ${lng}`);
-      return new firebase.firestore.GeoPoint(lat, lng);
-    } else {
-      console.error('Geocoding failed or returned no results:', data);
+    console.log(`Geocoding request for address: ${address}`);
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error(
+          `Geocoding API request failed with status ${response.status}`
+        );
+        return null;
+      }
+
+      const data = await response.json();
+      console.log("Geocoding API response:", data);
+
+      if (data.status === "OK" && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        console.log(
+          `Geocoding succeeded, coordinates: Latitude ${lat}, Longitude ${lng}`
+        );
+        return new firebase.firestore.GeoPoint(lat, lng);
+      } else {
+        console.error("Geocoding failed or returned no results:", data);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error occurred during geocoding:", error);
       return null;
     }
-  } catch (error) {
-    console.error('Error occurred during geocoding:', error);
-    return null;
-  }
-};
+  };
   const parseTime = (timeString: string | null | undefined): Date => {
     // Check if the timeString is missing or null/undefined
     if (!timeString) {
       console.warn("Time of Crime missing, using current time.");
       return new Date(); // Return the current time
     }
-  
+
     // Clean up the time string to handle spaces and case-insensitive matching
     const cleanedTimeString = timeString.trim().toLowerCase();
-  
+
     // Regex for 12/25/2024 12:30 pm format (handles space between time and am/pm)
     const regex = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{1,2}):(\d{2})\s*(am|pm)$/i;
     const match = cleanedTimeString.match(regex);
-  
+
     if (!match) {
       console.warn(`Invalid time format: ${timeString}, using current time.`);
       return new Date(); // Return the current time if the format is invalid
     }
-  
+
     // Extract date components from matched groups
     const month = parseInt(match[1], 10) - 1; // JavaScript months are 0-based
     const day = parseInt(match[2], 10);
@@ -161,130 +181,147 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
     let hour = parseInt(match[4], 10);
     const minute = parseInt(match[5], 10);
     const period = match[6]; // 'am' or 'pm'
-  
+
     // Adjust the hour for 12-hour format (AM/PM)
-    if (period === 'pm' && hour !== 12) {
+    if (period === "pm" && hour !== 12) {
       hour += 12;
-    } else if (period === 'am' && hour === 12) {
+    } else if (period === "am" && hour === 12) {
       hour = 0; // Midnight case
     }
-  
+
     // Create a Date object using the parsed values
     const date = new Date(year, month, day, hour, minute, 0, 0);
-  
+
     // Check for invalid date
     if (isNaN(date.getTime())) {
       console.warn(`Invalid time format: ${timeString}, using current time.`);
       return new Date(); // Return the current time if the date is invalid
     }
-  
+
     // Convert to UTC and apply Philippine Standard Time (PST) offset
     const utcDate = new Date(date.toUTCString());
     const phOffset = 8 * 60; // Philippines is UTC +8
     utcDate.setMinutes(utcDate.getMinutes() + phOffset);
-  
+
     return utcDate;
   };
   const handleImport = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: [
-          'text/csv',
-          'application/vnd.ms-excel',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          "text/csv",
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         ],
       });
-  
+
       if (result.canceled) {
-        console.log('File selection was canceled.');
+        console.log("File selection was canceled.");
         return;
       }
-  
+
       const file = result.assets?.[0];
       if (!file?.uri) {
-        console.error('No URI found for the selected file.');
+        console.error("No URI found for the selected file.");
         return;
       }
-  
+
       const response = await fetch(file.uri);
       const data = await response.blob();
       const reader = new FileReader();
-  
+
       reader.onload = async (event) => {
         const binaryData = event.target?.result;
         if (!binaryData) {
-          console.error('Failed to read the file.');
+          console.error("Failed to read the file.");
           return;
         }
-  
-        const workbook = XLSX.read(binaryData, { type: 'binary' });
+
+        const workbook = XLSX.read(binaryData, { type: "binary" });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
-  
-        const importedReports = await Promise.all(jsonData.map(async (item: any) => {
-          let timeOfCrime = item['Time of Crime'] ? parseTime(item['Time of Crime']) : null;
-          let timeReported = item['Time Reported'] ? parseTime(item['Time Reported']) : null;
-  
-          if (!timeOfCrime) {
-            timeOfCrime = new Date(); // Default to current time
-            console.warn("Time of Crime missing or invalid, using current time.");
-          }
-  
-          if (!timeReported) {
-            timeReported = new Date(); // Default to current time
-            console.warn("Time Report missing or invalid, using current time.");
-          }
-  
-          let coordinate: FirestoreGeoPoint | null = null;
-          const lat = item['Latitude'] ? parseFloat(item['Latitude']) : null;
-          const lng = item['Longitude'] ? parseFloat(item['Longitude']) : null;
-  
-          // Check if latitude and longitude exist in the file
-          if (lat && lng) {
-            coordinate = new FirestoreGeoPoint(lat, lng);
-          } else if (item["Location"]) {
-            // Geocode the address if coordinates aren't available
-            coordinate = await geocodeAddress(item["Location"]);
-          }
-  
-          if (!coordinate) {
-            console.warn("Geocoding failed or no coordinates provided, using default coordinates for Barangay Holy Spirit.");
-            coordinate = new FirestoreGeoPoint(14.6522, 121.0633); // Default coordinates
-          }
-  
-          // Log coordinate values for debugging
-          console.log("Coordinates before formatting:", {
-            latitude: coordinate.latitude, 
-            longitude: coordinate.longitude
-          });
-  
-          // Format the coordinates for display or usage
-  
-          // Convert the time to Firestore Timestamp
-          const timestampOfCrime = Timestamp.fromMillis(timeOfCrime.getTime());
-          const timestampReported = Timestamp.fromMillis(timeReported.getTime());
-  
-          const report = {
-            id: uuidv4(),
-            additionalInfo: item['Additional Info'] || "No additional info",
-            category: item['Category'] || "Unknown",
-            location: item['Location'] || "Unknown location",
-            time: item['Time'] || "00:00",
-            timeOfCrime: timestampOfCrime,
-            timeReported: timestampReported,
-            coordinate,  // Store GeoPoint directly
-           
-          };
-  
-          console.log("Imported Report Details:", report);
-          return report;
-        }));
-  
+
+        const importedReports = await Promise.all(
+          jsonData.map(async (item: any) => {
+            let timeOfCrime = item["Time of Crime"]
+              ? parseTime(item["Time of Crime"])
+              : null;
+            let timeReported = item["Time Reported"]
+              ? parseTime(item["Time Reported"])
+              : null;
+
+            if (!timeOfCrime) {
+              timeOfCrime = new Date(); // Default to current time
+              console.warn(
+                "Time of Crime missing or invalid, using current time."
+              );
+            }
+
+            if (!timeReported) {
+              timeReported = new Date(); // Default to current time
+              console.warn(
+                "Time Report missing or invalid, using current time."
+              );
+            }
+
+            let coordinate: FirestoreGeoPoint | null = null;
+            const lat = item["Latitude"] ? parseFloat(item["Latitude"]) : null;
+            const lng = item["Longitude"]
+              ? parseFloat(item["Longitude"])
+              : null;
+
+            // Check if latitude and longitude exist in the file
+            if (lat && lng) {
+              coordinate = new FirestoreGeoPoint(lat, lng);
+            } else if (item["Location"]) {
+              // Geocode the address if coordinates aren't available
+              coordinate = await geocodeAddress(item["Location"]);
+            }
+
+            if (!coordinate) {
+              console.warn(
+                "Geocoding failed or no coordinates provided, using default coordinates for Barangay Holy Spirit."
+              );
+              coordinate = new FirestoreGeoPoint(14.6522, 121.0633); // Default coordinates
+            }
+
+            // Log coordinate values for debugging
+            console.log("Coordinates before formatting:", {
+              latitude: coordinate.latitude,
+              longitude: coordinate.longitude,
+            });
+
+            // Format the coordinates for display or usage
+
+            // Convert the time to Firestore Timestamp
+            const timestampOfCrime = Timestamp.fromMillis(
+              timeOfCrime.getTime()
+            );
+            const timestampReported = Timestamp.fromMillis(
+              timeReported.getTime()
+            );
+
+            const report = {
+              id: uuidv4(),
+              additionalInfo: item["Additional Info"] || "No additional info",
+              category: item["Category"] || "Unknown",
+              location: item["Location"] || "Unknown location",
+              time: item["Time"] || "00:00",
+              timeOfCrime: timestampOfCrime,
+              timeReported: timestampReported,
+              coordinate, // Store GeoPoint directly
+            };
+
+            console.log("Imported Report Details:", report);
+            return report;
+          })
+        );
+
         console.log("Total Reports Imported: ", importedReports.length);
         console.log("Imported Reports: ", importedReports);
-  
+
         const crimesCollection = collection(db, "crimes");
-  
+
         try {
           const addReportsPromises = importedReports.map(async (report) => {
             console.log("Adding report to Firestore:", report);
@@ -294,9 +331,9 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
               console.error("Error adding report to Firestore:", error);
             }
           });
-  
+
           await Promise.all(addReportsPromises);
-  
+
           alert("Reports successfully added.");
           await fetchIncidents();
         } catch (error) {
@@ -304,18 +341,18 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
           alert("Failed to add reports. Please try again.");
         }
       };
-  
+
       reader.readAsBinaryString(data);
     } catch (error) {
       console.error("Error during file import:", error);
-      alert("An error occurred during file import. Please check the file format.");
+      alert(
+        "An error occurred during file import. Please check the file format."
+      );
     }
   };
-  
+
   // Helper function to parse the date format in the CSV
-  
-  
-  
+
   // const formatDate = (date: Date | null): string => {
   //   if (date && date._seconds) {
   //     date = dayjs(date._seconds * 1000);
@@ -324,7 +361,6 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
   //   }
   //   return format(date.toLocaleString(), "yyyy-MM-dd");
   // };
- 
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -395,8 +431,14 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
 
       // Ensure report.coordinate is a GeoPoint
       let FirestoregeoPoint = report.coordinate;
-      if (FirestoregeoPoint && !(FirestoregeoPoint instanceof FirestoreGeoPoint)) {
-        FirestoregeoPoint = new FirestoreGeoPoint(FirestoregeoPoint.latitude, FirestoregeoPoint.longitude);
+      if (
+        FirestoregeoPoint &&
+        !(FirestoregeoPoint instanceof FirestoreGeoPoint)
+      ) {
+        FirestoregeoPoint = new FirestoreGeoPoint(
+          FirestoregeoPoint.latitude,
+          FirestoregeoPoint.longitude
+        );
       }
 
       // Ensure the location is available or default to 'Unknown'
@@ -412,9 +454,8 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
           ? `${FirestoregeoPoint.latitude}, ${FirestoregeoPoint.longitude}`
           : "N/A", // Show coordinates as string
         Location: location, // Add the location field here
-  
+
         Description: report.additionalInfo || "N/A", // Assuming there's a description field
-        
       };
     });
 
@@ -490,12 +531,7 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
     timeReported: Date | null;
     unixTOC: number;
   }
-  
- 
-  
-  
-  
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10;
   const currentReports = filteredReports.slice(
@@ -699,128 +735,156 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
             </TouchableWithoutFeedback>
           </Modal>
           <ScrollView
-  contentContainerStyle={[
-    webstyles.reportList,
-    isAlignedRight && { width: "75%" },
-  ]}
->
-  {currentReports.length > 0 ? (
-    currentReports.map((incident, index) => {
-      // Destructure coordinates (_lat, _long) from incident.coordinate
-      const { latitude, longitude } = incident.coordinate;
-      const isValidCoordinate = latitude && longitude;
-
-      return (
-        <View
-          key={index}
-          style={{
-            marginBottom: 20,
-            padding: 15,
-            borderRadius: 8,
-            backgroundColor: "#f9f9f9",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-          }}
-        >
-          {/* Title, Date, and Unread Button */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
+            contentContainerStyle={[
+              webstyles.reportList,
+              isAlignedRight && { width: "75%" },
+            ]}
           >
-            {/* Left side: Title and Date */}
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: "bold",
-                  color: "#115272",
-                }}
-              >
-                {incident.category.charAt(0).toUpperCase() + incident.category.slice(1)}
-              </Text>
-              <Text
-                style={{
-                  color: "#115272",
-                  fontSize: 14,
-                  marginLeft: 10, // Space between title and date
-                }}
-              >
-                {format(new Date(incident.timeOfCrime || new Date()), "yyyy-MM-dd")}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={{ padding: 10 }}
-              onPress={() => setDeleteModalVisible(true)}
-            >
-              <Text style={{ color: "#DA4B46" }}>Unread</Text>
-            </TouchableOpacity>
-          </View>
+            {currentReports.length > 0 ? (
+              currentReports.map((incident, index) => {
+                // Destructure coordinates (_lat, _long) from incident.coordinate
+                const { latitude, longitude } = incident.coordinate;
+                const isValidCoordinate = latitude && longitude;
 
-          {/* Coordinates: Display both latitude/longitude and location */}
-          <Text style={{ color: "#115272", fontSize: 14, marginTop: 10 }}>
-            {/* Always display standard coordinates, even if invalid */}
-            {isValidCoordinate
-              ? `Latitude: ${latitude}, Longitude: ${longitude}`
-              : ""}
-          </Text>
-          <Text style={{ color: "#115272", fontSize: 14, marginTop: 5 }}>
-            {/* Display location if available */}
-            {incident.location ? `Location: ${incident.location}` : "Location not provided"}
-          </Text>
-
-          {/* Modal for delete confirmation */}
-          <Modal
-            visible={isDeleteModalVisible}
-            animationType="fade"
-            transparent={true}
-            onRequestClose={() => setDeleteModalVisible(false)}
-          >
-            <TouchableWithoutFeedback onPress={() => setDeleteModalVisible(false)}>
-              <View
-                style={[
-                  webstyles.modalContainer,
-                  { backgroundColor: "transparent" },
-                ]}
-              >
-                <TouchableWithoutFeedback>
-                  <View style={webstyles.modalContent}>
-                    <Text style={webstyles.modalHeader}>Confirm Read?</Text>
-                    <Text style={webstyles.modalText}>
-                      Do you acknowledge this report as read?
-                    </Text>
-                    <View style={webstyles.modalActions}>
-                      <TouchableOpacity
-                        style={[webstyles.modalButton, { backgroundColor: "#ccc" }]}
-                        onPress={() => setDeleteModalVisible(false)}
+                return (
+                  <View
+                    key={index}
+                    style={{
+                      marginBottom: 20,
+                      padding: 15,
+                      borderRadius: 8,
+                      backgroundColor: "#f9f9f9",
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3.84,
+                    }}
+                  >
+                    {/* Title, Date, and Unread Button */}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      {/* Left side: Title and Date */}
+                      <View
+                        style={{ flexDirection: "row", alignItems: "center" }}
                       >
-                        <Text style={webstyles.modalButtonText}>Cancel</Text>
-                      </TouchableOpacity>
+                        <Text
+                          style={{
+                            fontSize: 18,
+                            fontWeight: "bold",
+                            color: "#115272",
+                          }}
+                        >
+                          {incident.category.charAt(0).toUpperCase() +
+                            incident.category.slice(1)}
+                        </Text>
+                        <Text
+                          style={{
+                            color: "#115272",
+                            fontSize: 14,
+                            marginLeft: 10, // Space between title and date
+                          }}
+                        >
+                          {format(
+                            new Date(incident.timeOfCrime || new Date()),
+                            "yyyy-MM-dd"
+                          )}
+                        </Text>
+                      </View>
                       <TouchableOpacity
-                        style={[webstyles.modalButton, { backgroundColor: "#DA4B46" }]}
-                        onPress={() => handleDeleteRequest(incident.id)} // Handle the confirm action here
+                        style={{ padding: 10 }}
+                        onPress={() => setDeleteModalVisible(true)}
                       >
-                        <Text style={webstyles.modalButtonText}>Confirm</Text>
+                        <Text style={{ color: "#DA4B46" }}>Unread</Text>
                       </TouchableOpacity>
                     </View>
+
+                    {/* Coordinates: Display both latitude/longitude and location */}
+                    <Text
+                      style={{ color: "#115272", fontSize: 14, marginTop: 10 }}
+                    >
+                      {/* Always display standard coordinates, even if invalid */}
+                      {isValidCoordinate
+                        ? `Latitude: ${latitude}, Longitude: ${longitude}`
+                        : ""}
+                    </Text>
+                    <Text
+                      style={{ color: "#115272", fontSize: 14, marginTop: 5 }}
+                    >
+                      {/* Display location if available */}
+                      {incident.location
+                        ? `Location: ${incident.location}`
+                        : "Location not provided"}
+                    </Text>
+
+                    {/* Modal for delete confirmation */}
+                    <Modal
+                      visible={isDeleteModalVisible}
+                      animationType="fade"
+                      transparent={true}
+                      onRequestClose={() => setDeleteModalVisible(false)}
+                    >
+                      <TouchableWithoutFeedback
+                        onPress={() => setDeleteModalVisible(false)}
+                      >
+                        <View
+                          style={[
+                            webstyles.modalContainer,
+                            { backgroundColor: "transparent" },
+                          ]}
+                        >
+                          <TouchableWithoutFeedback>
+                            <View style={webstyles.modalContent}>
+                              <Text style={webstyles.modalHeader}>
+                                Confirm Read?
+                              </Text>
+                              <Text style={webstyles.modalText}>
+                                Do you acknowledge this report as read?
+                              </Text>
+                              <View style={webstyles.modalActions}>
+                                <TouchableOpacity
+                                  style={[
+                                    webstyles.modalButton,
+                                    { backgroundColor: "#ccc" },
+                                  ]}
+                                  onPress={() => setDeleteModalVisible(false)}
+                                >
+                                  <Text style={webstyles.modalButtonText}>
+                                    Cancel
+                                  </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[
+                                    webstyles.modalButton,
+                                    { backgroundColor: "#DA4B46" },
+                                  ]}
+                                  onPress={() =>
+                                    handleDeleteRequest(incident.id)
+                                  } // Handle the confirm action here
+                                >
+                                  <Text style={webstyles.modalButtonText}>
+                                    Confirm
+                                  </Text>
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          </TouchableWithoutFeedback>
+                        </View>
+                      </TouchableWithoutFeedback>
+                    </Modal>
                   </View>
-                </TouchableWithoutFeedback>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
-        </View>
-      );
-    })
-  ) : (
-    <Text style={{ textAlign: "center", marginTop: 20 }}>
-      No incidents available.
-    </Text>
-  )}
-</ScrollView>
+                );
+              })
+            ) : (
+              <Text style={{ textAlign: "center", marginTop: 20 }}>
+                No incidents available.
+              </Text>
+            )}
+          </ScrollView>
 
           <PaginationReport
             filteredReports={filteredReports}

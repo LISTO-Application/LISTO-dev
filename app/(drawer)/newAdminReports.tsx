@@ -29,9 +29,9 @@ import {
   setDoc,
   doc,
 } from "@react-native-firebase/firestore";
-import { getIconName } from "../../assets/utils/getIconName";
+import { getIconName } from "@/assets/utils/getIconName";
 import { SideBar } from "@/components/SideBar";
-import { crimeImages, CrimeType } from "../(tabs)/data/marker";
+import { crimeImages, CrimeType } from "@/app/(tabs)/data/marker";
 import dayjs, { Dayjs } from "dayjs";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -198,7 +198,7 @@ export default function NewAdminReports({
       return;
     }
 
-    const defaultImage = require("../../assets/images/default-image.jpg");
+    const defaultImage = require("@/assets/images/default-image.jpg");
     const defaultURI = Asset.fromModule(defaultImage).uri;
 
     const timestamp = new Date();
@@ -265,7 +265,7 @@ export default function NewAdminReports({
       alert("You did not select any image.");
     }
   };
-  const PlaceholderImage = require("../../assets/images/background-image.jpg");
+  const PlaceholderImage = require("@/assets/images/background-image.jpg");
 
   const Button = ({ label, theme, onPress }: ImageProps) => {
     if (theme === "primary") {

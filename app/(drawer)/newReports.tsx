@@ -214,7 +214,7 @@ export default function NewReports({
     }
 
     // Default image if no image selected
-    const defaultImage = require("../../assets/images/default-image.jpg");
+    const defaultImage = require("@/assets/images/default-image.jpg");
     //Timestamp
     const timestamp = new Date();
     const unixTimestamp = timestamp.getTime();
@@ -357,7 +357,7 @@ export default function NewReports({
     }
   };
 
-  const PlaceholderImage = require("../../assets/images/background-image.jpg");
+  const PlaceholderImage = require("@/assets/images/background-image.jpg");
 
   const Button = ({ label, theme, onPress }: ImageProps) => {
     if (theme === "primary") {
