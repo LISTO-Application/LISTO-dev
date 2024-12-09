@@ -29,7 +29,7 @@ type Report = {
   phone: string;
   status: number;
   time: string;
-  timeOfCrime: Date;  // Ensure it's a Date object
+  timeOfCrime: Date; // Ensure it's a Date object
   timeReported: Date; // Ensure it's a Date object
   unixTOC: number;
   uid: string;
@@ -91,7 +91,7 @@ export default function SearchSort({
     });
     setIsSortedAsc(true); // Set sorting state to ascending
   };
-  
+
   const sortReportsByDateDesc = () => {
     setFilteredReports((prevReports: Report[]) => {
       const sortedReports = [...prevReports];
@@ -108,7 +108,7 @@ export default function SearchSort({
   const sortReportsByAlphabetAsc = () => {
     setFilteredReports((prevReports: any) => {
       const sortedReports = [...prevReports].sort((a, b) => {
-        return a.title.localeCompare(b.title);
+        return a.category.localeCompare(b.category);
       });
       return sortedReports;
     });
@@ -118,7 +118,7 @@ export default function SearchSort({
   const sortReportsByAlphabetDesc = () => {
     setFilteredReports((prevReports: any) => {
       const sortedReports = [...prevReports].sort((a, b) => {
-        return b.title.localeCompare(a.title);
+        return b.category.localeCompare(a.category);
       });
       return sortedReports;
     });

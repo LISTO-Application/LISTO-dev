@@ -22,12 +22,27 @@ export default function ValidateReportCard({
   handleStatusChange: (reportId: string, newStatus: number) => void;
 }) {
   const [isImageZoomVisible, setIsImageZoomVisible] = useState(false);
-  const parsedDate = format(report.date, "yyyy-MM-dd");
-  console.log(parsedDate);
-  console.log(new Date(report.timestamp * 1000));
-  const timestamp = new Date(report.timestamp * 1000);
-  const localTime = dayjs(timestamp).format("hh:mm A");
-  console.log(format(new Date(report.timestamp * 1000), "hh:mm a"));
+  console.log(report.timeReported);
+  const timeReported = new Date(
+    report.timeReported._seconds * 1000 +
+      report.timeReported._nanoseconds / 1000000
+  );
+  const date = new Date(
+    report.timeOfCrime._seconds * 1000 +
+      report.timeOfCrime._nanoseconds / 1000000
+  );
+  console.log(date);
+  console.log(timeReported);
+  const parsedDate = format(date, "yyyy-MM-dd");
+  const parsedTimeCrime = format(date, "hh:mm");
+  const parsedTimeReported = format(timeReported, "hh:mm a");
+  console.log(parsedTimeReported);
+  // const parsedDate = format(report.date, "yyyy-MM-dd");
+  // console.log(parsedDate);
+  // console.log(new Date(report.timestamp * 1000));
+  // const timestamp = new Date(report.timestamp * 1000);
+  // const localTime = dayjs(timestamp).format("hh:mm A");
+  // console.log(format(new Date(report.timestamp * 1000), "hh:mm a"));
 
   return (
     <View
@@ -66,7 +81,8 @@ export default function ValidateReportCard({
                   color: "#115272",
                 }}
               >
-                {report.category.charAt(0).toUpperCase() + report.category.slice(1)}
+                {report.category.charAt(0).toUpperCase() +
+                  report.category.slice(1)}
               </Text>
             </TouchableOpacity>
             <Text
@@ -76,7 +92,7 @@ export default function ValidateReportCard({
                 marginLeft: 10,
               }}
             >
-              {parsedDate} &nbsp; {localTime}
+              {parsedDate} &nbsp; {parsedTimeCrime}
             </Text>
           </View>
           {/* Report Category */}
@@ -91,75 +107,75 @@ export default function ValidateReportCard({
       </View>
       {/* Action Buttons */}
       <View
-  style={{
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    alignSelf: "flex-end",
-    marginTop: 10,
-  }}
->
-  {report.status === 1 ? (
-    <>
-      <TouchableOpacity
         style={{
-          backgroundColor: "#28a745",
-          paddingVertical: 5,
-          paddingHorizontal: 10,
-          borderRadius: 5,
-          marginLeft: 5,
+          flexDirection: "row",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          alignSelf: "flex-end",
+          marginTop: 10,
         }}
-        onPress={() => handleStatusChange(report.uid, 2)} // Validate: Change status to 2 (valid)
       >
-        <Text
-          style={{
-            color: "#fff",
-            fontSize: 20,
-            textAlign: "center",
-          }}
-        >
-          Validate
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={{
-          backgroundColor: "#dc3545",
-          paddingVertical: 5,
-          paddingHorizontal: 10,
-          borderRadius: 5,
-          marginLeft: 5,
-        }}
-        onPress={() => handleStatusChange(report.uid, 0)} // Archive: Change status to 0 (archived)
-      >
-        <Text
-          style={{
-            color: "#fff",
-            fontSize: 20,
-            textAlign: "center",
-          }}
-        >
-          Archive
-        </Text>
-      </TouchableOpacity>
-    </>
-  ) : (
-    <Text
-      style={{
-        color:
-          report.status === 2
-            ? "#28a745"
-            : report.status === 0
-            ? "#6c757d"
-            : "#6c757d",
-        fontWeight: "bold",
-        fontSize: 20,
-        textAlign: "right",
-      }}
-    >
-      {report.status === 2 ? "Valid" : "Archived"}
-    </Text>
-  )}
-</View>
+        {report.status === 1 ? (
+          <>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#28a745",
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderRadius: 5,
+                marginLeft: 5,
+              }}
+              onPress={() => handleStatusChange(report.id, 2)} // Validate: Change status to 2 (valid)
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 20,
+                  textAlign: "center",
+                }}
+              >
+                Validate
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#dc3545",
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderRadius: 5,
+                marginLeft: 5,
+              }}
+              onPress={() => handleStatusChange(report.id, 0)} // Archive: Change status to 0 (archived)
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 20,
+                  textAlign: "center",
+                }}
+              >
+                Archive
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <Text
+            style={{
+              color:
+                report.status === 2
+                  ? "#28a745"
+                  : report.status === 0
+                    ? "#6c757d"
+                    : "#6c757d",
+              fontWeight: "bold",
+              fontSize: 20,
+              textAlign: "right",
+            }}
+          >
+            {report.status === 2 ? "Valid" : "Archived"}
+          </Text>
+        )}
+      </View>
       <Modal
         visible={isImageZoomVisible}
         animationType="fade"

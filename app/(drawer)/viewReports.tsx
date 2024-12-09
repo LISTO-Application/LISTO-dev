@@ -322,6 +322,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             filterReports={filterReports}
             handleExport={undefined}
             handleImport={undefined}
+            pickFile={undefined}
+            excelData={undefined}
+            uploading={undefined}
+            uploadToFirestore={undefined}
           />
           <Modal
             visible={isCategoryModalVisible}

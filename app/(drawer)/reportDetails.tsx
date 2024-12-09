@@ -13,12 +13,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity } from "react-native-gesture-handler";
 
 interface ReportDetailsType {
-  uid: string;
+  id: string;
   title: string;
   category: string;
   location: string | null;
   time: string;
-  status: "PENDING" | "VALID" | "PENALIZED";
+  status: 0 | 1 | 2;
   additionalInfo: string | null;
   reporterName?: string | null;
   image?: {
@@ -29,8 +29,8 @@ interface ReportDetailsType {
 
 const ReportDetails = ({ navigation }: { navigation: any }) => {
   const route = useRoute(); // Using useRoute to access params
-  const { uid } = route.params as {
-    uid: string;
+  const { id } = route.params as {
+    id: string;
   };
   // Example report data (this should come from your data source, such as an API or state)
 
@@ -42,16 +42,16 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (uid) {
+    if (id) {
       const fetchReportDetails = async () => {
         try {
-          const reportRef = firestore().collection("reports").doc(uid);
+          const reportRef = firestore().collection("reports").doc(id);
           const reportDoc = await reportRef.get();
 
           if (reportDoc.exists) {
             const reportData = reportDoc.data();
             setReportDetails({
-              uid: reportDoc.id,
+              id: reportDoc.id,
               title: reportData?.title || "Untitled",
               category: reportData?.category || "Unknown Category",
               location: reportData?.location || "Unknown Location",
@@ -75,7 +75,7 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
 
       fetchReportDetails();
     }
-  }, [uid]);
+  }, [id]);
 
   if (loading) {
     return (
@@ -145,16 +145,20 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
               styles.value,
               {
                 color:
-                  reportDetails.status === "VALID"
+                  reportDetails.status === 2
                     ? "green"
-                    : reportDetails.status === "PENALIZED"
+                    : reportDetails.status === 0
                       ? "red"
                       : "#FFA500",
               },
               styles.statusText,
             ]}
           >
-            {reportDetails.status}
+            {reportDetails.status === 2
+              ? "VALID"
+              : reportDetails.status === 1
+                ? "PENDING"
+                : "ARCHIVED"}
           </Text>
         </View>
 

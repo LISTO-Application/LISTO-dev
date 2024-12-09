@@ -44,6 +44,8 @@ import PaginationReport from "@/components/PaginationReport";
 import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
 import dayjs from "dayjs";
+import { getDownloadURL, getStorage, ref } from "firebase/storage";
+import { app, dbWeb } from "../(auth)";
 
 const database = db;
 
@@ -55,48 +57,60 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   const handleTitlePress = (report: Report) => {
     console.log("Navigating to details page for report:", report);
     navigation.navigate("ReportDetails", {
-      uid: report.uid,
+      id: report.id,
       category: report.category,
       status: report.status,
       additionalInfo: report.additionalInfo,
       image: report.image,
     });
   };
-  const handleStatusChange = async (uid: string, newStatus: number) => {
+  const handleStatusChange = async (id: string, newStatus: number) => {
     try {
-      // Query the "reports" collection where the `uid` field matches the provided `uid`
+      // Query the "reports" collection where the `id` field matches the provided `id`
+      console.log("Handling status...");
       const reportsCollection = collection(db, "reports");
-      const q = query(reportsCollection, where("uid", "==", uid)); // Query by `uid` field
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(reportsCollection);
 
+      const snapshot = querySnapshot.docs.filter((doc) => doc.id === id);
+
+      console.log(`Obtained snapshot ${querySnapshot.docs}`);
+      console.log(querySnapshot);
       if (querySnapshot.empty) {
-        console.error(`No report found with UID: ${uid}`);
+        console.error(`No report found with ID: ${id}`);
         return;
       }
-
-      // Get the first document (assuming the uid is unique)
-      const reportDoc = querySnapshot.docs[0]; // Get the first matched document
-      const reportRef = reportDoc.ref; // Reference to the document
+      const reportRef = doc(db, "reports", snapshot[0].id);
+      const reportData = snapshot[0].data();
 
       // Update the status in Firestore
       await updateDoc(reportRef, { status: newStatus });
-      console.log(`Status updated to ${newStatus} for report UID ${uid}`);
+      window.confirm(`Status updated to ${newStatus} for report ID ${id}`);
 
-      // If status is 2 (valid), transfer to "crimes"
       if (newStatus === 2) {
-        const newCrime = reportDoc.data(); // Get the data of the report
+        const newCrime = {
+          additionalInfo: reportData.additionalInfo || "",
+          category: reportData.category || "",
+          coordinate: reportData.coordinate || [],
+          location: reportData.location || "",
+          time: reportData.time || "",
+          timeOfCrime: reportData.timeOfCrime || "",
+          timeReported: reportData.timeReported || "",
+          unixTOC: reportData.unixTOC || null,
+        };
         const crimeRef = collection(db, "crimes");
         await addDoc(crimeRef, newCrime);
-        console.log(`Report ${uid} transferred to crimes.`);
-
-        // Delete the report from "reports" collection after transferring it to "crimes"
-        await deleteDoc(reportRef);
-        console.log(`Report ${uid} removed from reports.`);
+        window.confirm(`Report ${id} transferred to crimes.`);
+        navigation.navigate("ViewAdminEmergencyList");
       }
 
       // If status is 0 (archived), just log the action
       if (newStatus === 0) {
-        console.log(`Report ${uid} archived.`);
+        const archivedCrime = snapshot[0].data();
+        const archiveRef = collection(db, "archives");
+        await addDoc(archiveRef, archivedCrime);
+        window.confirm(`Report ${id} transferred to archives.`);
+        window.confirm(`Report ${id} archived.`);
+        navigation.navigate("ViewReports");
       }
 
       // Re-sort the reports (optional)
@@ -134,6 +148,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
           }
 
           return {
+            uid: data.uid,
             id: doc.id,
             additionalInfo: data.additionalInfo || "No additional info",
             category: data.category || "Unknown",
@@ -144,16 +159,9 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
             phone: data.phone || "No phone",
             status: data.status || 1,
             time: data.time || "Unknown time",
-            timeOfCrime:
-              data.timeOfCrime instanceof Timestamp
-                ? data.timeOfCrime.toDate()
-                : new Date(data.timeOfCrime || null),
-            timeReported:
-              data.timeReported instanceof Timestamp
-                ? data.timeReported.toDate()
-                : new Date(data.timeReported || null),
+            timeOfCrime: data.timeOfCrime,
+            timeReported: data.timeReported,
             unixTOC: data.unixTOC || 0,
-            uid: data.uid || "Unknown UID",
             date: data.date || new Date(),
             timestamp: data.timestamp || Date.now(),
           };
@@ -241,10 +249,10 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
           time: any;
           location: string;
           category: string;
-          date: Date;
+          timeOfCrime: Date;
         }) => {
           const query = searchQuery.toLowerCase();
-          const date = dayjs(report.date).format("YYYY-MM-DD");
+          const date = dayjs(report.timeOfCrime).format("YYYY-MM-DD");
           return (
             report.location.toLowerCase().includes(query) ||
             report.category.toLowerCase().includes(query) ||
@@ -279,7 +287,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
 
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           {currentReports.map((report) => (
-            <View key={report.uid}>
+            <View key={report.id}>
               {/* Report content */}
               <View style={styles.reportContainer}>
                 <View style={styles.reportIcon}>
@@ -297,7 +305,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                   <TouchableOpacity
                     onPress={() =>
                       navigation.navigate("reportDetails", {
-                        uid: report.uid,
+                        id: report.id,
                         category: report.category,
                       })
                     }

@@ -43,6 +43,6 @@ export default function AuthLayout() {
       </ThemeProvider>
     );
   } else {
-    <Redirect href="../(tabs)/account" />;
+    <Redirect href="../(tabs)" />;
   }
 }
