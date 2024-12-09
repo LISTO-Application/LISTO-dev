@@ -10,7 +10,7 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from "expo-file-system"
 
 //Firebase Imports
-import firestore from '@react-native-firebase/firestore';
+import { firebase } from '@react-native-firebase/firestore';
 
 //Date-FNS Imports
 import { toDate, isToday, isThisWeek, isThisMonth, compareDesc, set} from "date-fns";
@@ -54,7 +54,8 @@ export default function Summary() {
   const circularProgressSize = 150;
 
   //Firestore Collection Constants
-  const incidentCollection = firestore().collection('incidents');
+  const crimesCollection = firebase.firestore().collection("crimes");
+  const reportsCollection = firebase.firestore().collection("reprots");
 
   //State for managing which time range is selected (blue background)
   const [timeRangeState, setTimeRangeState] = useState(1)
@@ -82,11 +83,16 @@ export default function Summary() {
 
   //Fetch Data from Database, set incidents array and bar data array for use in the Bar Chart
   const handleDataChange = async () => {
+    console.log("WTF");
     setLoading(true);
-    const querySnapshot = await incidentCollection.get();
-    const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setIncidents(data);
-    setBarData(data, timeRangeIndex.current);
+    crimesCollection
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIncidents(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+      })
   };
 
     //Error Handling Function
@@ -94,7 +100,8 @@ export default function Summary() {
 
     //Attaches a Listener to the Incident Collection and cleans up when the component is unmounted
     useEffect(() => {
-      const unsubscribe = incidentCollection.onSnapshot(handleDataChange, fetchError);
+      console.log("Incident Collection Listener Attached");
+      const unsubscribe = crimesCollection.onSnapshot(handleDataChange, fetchError);
       return () => unsubscribe();
     }, [timeRangeIndex.current]);
 
@@ -442,173 +449,6 @@ export default function Summary() {
               } }>
                   <ThemedText style = {{width: "100%", textAlign: 'center'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Generate Reports</ThemedText>
             </TouchableOpacity>
-  
-          </ScrollView>
-  
-      </ThemedView>
-    );
-  }
-  else if (Platform.OS === 'web') {
-    return (
-    
-      <ThemedView
-      style={[styles.mainContainer, utility.blueBackground]}
-      >
-          <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }} >
-            
-            {/* MAIN CONTAINER */}
-            <SpacerView
-            flex={1}
-            flexDirection='column'
-            justifyContent='center'
-            alignItems='center'>
-
-                {/* MIDDLE COLUMN */}
-                <SpacerView
-                flex={1}
-                height="100%"
-                width="75%"
-                flexDirection='column'
-                justifyContent='space-evenly'>
-
-                    <SpacerView
-                    backgroundColor = "#FFF"
-                    justifyContent='center'
-                    alignItems='center'
-                    flexDirection='column'
-                    width='100%'
-                    borderRadius={20}
-                    height='auto'
-                    paddingTop='2%'
-                    paddingBottom='2%'>
-                        <Image source={user}/>
-                        <ThemedText lightColor='#115272' darkColor='#115272' type="title" paddingVertical = {2}> John Doe </ThemedText>
-                    </SpacerView>
-                
-                    <SpacerView
-                    height='auto'
-                    justifyContent='space-between'>
-                    
-                        <SpacerView
-                        backgroundColor='#FFF'
-                        height="auto"
-                        width='45%'
-                        flexDirection='column'
-                        justifyContent='center'
-                        paddingLeft='2%'
-                        paddingRight='2%'
-                        paddingTop='1%'
-                        paddingBottom='1%'
-                        borderRadius={20}
-                        >
-                          
-                            <SpacerView
-                            borderBottomWidth={5}
-                            borderBottomColor='#115272'
-                            height='auto'
-                            marginTop='5%'
-                            marginBottom = '5%'
-                            >
-                                <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle">Personal Information</ThemedText>
-
-                            </SpacerView>
-
-                            <SpacerView
-                            flex={1}
-                            justifyContent='space-between'
-                            height='auto'
-                            >
-
-                                <SpacerView
-                                height='auto'
-                                width="45%"
-                                flexDirection='column'
-                                >
-                                    <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> First Name </ThemedText>
-                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' placeholderTextColor = "#115272" placeholder="John Doe"/>
-                                </SpacerView>
-
-                                <SpacerView
-                                height='auto'
-                                width="45%"
-                                flexDirection='column'>
-                                    <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical = {2}> Last Name </ThemedText>
-                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder="John Doe" />
-                                </SpacerView>
-
-                            </SpacerView>
-
-                            <SpacerView
-                            flexDirection='column'
-                            height='auto'
-                            >
-                              <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> Email </ThemedText>
-                              <ThemedInput width='45%' borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder='@gmail.com' />
-                              
-                              <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> Phone Number </ThemedText>
-                              <ThemedInput width='45%' borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder='+63' />
-                            </SpacerView>
-
-                            <SpacerView
- 
-                            justifyContent='center'
-                            alignItems='flex-end'
-                            height='auto'
-                            marginTop='5%'
-                            >
-
-                                <ThemedButton width='35%' title="Login" onPress={() =>
-                                  {router.replace("/(tabs)/emergency")}} />
-
-                            </SpacerView>
-
-                        </SpacerView>
-
-                        <SpacerView
-                        backgroundColor='#FFF'
-                        height="50%"
-                        width='45%'
-                        flexDirection='column'
-                        alignItems='center'
-                        justifyContent='center'>
-
-                            <SpacerView
-                            borderBottomWidth={5}
-                            borderBottomColor='#115272'
-                            height='auto'
-                            marginTop='5%'
-                            marginBottom = '5%'
-                            width='90%'
-                            >
-                                <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle">Account Settings</ThemedText>
-
-                            </SpacerView>
-
-                            <SpacerView
-                            flex={1}
-                            flexDirection='column'
-                            justifyContent='space-evenly'
-                            alignItems='center'
-                            height='auto'
-                            width='100%'
-                            >
-
-                            <ThemedButton width='35%' title="Delete Account" onPress={() =>
-                                  {router.replace("/(auth)/login")}} />  
-
-                            <ThemedButton width='35%' title="Logout" onPress={() =>
-                                   {router.replace("/(auth)/login")}} />  
-
-                            </SpacerView>
-
-                        </SpacerView>
-
-                    </SpacerView>
-
-                </SpacerView>
-
-            </SpacerView>
   
           </ScrollView>
   

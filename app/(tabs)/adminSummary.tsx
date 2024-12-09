@@ -1,9 +1,8 @@
 //React Imports
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {Image, Platform, ScrollView, ImageBackground, Pressable, TouchableOpacity, View, Text, ActivityIndicator, PermissionsAndroid} from 'react-native';
+import { useState, useEffect, useCallback, useMemo, useRef, SetStateAction } from 'react';
+import {Image, Platform, ScrollView, ImageBackground, Pressable, TouchableOpacity, View, Text, ActivityIndicator, PermissionsAndroid, Alert} from 'react-native';
 import  { AnimatedCircularProgress} from 'react-native-circular-progress';
 import { BarChart } from "react-native-gifted-charts";
-import { Calendar } from 'react-native-calendars';
 
 //Expo Imports
 import {router} from 'expo-router';
@@ -11,10 +10,10 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from "expo-file-system"
 
 //Firebase Imports
-import firestore, { Timestamp } from '@react-native-firebase/firestore';
+import { firebase, FirebaseFirestoreTypes, Timestamp } from '@react-native-firebase/firestore';
 
 //Date-FNS Imports
-import { toDate, isToday, isThisWeek, isThisMonth, compareDesc, set, formatDate, subYears, isThisYear, isAfter, isBefore, getTime} from "date-fns";
+import { toDate, isToday, isThisWeek, isThisMonth, compareDesc, set, startOfDay, getUnixTime, endOfDay, getTime, startOfMonth, endOfMonth, startOfWeek, endOfWeek, formatDate, isThisYear, isAfter, isBefore, subYears} from "date-fns";
 
 //XLSX Imports
 import xlsx from 'xlsx';
@@ -30,23 +29,28 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedInput } from '@/components/ThemedInput';
 
-// Hooks
+//Hooks
 import useResponsive from '@/hooks/useResponsive';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import BottomSheet from '@gorhom/bottom-sheet';
+import { Calendar } from 'react-native-calendars';
+import { useDynamicAnimation } from 'moti';
+import { LatLng } from 'react-native-maps';
+import { Portal } from '@gorhom/portal';
 
-  //Image Imports
-  const texture = require('../../assets/images/texture.png');
-  const user = require('../../assets/images/user-icon.png');
-  const backArrow = require('../../assets/images/back-button-white.png');
-  
 export default function Summary() {
 
-  const { display, subDisplay, title, subtitle, body, small, tiny, height} = useResponsive();
-
-  //Incident Object Interface
-  interface Incident {
-    id: string;
-    [key: string]: any;
+  const session = firebase.auth().currentUser;
+  if(session == null) {
+    router.replace({"pathname": "/(auth)/login"});
   }
+
+    //Image Imports
+    const texture = require('../../assets/images/texture.png');
+    const user = require('../../assets/images/user-icon.png');
+    const backArrow = require('../../assets/images/back-button-white.png');
+
+  const { display, subDisplay, title , subtitle, body, small, height} = useResponsive();
 
   //Time Range Constants
   const timeRange = [
@@ -56,17 +60,49 @@ export default function Summary() {
     { id: 4, name: 'Custom'},
   ];
 
+  const calendarSheetRef = useRef<BottomSheet>(null);
+  const [customRange, setCustomRange] = useState({ start: new Date(), end: new Date() });
+  const [current, setCurrent] = useState(Timestamp.now().toDate());
+  const [isCalendarSheetOpen, setIsCalendarSheetOpen] = useState(false);
+  const initialDate = {timestamp: Timestamp.now().toMillis(), date: Timestamp.now().toDate()}
+  const minDate = formatDate(subYears(initialDate.date, 4), "yyyy-MM-dd");
+  const maxDate = formatDate(initialDate.date, "yyyy-MM-dd");
+  const [markedDates, setMarkedDates] = useState<{
+    [key: string]: { selected: boolean; selectedColor: string };
+  }>({});
+  const [selectedDate, setSelectedDate] = useState({date1: "", date2: ""});
+
+  const handleCalendarSheetChange = useCallback((index: any) => {
+    setIsCalendarSheetOpen(index !== -1);
+  }, []);
+  const handleCalendarSnapPress = useCallback((index: number) => {
+    calendarSheetRef.current?.snapToIndex(index);
+  }, []);
+  const handleCalendarClosePress = useCallback(() => {
+    calendarSheetRef.current?.close();
+  }, []);
+  const calendarSnapPoints = useMemo(() => ["65%"], []);
+
+  const load = useDynamicAnimation(() => {
+    return {
+      opacity: 1,
+    }
+  });
+
+  
   //Circular Progress Constants
-  const circularProgressSize = 125;
+  const circularProgressSize = 150;
 
   //Firestore Collection Constants
-  const incidentCollection = firestore().collection('incidents');
+  const crimesCollection = firebase.firestore().collection("crimes");
+  const reportsCollection = firebase.firestore().collection("reports");
 
   //State for managing which time range is selected (blue background)
   const [timeRangeState, setTimeRangeState] = useState(1)
 
   //State and array of incidents with their details
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [incidents, setIncidents] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
+  const [reports, setReports] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
 
   //State and array of incidents and their counts
   const [homicideIncidents, setHomicideIncidentCount] = useState(0)
@@ -77,19 +113,9 @@ export default function Summary() {
   const [carnappingIncidents, setCarnappingIncidentCount] = useState(0)
   const [rapeIncidents, setRapeIncidentCount] = useState(0)
 
-  //Calendar States & Constants
-  const initialDate = {timestamp: Timestamp.now().toMillis(), date: Timestamp.now().toDate()};
-  const [current, setCurrent] = useState(initialDate.date);
-  const minDate = formatDate(subYears(initialDate.date, 4), "yyyy-MM-dd");
-  const maxDate = formatDate(initialDate.date, "yyyy-MM-dd");
-  const [markedDates, setMarkedDates] = useState<{
-    [key: string]: { selected: boolean; selectedColor: string };
-  }>({});
-  const [dateMode, setDateMode] = useState("month");
-  const [selectedDate, setSelectedDate] = useState(formatDate(initialDate.date, "yyyy-MM-dd").toString());
-  
   //State for managing loading state
   const [loading, setLoading] = useState(true);
+
 
   const handleTimeRangePress = useCallback((index: number) => {
     setTimeRangeState(index);
@@ -99,21 +125,104 @@ export default function Summary() {
 
   //Fetch Data from Database, set incidents array and bar data array for use in the Bar Chart
   const handleDataChange = async () => {
+    console.log("WTF");
     setLoading(true);
-    const querySnapshot = await incidentCollection.get();
-    const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setIncidents(data);
-    setBarData(data, timeRangeIndex.current);
-  };
+    if(timeRangeIndex.current === 1) {
+      crimesCollection
+      .where("unixTOC", ">", getTime(startOfDay(new Date())))
+      .where("unixTOC", "<", getTime(endOfDay(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIncidents(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+      })
+    reportsCollection
+    .where("unixTOC", ">", getTime(startOfDay(new Date())))
+    .where("unixTOC", "<", getTime(endOfDay(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setReports(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+      })
+    } else if(timeRangeIndex.current === 2) {
+      crimesCollection
+      .where("unixTOC", ">", getTime(startOfMonth(new Date())))
+      .where("unixTOC", "<", getTime(endOfMonth(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIncidents(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+      })
+    reportsCollection
+    .where("unixTOC", ">", getTime(startOfWeek(new Date())))
+    .where("unixTOC", "<", getTime(endOfWeek(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setReports(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+      })
+    } else if(timeRangeIndex.current) {
+      crimesCollection
+      .where("unixTOC", ">", getTime(startOfWeek(new Date())))
+      .where("unixTOC", "<", getTime(endOfWeek(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIncidents(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+      })
+    reportsCollection
+    .where("unixTOC", ">", getTime(startOfMonth(new Date())))
+    .where("unixTOC", "<", getTime(endOfMonth(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setReports(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+      })
+    } else if (timeRangeIndex.current === 4) {
+      crimesCollection
+      .where("unixTOC", ">", getTime((customRange.start)))
+      .where("unixTOC", "<", getTime((customRange.end)))
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIncidents(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+      })
+    reportsCollection
+    .where("unixTOC", ">", getTime((customRange.start)))
+    .where("unixTOC", "<", getTime((customRange.end)))
+      .get()
+      .then((querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setReports(data);
+        setBarData(data, timeRangeIndex.current);
+        setLoading(false);
+    });
+  }
+};
 
     //Error Handling Function
     const fetchError =  (error : any) => {console.log(error);}
 
     //Attaches a Listener to the Incident Collection and cleans up when the component is unmounted
-    useEffect(() => {
-      const unsubscribe = incidentCollection.onSnapshot(handleDataChange, fetchError);
-      return () => unsubscribe();
-    }, [timeRangeIndex.current]);
+    // useEffect(() => {
+    //   console.log("Incident Collection Listener Attached");
+    //   const unsubscribe = crimesCollection.onSnapshot(handleDataChange, fetchError);
+    //   return () => unsubscribe();
+    // }, [timeRangeIndex.current]);
 
   const setBarData = useCallback ((incidents : any, chosenDateRange: number) => {
 
@@ -127,17 +236,6 @@ export default function Summary() {
     let kidnappingCount = 0;
     let carnappingCount = 0;
     let rapeCount = 0;
-
-    function setCounts() {
-      setHomicideIncidentCount(homicideCount);
-      setInjuryIncidentCount(injuryCount);
-      setTheftIncidentCount(theftCount);
-      setRobberyIncidentCount(robberyCount);
-      setKidnappingIncidentCount(kidnappingCount);
-      setCarnappingIncidentCount(carnappingCount);
-      setRapeIncidentCount(rapeCount);
-      setLoading(false);
-    }
 
     // Iterate through incidents once
     incidents.map((incident: any) => {
@@ -170,7 +268,6 @@ export default function Summary() {
               default:
                 break;
             }
-            setCounts();
           }
         } else if (chosenDateRange === 2) {
           if (isThisWeek(incidentDate)) {
@@ -199,7 +296,6 @@ export default function Summary() {
               default:
                 break;
             }
-            setCounts();
           }
         } else if (chosenDateRange === 3) {
           if (isThisMonth(incidentDate)) {
@@ -228,13 +324,22 @@ export default function Summary() {
               default:
                 break;
             }
-            setCounts();
           }
         } else if (chosenDateRange === 4) {
-
+          // Handle 'Custom' case
         }
       }
     });
+
+    // Set counts
+    setHomicideIncidentCount(homicideCount);
+    setInjuryIncidentCount(injuryCount);
+    setTheftIncidentCount(theftCount);
+    setRobberyIncidentCount(robberyCount);
+    setKidnappingIncidentCount(kidnappingCount);
+    setCarnappingIncidentCount(carnappingCount);
+    setRapeIncidentCount(rapeCount);
+    setLoading(false);
   },[incidents, timeRangeState]);
 
 
@@ -336,7 +441,6 @@ export default function Summary() {
 
           <ScrollView style = {{backgroundColor: '#DADADA'}} contentContainerStyle = {{justifyContent: 'center', alignItems: 'center'}}>
   
-            {/* MAIN CONTAINER */}
             <ImageBackground
             source = {texture}
             style={[{ width: '100%', justifyContent: 'space-between', alignItems: 'center', flexDirection: 'column', paddingVertical: 25}]}>
@@ -351,6 +455,9 @@ export default function Summary() {
                   key={timeRange.id}
                   onPress={() => {
                     handleTimeRangePress(index + 1);
+                    if(timeRange.id === 4) {
+                      handleCalendarSnapPress(0);
+                    }
                     timeRangeIndex.current = timeRange.id;
                     setBarData(incidents, timeRangeIndex.current);
                     }}>
@@ -363,11 +470,9 @@ export default function Summary() {
   
             <View style = {{width: '85%', justifyContent: 'space-around', flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 20, marginVertical: '5%'}}>
               
-              {/*CRIMES COUNT*/}
               <View style = {{flexDirection: 'column', justifyContent: 'center', alignItems:'center'}}>
-                <Text style = {{width: '100%', fontSize: 28, fontWeight:'bold', textAlign: 'center', color: '#115272'}}>Crimes</Text>
                 <AnimatedCircularProgress
-                style = {{height: "auto", aspectRatio: 1/1}}
+                style = {{height: circularProgressSize * .75}}
                 size={circularProgressSize}
                 width={20}
                 fill={incidents.length}
@@ -386,16 +491,15 @@ export default function Summary() {
                   )
                 }
                 </AnimatedCircularProgress>
+                <Text style = {{width: '100%', fontSize: title, fontWeight:'bold', textAlign: 'center', color: '#115272'}}>Crimes</Text>
               </View>
 
-              {/*REPORTS COUNT*/}
               <View style = {{flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                <Text style = {{width: '100%', fontSize: 28, fontWeight:'bold', textAlign: 'center', color: '#115272'}}>Reports</Text>
                   <AnimatedCircularProgress
-                  style = {{height: "auto"}}
+                  style = {{height: circularProgressSize * .75}}
                   size={circularProgressSize}
                   width={20}
-                  fill={24}
+                  fill={reports.length}
                   arcSweepAngle={220}
                   rotation={250}
                   tintColor='#DA4B46'
@@ -412,23 +516,20 @@ export default function Summary() {
                     )
                   }
                   </AnimatedCircularProgress>
+                  <Text style = {{width: '100%', fontSize: 28, fontWeight:'bold', textAlign: 'center', color: '#115272'}}>Reports</Text>
+
               </View>
+              
             </View>
       
-            {/*BAR CHART*/}
+
             <View style = {{width: '85%', justifyContent: 'center', alignItems: 'center', flexDirection: 'row', backgroundColor: '#FFF', marginVertical:'5%', paddingVertical: 25, borderRadius: 20,}}>
-              {loading && 
-                <View style = {{width: "100%", justifyContent: "center"}}>
-                  <ActivityIndicator style = {{paddingVertical: '25%'}} color='#115272' size={'large'}/>
-                </View>
-                }
-              <ScrollView horizontal>
-                {!loading && <BarChart data={barData} initialSpacing={30} barWidth={17.5} barBorderTopLeftRadius={5} barBorderTopRightRadius={5} animationDuration={200} isAnimated/>}         
-              </ScrollView>
+              { loading && <ActivityIndicator style = {{paddingVertical: '25%'}} color='#115272' size={'large'}/>}
+              { !loading && <BarChart data={barData} initialSpacing={30} barWidth={17.5} barBorderTopLeftRadius={5} barBorderTopRightRadius={5} animationDuration={200} isAnimated/>}
+              
             </View>
 
-            {/*GENERATE REPORTS BUTTON*/}
-            <TouchableOpacity style = {{width: '50%', height: 'auto', backgroundColor: '#DA4B46', paddingVertical: '1.5%', borderRadius: 50, justifyContent: 'center', marginVertical: "5%"}} 
+            <TouchableOpacity style = {{width: '50%', height: 'auto', backgroundColor: '#DA4B46', paddingVertical: '1.5%', borderRadius: 50, justifyContent: 'center'}} 
             onPress={ async () =>
               {
                 try{
@@ -468,14 +569,27 @@ export default function Summary() {
                 pathname: "/",
               });}*/}
               } }>
-                  <Text style = {{width: "100%", fontSize: subtitle, color: "#FFF", fontWeight: "bold", textAlign: 'center'}} >Generate Reports</Text>
+
+                  <ThemedText style = {{width: "100%", textAlign: 'center'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Generate Reports</ThemedText>
             </TouchableOpacity>
   
-          </ScrollView>
-
-          {/*CALENDAR*/}
-          {timeRangeState == 4 && 
-          <View
+          {/* CALENDAR SHEET */}
+          <Portal>
+            <BottomSheet
+              ref={calendarSheetRef}
+              index={-1}
+              snapPoints={calendarSnapPoints}
+              onChange={handleCalendarSheetChange}
+              backgroundStyle={{ backgroundColor: "#115272" }}
+              handleIndicatorStyle={{
+                backgroundColor: "#FFF",
+                width: "40%",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              enablePanDownToClose={true}
+            >
+              <View
                 style={{
                   width: "100%",
                   height: "100%",
@@ -485,7 +599,7 @@ export default function Summary() {
                 }}
               >
                 <Calendar
-                  style={{width: "100%", height: "80%",}}
+                  style={{width: "100%", height: "75%", marginBottom: "5%"}}
                   current={formatDate(current, "yyyy-MM-dd")}
                   key={formatDate(current, "yyyy-MM-dd")}
                   theme={{
@@ -500,26 +614,20 @@ export default function Summary() {
                   hideExtraDays={true}
                   markingType="dot"
                   markedDates={markedDates}
-                  onMonthChange={(month) => {
-                      if(isThisYear(month.dateString) && !isAfter(month.dateString, maxDate) && !isBefore(month.dateString, minDate)) {
-                        setDateMode("month");
-                        setSelectedDate(month.dateString);
-                      }
-                  }}
-                  onDayPress={(day) => {
-                    setSelectedDate(formatDate(day.dateString, 'yyyy-MM-dddd'));
-                    setDateMode("day");
-                    console.log(getTime(selectedDate));
+                  onDayPress={(day: { dateString: string | number | Date; }) => {
+                    // if(selectedDate.date1 === "") {
+                    //   setSelectedDate({date1: day.dateString, date2: ""});
+                    // }
+                    console.log(typeof day.dateString);
                     setMarkedDates({
-                      [day.dateString]: {
+                      [String(day.dateString)]: {
                         selected: true,
                         selectedColor: "#DA4B46",
-                      },
+                      }, 
                     });
                   }}
                 />
-
-                {!loading && 
+                {!loading &&
                 <Pressable
                   style={{
                     backgroundColor: "#DA4B46",
@@ -527,191 +635,36 @@ export default function Summary() {
                     width: "100%",
                     borderRadius: 50,
                     justifyContent: "center",
-                    marginVertical: '10%',
+                    marginVertical: '2.5%',
                     alignSelf: "center",
                   }}
                 onPress={async () => {
-
+                  handleCalendarClosePress();
+                  handleDataChange();
                 }}>
                   <Text
                     style = {{width: '100%', height: "100%", color: "#FFF", fontWeight: "bold", fontSize: 16, textAlign: "center", textAlignVertical: "center"}}>
                       Search
                   </Text>
                 </Pressable>}
-
-                {loading && 
+                {loading &&
                 <Pressable
-                  style={{backgroundColor: "#DA4B46", height: 36, width: "100%", borderRadius: 50, justifyContent: "center", marginVertical: '5%', alignSelf: "center", paddingVertical: loading ? '2.5%' : 0
+                  style={{
+                    backgroundColor: "#DA4B46",
+                    height: 36,
+                    width: "100%",
+                    borderRadius: 50,
+                    justifyContent: "center",
+                    marginVertical: '5%',
+                    alignSelf: "center",
+                    paddingVertical: loading ? '2.5%' : 0
                   }}>
                     <ActivityIndicator size="large" color="#FFF"/>
                 </Pressable>}
-          </View>}
-  
-      </ThemedView>
-    );
-  }
-  else if (Platform.OS === 'web') {
-    return (
-    
-      <ThemedView
-      style={[styles.mainContainer, utility.blueBackground]}
-      >
-          <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }} >
-            
-            {/* MAIN CONTAINER */}
-            <SpacerView
-            flex={1}
-            flexDirection='column'
-            justifyContent='center'
-            alignItems='center'>
+              </View>
+            </BottomSheet>
+          </Portal>
 
-                {/* MIDDLE COLUMN */}
-                <SpacerView
-                flex={1}
-                height="100%"
-                width="75%"
-                flexDirection='column'
-                justifyContent='space-evenly'>
-
-                    <SpacerView
-                    backgroundColor = "#FFF"
-                    justifyContent='center'
-                    alignItems='center'
-                    flexDirection='column'
-                    width='100%'
-                    borderRadius={20}
-                    height='auto'
-                    paddingTop='2%'
-                    paddingBottom='2%'>
-                        <Image source={user}/>
-                        <ThemedText lightColor='#115272' darkColor='#115272' type="title" paddingVertical = {2}> John Doe </ThemedText>
-                    </SpacerView>
-                
-                    <SpacerView
-                    height='auto'
-                    justifyContent='space-between'>
-                    
-                        <SpacerView
-                        backgroundColor='#FFF'
-                        height="auto"
-                        width='45%'
-                        flexDirection='column'
-                        justifyContent='center'
-                        paddingLeft='2%'
-                        paddingRight='2%'
-                        paddingTop='1%'
-                        paddingBottom='1%'
-                        borderRadius={20}
-                        >
-                          
-                            <SpacerView
-                            borderBottomWidth={5}
-                            borderBottomColor='#115272'
-                            height='auto'
-                            marginTop='5%'
-                            marginBottom = '5%'
-                            >
-                                <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle">Personal Information</ThemedText>
-
-                            </SpacerView>
-
-                            <SpacerView
-                            flex={1}
-                            justifyContent='space-between'
-                            height='auto'
-                            >
-
-                                <SpacerView
-                                height='auto'
-                                width="45%"
-                                flexDirection='column'
-                                >
-                                    <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> First Name </ThemedText>
-                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' placeholderTextColor = "#115272" placeholder="John Doe"/>
-                                </SpacerView>
-
-                                <SpacerView
-                                height='auto'
-                                width="45%"
-                                flexDirection='column'>
-                                    <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle" paddingVertical = {2}> Last Name </ThemedText>
-                                    <ThemedInput borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder="John Doe" />
-                                </SpacerView>
-
-                            </SpacerView>
-
-                            <SpacerView
-                            flexDirection='column'
-                            height='auto'
-                            >
-                              <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> Email </ThemedText>
-                              <ThemedInput width='45%' borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder='@gmail.com' />
-                              
-                              <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle"> Phone Number </ThemedText>
-                              <ThemedInput width='45%' borderRadius = {5} backgroundColor='#FFF' type='blueOutline' marginVertical='2.5%' placeholderTextColor = "#115272" placeholder='+63' />
-                            </SpacerView>
-
-                            <SpacerView
- 
-                            justifyContent='center'
-                            alignItems='flex-end'
-                            height='auto'
-                            marginTop='5%'
-                            >
-
-                                <ThemedButton width='35%' title="Login" onPress={() =>
-                                  {router.replace("/(tabs)/emergency")}} />
-
-                            </SpacerView>
-
-                        </SpacerView>
-
-                        <SpacerView
-                        backgroundColor='#FFF'
-                        height="50%"
-                        width='45%'
-                        flexDirection='column'
-                        alignItems='center'
-                        justifyContent='center'>
-
-                            <SpacerView
-                            borderBottomWidth={5}
-                            borderBottomColor='#115272'
-                            height='auto'
-                            marginTop='5%'
-                            marginBottom = '5%'
-                            width='90%'
-                            >
-                                <ThemedText lightColor='#115272' darkColor='#115272' type="subtitle">Account Settings</ThemedText>
-
-                            </SpacerView>
-
-                            <SpacerView
-                            flex={1}
-                            flexDirection='column'
-                            justifyContent='space-evenly'
-                            alignItems='center'
-                            height='auto'
-                            width='100%'
-                            >
-
-                            <ThemedButton width='35%' title="Delete Account" onPress={() =>
-                                  {router.replace("/(auth)/login")}} />  
-
-                            <ThemedButton width='35%' title="Logout" onPress={() =>
-                                   {router.replace("/(auth)/login")}} />  
-
-                            </SpacerView>
-
-                        </SpacerView>
-
-                    </SpacerView>
-
-                </SpacerView>
-
-            </SpacerView>
-  
           </ScrollView>
   
       </ThemedView>

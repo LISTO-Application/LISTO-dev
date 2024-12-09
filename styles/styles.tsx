@@ -195,7 +195,8 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 18,
-    color: 'black',
+    fontWeight: 'bold',
+    color: '#115272',
   },
   textInput: {
     borderWidth: 1,

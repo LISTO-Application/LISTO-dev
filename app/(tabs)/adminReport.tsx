@@ -1,6 +1,6 @@
 //React Imports
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet, Image, ImageSourcePropType, Alert, ActivityIndicator, Pressable } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet, Image, ImageSourcePropType, Alert, ActivityIndicator, Pressable, KeyboardAvoidingView } from 'react-native';
 import Geocoder from 'react-native-geocoding';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -35,7 +35,7 @@ import { AnimatePresence, MotiView, ScrollView, useDynamicAnimation } from 'moti
 import Thanks from "@/assets/images/thanks.svg"
 import Archive from "@/assets/images/archive.svg"
 import Check from "@/assets/images/check.svg"
-import Create from "@/assets/images/create.svg"
+import Created from "@/assets/images/created.svg"
 
 //Style Imports
 import { styles } from '@/styles/styles'; // Adjust the path if necessary
@@ -59,7 +59,7 @@ export default function adminReport() {
   // AUTHENTICATION STATE
   const session = firebase.auth().currentUser;
   session?.getIdTokenResult().then((idTokenResult) => {
-    if(!idTokenResult.claims.admin) {
+    if(!idTokenResult.claims.user) {
       router.replace("../(auth)/login");
     }
   })
@@ -111,6 +111,7 @@ export default function adminReport() {
   // MODAL STATES
   const [addReportVisible, AddReportVisible] = useState(false);
   const [geoLocateVisible, setGeoLocateVisible] = useState(false);
+  const [viewGeoVisible, setViewGeoVisible] = useState(false);
   const [addCrime, setAddCrime] = useState(false);
 
   // FORM INPUTS
@@ -257,12 +258,16 @@ export default function adminReport() {
                       setDetailID(report.id);
                       setDetails({...report.data(), image: {uri: url, filename: ""}});
                       setLoading(false);
+                    }).catch((error) => {
+                      console.log(error);
+                      setLoading(false);
+                      Alert.alert("Could not fetch image", "Could not fetch image. Please try again later.");
                     });
                   } else {
                     setGeoLocation({coords: {latitude: report.data().coordinate.latitude, longitude: report.data().coordinate.longitude, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null}, timestamp: 0});
                       setSelectedValue({label: report.data().category, value: report.data().category});
                       setLocation(report.data().location);
-                      setDate(report.data().date.toDate());
+                      setDate(report.data().timeOfCrime.toDate());
                       setUploadImage("");
                       setTime(report.data().timeOfCrime.toDate());
                       setAdditionalInfo(report.data().additionalInfo);
@@ -319,137 +324,335 @@ export default function adminReport() {
         {/* ADD REPORT MODAL */}
         {addCrime && 
         <Modal statusBarTranslucent visible = {addCrime} hardwareAccelerated>
-          <View style={[styles.headerContainer, {opacity: loading ? 0.5 : 1}]}>
-            <Text style={styles.headerText}>Submit a Report</Text>
-            <SpacerView height={80} />
-          </View>
-
-        <ScrollView style = {{opacity: loading ? 0.5 : 1}}>
-            <View style={styles.formContainer}>
-
-              {/* Crime Type */}
-              <TouchableOpacity style={styles.dropdown} onPress={() => AddReportVisible(true)}>
-                <Text style={styles.selectedText}>{selectedValue.label}</Text>
-                <Ionicons name="chevron-down" size={24} color="#115272" />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={{padding: 15,borderWidth: 1, borderColor: '#115272', borderRadius: 5, flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 20,}} 
-                    onPress={ async () => {
-                      await getCurrentLocation().then((location) => {
-                        if (location != false) {
-                          if(location.coords.latitude <= mapBoundaries.northEast.latitude &&
-                            location.coords.longitude <= mapBoundaries.northEast.longitude &&
-                            location.coords.latitude >= mapBoundaries.southWest.latitude &&
-                            location.coords.longitude >= mapBoundaries.southWest.longitude) {
-                              setGeoLocation(location);
-                              setGeoLocateVisible(true)
-                            } else {
-                              Alert.alert("Out of bounds", "You are outside the boundaries of the barangays. Please avoid reporting if the incident is not within the area.", [{text: "OK", onPress: () => {
-                                setGeoLocateVisible(true);
-                              }}]);
-                            }
-                        } else {
-                          Alert.alert("Could not get location", "Please enable location services to send a distress message.");
-                        }
-                      });
-                    }}>
-                <Ionicons name="locate" size={24} color="#115272" />
-                <Text style={[styles.selectedText, {marginHorizontal: "2.5%"}, location == "Tap to locate the incident" ? {color: "#B4B4B4"} : {color: "#115272"}]}>{location}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={{padding: 15,borderWidth: 1, borderColor: '#115272', borderRadius: 5, flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 20,}} 
-                onPress={()=>{
-                      DateTimePickerAndroid.open({
-                        minimumDate: new Date(subYears(Date.now(), 4)),
-                        maximumDate: new Date(Date.now()),
-                        value: date,
-                        onChange: (event, selectedDate) => {
-                          if (selectedDate !== undefined) {
-                            setDate(selectedDate);
-                          }
-                        },
-                        mode: 'date',
-                        is24Hour: true,
-                      });
-                    }}>
-                <Ionicons name="calendar-outline" size={24} color="#115272" />
-                <Text style={[styles.selectedText, {marginHorizontal: "2.5%"}]}>{date.toDateString()}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={{padding: 15,borderWidth: 1, borderColor: '#115272', borderRadius: 5, flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 20,}} 
-                onPress={()=>{
-                      DateTimePickerAndroid.open({
-                        minimumDate: new Date(subYears(Date.now(), 4)),
-                        maximumDate: new Date(Date.now()),
-                        value: time,
-                        onChange: (event, selectedDate) => {
-                          if (selectedDate !== undefined) {
-                            setTime(selectedDate);
-                          }
-                        },
-                        mode: 'time',
-                        is24Hour: true,
-                      });
-                    }}>
-                <Ionicons name="time-outline" size={24} color="#115272" />
-                <Text style={[styles.selectedText, {marginHorizontal: "2.5%"}]}>{formatDate(time, "hh:mm aa")}</Text>
-              </TouchableOpacity>
-
-              {/* Additional Information Input */}
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                placeholder="Additional Information"
-                placeholderTextColor={'#115272'}
-                value={additionalInfo}
-                onChangeText={setAdditionalInfo}
-                multiline={true}/>
-              
+          <KeyboardAvoidingView>
+            <View style={[styles.headerContainer, {opacity: loading ? 0.5 : 1}]}>
+              <Text style={styles.headerText}>Record a Crime</Text>
+              <SpacerView height={80} />
             </View>
-            {/* Action Buttons */}
-            <View style={styles.buttonContainerReport}>
-            {!loading ? 
-              <TouchableOpacity style={styles.cancelButtonReport} onPress={() => {
-                setDetails(null);
-                resetData();
-                setAddCrime(false)
-                setLoading(false);}
-                }>
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-              :
-              <TouchableOpacity style={styles.cancelButtonReport}><ActivityIndicator color="#115272" size="large"/></TouchableOpacity>
-              }
-              <TouchableOpacity
-                  style={styles.submitButton}
-                  onPress={async () => {
-                    setLoading(true);
-                      firebase.firestore().collection("crime")
-                        .add({
-                          "category" : selectedValue.value as string,
-                          "coordinate": new GeoPoint(geoLocation?.coords.latitude ?? 0, geoLocation?.coords.longitude ?? 0) as GeoPoint,
-                          "location" : location as string,
-                          "timeOfCrime" : date as Date,
-                          "time" : formatDate(time, "hh:mmaa") as string,
-                          "additionalInfo" : additionalInfo as string,
-                          "timeReported" : getTime(Date.now()) as number,
-                        })
-                        .catch((error) => {
-                          setLoading(false);
-                          console.log(error);
+            
+                    <ScrollView style = {{opacity: loading ? 0.5 : 1}}>
+              <View style={styles.formContainer}>
+                {/* Crime Type */}
+                <TouchableOpacity style={styles.dropdown} onPress={() => AddReportVisible(true)}>
+                  <Text style={styles.selectedText}>{selectedValue.label}</Text>
+                  <Ionicons name="chevron-down" size={24} color="#115272" />
+                </TouchableOpacity>
+                <TouchableOpacity style={{padding: 15,borderWidth: 1, borderColor: '#115272', borderRadius: 5, flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 20,}}
+                      onPress={ async () => {
+                        await getCurrentLocation().then((location) => {
+                          if (location != false) {
+                            if(location.coords.latitude <= mapBoundaries.northEast.latitude &&
+                              location.coords.longitude <= mapBoundaries.northEast.longitude &&
+                              location.coords.latitude >= mapBoundaries.southWest.latitude &&
+                              location.coords.longitude >= mapBoundaries.southWest.longitude) {
+                                setGeoLocation(location);
+                                setGeoLocateVisible(true)
+                              } else {
+                                Alert.alert("Out of bounds", "You are outside the boundaries of the barangays. Please avoid reporting if the incident is not within the area.", [{text: "OK", onPress: () => {
+                                  setGeoLocateVisible(true);
+                                }}]);
+                              }
+                          } else {
+                            Alert.alert("Could not get location", "Please enable location services to send a distress message.");
+                          }
                         });
-                      setLoading(false);
-                      setAddCrime(false);
-                      setCrimeMade(true);
+                      }}>
+                  <Ionicons name="locate" size={24} color="#115272" />
+                  <Text style={[styles.selectedText, {marginHorizontal: "2.5%"}, location == "Tap to locate the incident" ? {color: "#B4B4B4"} : {color: "#115272"}]}>{location}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{padding: 15,borderWidth: 1, borderColor: '#115272', borderRadius: 5, flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 20,}}
+                  onPress={()=>{
+                        DateTimePickerAndroid.open({
+                          minimumDate: new Date(subYears(Date.now(), 4)),
+                          maximumDate: new Date(Date.now()),
+                          value: date,
+                          onChange: (event, selectedDate) => {
+                            if (selectedDate !== undefined) {
+                              setDate(selectedDate);
+                            }
+                          },
+                          mode: 'date',
+                          is24Hour: true,
+                        });
+                      }}>
+                  <Ionicons name="calendar-outline" size={24} color="#115272" />
+                  <Text style={[styles.selectedText, {marginHorizontal: "2.5%"}]}>{date.toDateString()}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{padding: 15,borderWidth: 1, borderColor: '#115272', borderRadius: 5, flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 20,}}
+                  onPress={()=>{
+                        DateTimePickerAndroid.open({
+                          minimumDate: new Date(subYears(Date.now(), 4)),
+                          maximumDate: new Date(Date.now()),
+                          value: time,
+                          onChange: (event, selectedDate) => {
+                            if (selectedDate !== undefined) {
+                              setTime(selectedDate);
+                            }
+                          },
+                          mode: 'time',
+                          is24Hour: true,
+                        });
+                      }}>
+                  <Ionicons name="time-outline" size={24} color="#115272" />
+                  <Text style={[styles.selectedText, {marginHorizontal: "2.5%"}]}>{formatDate(time, "hh:mm aa")}</Text>
+                </TouchableOpacity>
+                {/* Additional Information Input */}
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  placeholder="Additional Information"
+                  placeholderTextColor={'#115272'}
+                  value={additionalInfo}
+                  onChangeText={setAdditionalInfo}
+                  multiline={true}/>
+            
+              </View>
+              {/* Action Buttons */}
+              <View style={styles.buttonContainerReport}>
+              {!loading ?
+                <TouchableOpacity style={styles.cancelButtonReport} onPress={() => {
+                  setDetails(null);
+                  resetData();
+                  setAddCrime(false)
+                  setLoading(false);}
+                  }>
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+                :
+                <TouchableOpacity style={styles.cancelButtonReport}><ActivityIndicator color="#115272" size="large"/></TouchableOpacity>
+                }
+                <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={async () => {
+                      if(selectedValue.value == "") {
+                        return Alert.alert("No Crime Selected", "Please select a crime type before submitting.");
+                      }
+                      if(location == "Tap to locate the incident") {
+                        return Alert.alert("No Location Selected", "Please select a location before submitting.");
+                      }
+                      setLoading(true);
+                        firebase.firestore().collection("crimes")
+                          .add({
+                            "category" : selectedValue.value as string,
+                            "coordinate": new GeoPoint(geoLocation?.coords.latitude ?? 0, geoLocation?.coords.longitude ?? 0) as GeoPoint,
+                            "location" : location as string,
+                            "timeOfCrime" : date as Date,
+                            "time" : formatDate(time, "hh:mmaa") as string,
+                            "additionalInfo" : additionalInfo as string,
+                            "timeReported" : getTime(Date.now()) as number,
+                          })
+                          .then(()=> {
+                            setLoading(false);
+                            setAddCrime(false);
+                            setCrimeMade(true);
+                            resetData();
+                          })
+                          .catch((error) => {
+                            setLoading(false);
+                            console.log(error);
+                          });
+                    }}>
+                    {!loading ?
+                    <Text style={[styles.buttonText, { color: '#FFF' }]}>Submit</Text>
+                    :
+                    <ActivityIndicator size="small" color="#FFF"/>
+                    }
+                  </TouchableOpacity>
+              </View>
+                    </ScrollView>
+          </KeyboardAvoidingView>
+        </Modal>}
+
+        
+        {/* CRIME CATEGORY MODAL */}
+        {addReportVisible && <Modal
+          visible={addReportVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => AddReportVisible(false)}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <FlatList
+                data={crimeTypes}
+                keyExtractor={(item) => item.value}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.item} 
+                  onPress={() => {
+                    handleSelect(item)
+                    }}>
+                    <Text style={styles.itemText}>{item.label}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </Modal>}
+
+        {/* EDITABLE GEOLOCATION MODAL */}
+        {geoLocateVisible && 
+        <Modal
+          visible={geoLocateVisible}
+          transparent={true}
+          animationType="slide"
+          statusBarTranslucent={true}
+          hardwareAccelerated>
+            <View style = {{width: "100%", height: "100%", backgroundColor: "#FFF", alignItems:"center", alignSelf: "center", marginVertical: "auto", borderRadius: 5}}>
+
+                <MapView
+                style={{width: "100%", height: "100%"}}
+                ref={mapRef}
+                provider={PROVIDER_GOOGLE}
+                minZoomLevel={15}
+                maxZoomLevel={17}
+                cameraZoomRange={{
+                  minCenterCoordinateDistance: 14,
+                  maxCenterCoordinateDistance: 17,
+                  animated: true,
+                }}
+                onRegionChangeComplete={(region) => {
+                  setLocationLoading(true);
+                  setTimeout(() => {
+                    setGeoLocation({coords: {latitude: region.latitude, longitude: region.longitude, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null}, timestamp: 0});
+                    // mapRef.current?.addressForCoordinate({latitude: region.latitude, longitude: region.longitude}).then((address) => {
+                    //   if (address) {
+                    //     setLocation(
+                    //       (address.thoroughfare ? address.thoroughfare + (address.subThoroughfare == null ? ", " : " ")  : "") + 
+                    //       (address.subThoroughfare != null && address.subThoroughfare ? address.subThoroughfare + ", " : "") + 
+                    //       (address.locality ? address.locality + ", " : "") + 
+                    //       (address.administrativeArea ? address.administrativeArea + " " : ""));
+                    //   }
+                    // console.log(location);
+                    // setLocationLoading(false);
+                    // });
+                    Geocoder.from(region.latitude, region.longitude)
+                    .then(json => {
+                        setLocation(json.results[0].formatted_address);
+                        setLocationLoading(false);
+                    })
+                    .catch(error => console.warn(error));
+                  }, 2000);
+                }}
+                loadingEnabled={true}
+                loadingBackgroundColor="#115272"
+                loadingIndicatorColor="#FFF"
+                googleMapId= "5cc51025f805d25d"
+                onMapLoaded={(e) => {
+                    if (geoLocation) {
+                      mapRef.current?.animateToRegion({
+                        latitude: geoLocation.coords.latitude,
+                        longitude: geoLocation.coords.longitude,
+                        latitudeDelta: 0,
+                        longitudeDelta: 0
+                      });
+                    }
                   }}>
 
-                  {!loading ?
-                  <Text style={[styles.buttonText, { color: '#FFF' }]}>Submit</Text>
-                  :
-                  <ActivityIndicator size="small" color="#FFF"/>
-                  }
-                </TouchableOpacity>
+                    
+
+                  {/* {geoLocation && 
+                    <Marker
+                    coordinate={{latitude: geoLocation.coords.latitude, longitude: geoLocation.coords.longitude}}
+                    isPreselected={true}
+                    draggable
+                    onDragEnd={(coord) => {
+                      // setGeoLocation({coords: {latitude: coord.nativeEvent.coordinate.latitude, longitude: coord.nativeEvent.coordinate.longitude, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null}, timestamp: 0});
+                      mapRef.current?.addressForCoordinate(coord.nativeEvent.coordinate).then((address) => {
+                        if (address) {
+                          setLocation(
+                            (address.thoroughfare ? address.thoroughfare + (address.subThoroughfare == null ? ", " : " ")  : "") + 
+                            (address.subThoroughfare != null && address.subThoroughfare ? address.subThoroughfare + ", " : "") + 
+                            (address.locality ? address.locality + ", " : "") + 
+                            (address.administrativeArea ? address.administrativeArea + ", " : ""));
+                        }
+                        console.log(address);
+                      });
+                    }}
+                    />
+                  } */}
+                </MapView>
+
+              <View style = {{position:"absolute", bottom: 0, left: 0, top: 0, right: 0, justifyContent: "center", alignItems:"center", padding: "1.5%"}}>
+                <Ionicons name= "location-sharp" size = {subDisplay} color="#115272" />
+              </View>
+
+              <Text style = {{position: "absolute", width: "75%", bottom: "17.5%", borderRadius: 50, fontSize: small, fontWeight: "bold", color: "#115272", textAlign: "center"}}>Pan the map to pin the location.</Text>
+              <View style = {{position: "absolute", bottom: "12.5%", width: "75%", backgroundColor: "#FFF", borderWidth: 3, borderColor: "#115272", borderRadius: 50, paddingHorizontal: "2.5%", paddingVertical: "1%", overflow: "scroll"}}>
+                {!locationLoading ? 
+                <>
+                  <ScrollView style = {{borderRadius: 50}} horizontal showsHorizontalScrollIndicator={false}>
+                    <Text style = {{borderRadius: 50, fontWeight: "bold", fontSize: small, color: "#115272", textAlign: "left", }}>{location}</Text>
+                  </ScrollView>
+                </> 
+                : 
+                <ActivityIndicator style = {{marginHorizontal: "auto"}} size="small" color="#115272"/>
+                }
+              </View>
+              <TouchableOpacity onPress={() => {
+                if(locationLoading == false) {
+                setGeoLocateVisible(false)
+                } else {
+                  Alert.alert("Loading location", "Please wait for the location to load before confirming.");
+                }
+                }} style = {{position: "absolute", bottom: "5%", width: "50%", backgroundColor: "#115272", paddingHorizontal: "2.5%", paddingVertical: "1.5%", borderRadius: 50}}>{!locationLoading ? <Text style = {{textAlign: "center", color: "#FFF"}}>Confirm</Text> : <ActivityIndicator style = {{marginHorizontal: "auto"}} size="small" color="#FFF"/>}</TouchableOpacity>
             </View>
-        </ScrollView>
+        </Modal>}
+
+        {/* vIEW ONLY GEOLOCATION MODAL */}
+        {viewGeoVisible && 
+        <Modal
+          visible={viewGeoVisible}
+          transparent={true}
+          animationType="slide"
+          statusBarTranslucent={true}
+          hardwareAccelerated>
+            <View style = {{width: "100%", height: "100%", backgroundColor: "#FFF", alignItems:"center", alignSelf: "center", marginVertical: "auto", borderRadius: 5}}>
+
+                <MapView
+                style={{width: "100%", height: "100%"}}
+                ref={mapRef}
+                provider={PROVIDER_GOOGLE}
+                minZoomLevel={15}
+                maxZoomLevel={17}
+                cameraZoomRange={{minCenterCoordinateDistance: 14, maxCenterCoordinateDistance: 17, animated: true}}
+                loadingEnabled={true}
+                loadingBackgroundColor="#115272"
+                loadingIndicatorColor="#FFF"
+                googleMapId= "5cc51025f805d25d"
+                onMapLoaded={(e) => {
+                    if (geoLocation) {
+                      mapRef.current?.animateToRegion({
+                        latitude: geoLocation.coords.latitude,
+                        longitude: geoLocation.coords.longitude,
+                        latitudeDelta: 0,
+                        longitudeDelta: 0
+                      });
+                    }
+                  }}>
+
+                    {geoLocation?.coords.latitude && geoLocation?.coords.longitude && (
+                      <Marker coordinate={{ latitude: geoLocation.coords.latitude, longitude: geoLocation.coords.longitude }} />
+                    )}
+    
+                </MapView>
+
+              <View style = {{position: "absolute", bottom: "12.5%", width: "75%", backgroundColor: "#FFF", borderWidth: 3, borderColor: "#115272", borderRadius: 50, paddingHorizontal: "2.5%", paddingVertical: "1%", overflow: "scroll"}}>
+                {!locationLoading ? 
+                <>
+                  <ScrollView style = {{borderRadius: 50}} horizontal showsHorizontalScrollIndicator={false}>
+                    <Text style = {{borderRadius: 50, fontWeight: "bold", fontSize: body, color: "#115272", textAlign: "left", }}>{location}</Text>
+                  </ScrollView>
+                </> 
+                : 
+                <ActivityIndicator style = {{marginHorizontal: "auto"}} size="small" color="#115272"/>
+                }
+              </View>
+              <TouchableOpacity onPress={() => {
+                if(locationLoading == false) {
+                setViewGeoVisible(false)
+                } else {
+                  Alert.alert("Loading location", "Please wait for the location to load before exiting.");
+                }
+                }} style = {{position: "absolute", bottom: "5%", width: "50%", backgroundColor: "#115272", paddingHorizontal: "2.5%", paddingVertical: "1.5%", borderRadius: 50}}>{!locationLoading ? <Text style = {{textAlign: "center", color: "#FFF", fontWeight: "bold"}}>Back</Text> : <ActivityIndicator style = {{marginHorizontal: "auto"}} size="small" color="#FFF"/>}</TouchableOpacity>
+            </View>
         </Modal>}
 
           {/* REPORT DETAILS MODAL*/}
@@ -466,12 +669,13 @@ export default function adminReport() {
               </View>
 
               <ScrollView contentContainerStyle = {{justifyContent: "center", alignItems: "center"}} style = {{width: "100%"}}>
-                <View style = {{width: "85%", flexDirection: "row", alignItems: "center", paddingVertical: "1.5%", borderRadius: 10, borderWidth: 5, borderColor: "#115272", marginVertical: "2.5%"}}>
+                <TouchableOpacity style = {{width: "85%", flexDirection: "row", alignItems: "center", paddingVertical: "1.5%", borderRadius: 10, borderWidth: 5, borderColor: "#115272", marginVertical: "2.5%"}}
+                onPress={()=> {setViewGeoVisible(true)}}>
                   <Ionicons style = {{marginHorizontal: "2.5%"}} name="location"  size={title} color="#115272"/>
                   <ScrollView>
                     <Text style = {{ color: "#115272", fontWeight: 'bold', fontSize: subtitle, marginHorizontal: "2.5%"}}> {location} </Text>
                   </ScrollView>
-                </View>
+                </TouchableOpacity>
                 
                 <View style = {{width: "85%", flexDirection: "row", alignItems: "center", paddingVertical: "2.5%", borderRadius: 10, borderWidth: 5, borderColor: "#115272", marginVertical: "2.5%"}}>
                   <Ionicons style = {{marginHorizontal: "2.5%"}} name="calendar"  size={title} color="#115272"/>
@@ -498,6 +702,7 @@ export default function adminReport() {
                   <TouchableOpacity style={{width: "40%", marginTop: "5%", backgroundColor: "#DA4B46", justifyContent: "center", borderRadius: 10, paddingVertical: "2.5%", marginVertical: "2.5%"}} 
                   onPress={() => {
                     setLoading(true);
+                    Alert.alert("Archive Report", "Are you sure you want to archive this report?", [{text: "Cancel", onPress: () => {setLoading(false)} }, {text: "Archive", onPress: () => {
                     firebase.firestore().collection("reports")
                     .doc(detailID)
                     .update({
@@ -534,14 +739,14 @@ export default function adminReport() {
                       setDetails(null);
                     })
                     .catch((error) => {
-                      resetData();
                       setLoading(false);
                       console.log(error);
                     });
+                    }}]);
                     }}>
                     {!loading ?
                     <Text style={{color: "#FFF", fontSize: subtitle, fontWeight: "bold", textAlign: "center"}}>
-                      Invalidate
+                      Archive
                     </Text>
                     :
                     <ActivityIndicator style = {{marginHorizontal: "auto"}} size="small" color="#FFF"/>}
@@ -550,7 +755,8 @@ export default function adminReport() {
                   <TouchableOpacity style={{width: "40%", marginTop: "5%", backgroundColor: "#115272", justifyContent: "center", borderRadius: 10, paddingVertical: "2.5%", marginVertical: "2.5%"}} 
                   onPress={() => {
                     setLoading(true);
-                    firebase.firestore().collection("reports")
+                    Alert.alert("Validate Report", "Are you sure you want to validate this report?", [{text: "Cancel",onPress: () => {setLoading(false)}}, {text: "Validate", onPress: () => {
+                      firebase.firestore().collection("reports")
                     .doc(detailID)
                     .update({
                       "status": 2
@@ -564,6 +770,7 @@ export default function adminReport() {
                       "time" : formatDate(time, "hh:mmaa") as string,
                       "additionalInfo" : additionalInfo as string,
                       "timeReported" : details.timeReported as number,
+                      "unixTOC" : details.timestamp as number,
                     })
                   })
                   .then(async () => {
@@ -584,10 +791,11 @@ export default function adminReport() {
                     setDetails(null);
                   })
                   .catch((error) => {
-                    resetData();
                     setLoading(false);
                     console.log(error);
                   });
+                    }}])
+                    
                     }}>
                     {!loading ?
                     <Text style={{color: "#FFF", fontSize: subtitle, fontWeight: "bold", textAlign: "center"}}>
@@ -633,7 +841,7 @@ export default function adminReport() {
           <>
             <MotiView style = {{position: "absolute", width: '100%', height: '100%', flexDirection: "column", backgroundColor: '#115272', justifyContent: 'center', alignItems: 'center'}} from = {{opacity: 0}} animate={{opacity: 1}}>
               <MotiView from = {{scale: 0}} animate={{scale: 1}}><Archive width={150} height={150} color="#FFF" style = {{backgroundColor: "#DA4B46", borderWidth: 5, borderRadius: 100, marginBottom: "5%"}}/></MotiView>
-              <Text style = {{color: "#FFF", fontWeight: 'bold', fontSize: title, textAlign: "center"}}>Report Invalidated and Archived!</Text>
+              <Text style = {{color: "#FFF", fontWeight: 'bold', fontSize: title, textAlign: "center"}}>Report Archived!</Text>
               <TouchableOpacity style={{width: "50%", marginTop: "5%", backgroundColor: "#DA4B46", justifyContent: "center", borderRadius: 50, paddingVertical: "2.5%"}} onPress={() => setArchived(false)}>
                 <Text style={{color: "#FFF",fontSize: subtitle, fontWeight: "bold", textAlign: "center"}}>
                   OK
@@ -645,7 +853,7 @@ export default function adminReport() {
           {crimeMade && 
           <>
             <MotiView style = {{position: "absolute", width: '100%', height: '100%', flexDirection: "column", backgroundColor: '#115272', justifyContent: 'center', alignItems: 'center'}} from = {{opacity: 0}} animate={{opacity: 1}}>
-              <MotiView from = {{scale: 0}} animate={{scale: 1}}><Create width={150} height={150} color="#FFF" style = {{backgroundColor: "#DA4B46", borderWidth: 5, borderRadius: 100, marginBottom: "5%"}}/></MotiView>
+              <MotiView from = {{scale: 0}} animate={{scale: 1}}><Created width={150} height={150} color="#FFF" style = {{backgroundColor: "#DA4B46", borderWidth: 5, borderRadius: 100, marginBottom: "5%"}}/></MotiView>
               <Text style = {{color: "#FFF", fontWeight: 'bold', fontSize: title, textAlign: "center"}}>Crime Recorded!</Text>
               <TouchableOpacity style={{width: "50%", marginTop: "5%", backgroundColor: "#DA4B46", justifyContent: "center", borderRadius: 50, paddingVertical: "2.5%"}} onPress={() => setCrimeMade(false)}>
                 <Text style={{color: "#FFF",fontSize: subtitle, fontWeight: "bold", textAlign: "center"}}>

@@ -35,7 +35,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   }, []);
 
   const icons = {
-    emergency: (props: any) => (
+    adminEmergency: (props: any) => (
       <Image style={{ width: 36, height: 36 }} source={phone} {...props} />
     ),
     adminReport: (props: any) => (
@@ -53,6 +53,11 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     return (
       <View style={styles.tabBar}>
         {state.routes.map((route: any, index: any) => {
+
+          if(route.name === "adminSummary") {
+            return null;
+          }
+          
           const { options } = descriptors[route.key];
           const label =
             options.tabBarLabel !== undefined

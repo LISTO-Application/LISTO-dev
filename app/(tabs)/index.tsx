@@ -74,6 +74,7 @@ const carnappingMarker = require("../../assets/images/car-marker.png");
 const injuryMarker = require("../../assets/images/injury-marker.png");
 const robberyMarker = require("../../assets/images/robbery-marker.png");
 const rapeMarker = require("../../assets/images/rape-marker.png");
+const summaryButton = require("../../assets/images/summary-button.png")
 
 export default function CrimeMap() {
 
@@ -193,7 +194,6 @@ export default function CrimeMap() {
           .where("unixTOC", "<", getTime(endOfMonth(initialDate.date)))
           .get()
           .then((querySnapshot) => {
-            console.log("WATDAPAK")
             const fetchedCrimeData: SetStateAction<FirebaseFirestoreTypes.DocumentData[]> = [];
             querySnapshot.forEach((doc) => {
               console.log("WAW")
@@ -356,6 +356,25 @@ export default function CrimeMap() {
             }
 
           </MapView>}
+
+          <TouchableOpacity
+              style={{
+                position: "absolute",
+                top: 30,
+                left: 20,
+              }}
+              onPress={() => {
+                router.push("../(tabs)/adminSummary");
+              }}
+            >
+              <Image
+                style={{
+                  width: 50,
+                  height: 50,
+                }}
+                source={summaryButton}
+              />
+            </TouchableOpacity>
 
           {!isFilterSheetOpen && (
             <TouchableOpacity

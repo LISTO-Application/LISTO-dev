@@ -17,7 +17,7 @@ import { TabBar } from "@/components/navigation/TabBar";
 
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
-import Emergency from "./emergency";
+import Emergency from "./adminEmergency";
 import CrimeMap from ".";
 import UserAccount from "./account";
 import ValidateReports from "../(drawer)/validateReports";
@@ -83,7 +83,7 @@ export default function TabLayout() {
         tabBar={(props) => <TabBar {...props} />}
       >
         <Tabs.Screen
-          name="emergency"
+          name="adminEmergency"
           options={{
             tabBarShowLabel: false,
             tabBarHideOnKeyboard: true,
@@ -114,6 +114,15 @@ export default function TabLayout() {
             tabBarShowLabel: false,
             tabBarHideOnKeyboard: true,
             title: "Account",
+          }}
+        />
+
+        <Tabs.Screen
+          name="adminSummary"
+          options={{
+            tabBarShowLabel: false,
+            tabBarHideOnKeyboard: true,
+            title: "Summary",
           }}
         />
       </Tabs>
