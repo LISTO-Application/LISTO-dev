@@ -185,6 +185,8 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
   
     return utcDate;
   };
+
+  
   const handleImport = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -221,96 +223,103 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
   
-        const importedReports = await Promise.all(jsonData.map(async (item: any) => {
-          let timeOfCrime = item['Time of Crime'] ? parseTime(item['Time of Crime']) : null;
-          let timeReported = item['Time Reported'] ? parseTime(item['Time Reported']) : null;
+        const importedReports = await Promise.all(
+          jsonData.map(async (item: any) => {
+            // Validation for required fields
+            const requiredFields = ['Category', 'Title', 'Additional Info', 'Location', 'Time', 'Time of Crime', 'Time Reported'];
+            const missingFields = requiredFields.filter((field) => !item[field]);
   
-          if (!timeOfCrime) {
-            timeOfCrime = new Date(); // Default to current time
-            console.warn("Time of Crime missing or invalid, using current time.");
-          }
+            if (missingFields.length > 0) {
+              console.warn(`Missing required fields: ${missingFields.join(', ')}`);
+              return null; // Skip this report
+            }
   
-          if (!timeReported) {
-            timeReported = new Date(); // Default to current time
-            console.warn("Time Report missing or invalid, using current time.");
-          }
+            let timeOfCrime = item['Time of Crime'] ? parseTime(item['Time of Crime']) : null;
+            let timeReported = item['Time Reported'] ? parseTime(item['Time Reported']) : null;
   
-          let coordinate: FirestoreGeoPoint | null = null;
-          const lat = item['Latitude'] ? parseFloat(item['Latitude']) : null;
-          const lng = item['Longitude'] ? parseFloat(item['Longitude']) : null;
+            if (!timeOfCrime) {
+              timeOfCrime = new Date(); // Default to current time
+              console.warn('Time of Crime missing or invalid, using current time.');
+            }
   
-          // Check if latitude and longitude exist in the file
-          if (lat && lng) {
-            coordinate = new FirestoreGeoPoint(lat, lng);
-          } else if (item["Location"]) {
-            // Geocode the address if coordinates aren't available
-            coordinate = await geocodeAddress(item["Location"]);
-          }
+            if (!timeReported) {
+              timeReported = new Date(); // Default to current time
+              console.warn('Time Report missing or invalid, using current time.');
+            }
   
-          if (!coordinate) {
-            console.warn("Geocoding failed or no coordinates provided, using default coordinates for Barangay Holy Spirit.");
-            coordinate = new FirestoreGeoPoint(14.6522, 121.0633); // Default coordinates
-          }
+            let coordinate: FirestoreGeoPoint | null = null;
+            const lat = item['Latitude'] ? parseFloat(item['Latitude']) : null;
+            const lng = item['Longitude'] ? parseFloat(item['Longitude']) : null;
   
-          // Log coordinate values for debugging
-          console.log("Coordinates before formatting:", {
-            latitude: coordinate.latitude, 
-            longitude: coordinate.longitude
-          });
+            // Check if latitude and longitude exist in the file
+            if (lat && lng) {
+              coordinate = new FirestoreGeoPoint(lat, lng);
+            } else if (item['Location']) {
+              // Geocode the address if coordinates aren't available
+              coordinate = await geocodeAddress(item['Location']);
+            }
   
-          // Format the coordinates for display or usage
+            if (!coordinate) {
+              console.warn(
+                'Geocoding failed or no coordinates provided, using default coordinates for Barangay Holy Spirit.'
+              );
+              coordinate = new FirestoreGeoPoint(14.6522, 121.0633); // Default coordinates
+            }
   
-          // Convert the time to Firestore Timestamp
-          const timestampOfCrime = Timestamp.fromMillis(timeOfCrime.getTime());
-          const timestampReported = Timestamp.fromMillis(timeReported.getTime());
+            // Convert the time to Firestore Timestamp
+            const timestampOfCrime = Timestamp.fromMillis(timeOfCrime.getTime());
+            const timestampReported = Timestamp.fromMillis(timeReported.getTime());
   
-          const report = {
-            id: uuidv4(),
-            additionalInfo: item['Additional Info'] || "No additional info",
-            category: item['Category'] || "Unknown",
-            location: item['Location'] || "Unknown location",
-            time: item['Time'] || "00:00",
-            timeOfCrime: timestampOfCrime,
-            timeReported: timestampReported,
-            coordinate,  // Store GeoPoint directly
-           
-          };
+            const report = {
+              id: uuidv4(),
+              additionalInfo: item['Additional Info'],
+              category: item['Category'],
+              title: item['Title'],
+              location: item['Location'],
+              time: item['Time'],
+              timeOfCrime: timestampOfCrime,
+              timeReported: timestampReported,
+              coordinate, // Store GeoPoint directly
+            };
   
-          console.log("Imported Report Details:", report);
-          return report;
-        }));
+            console.log('Imported Report Details:', report);
+            return report;
+          })
+        );
   
-        console.log("Total Reports Imported: ", importedReports.length);
-        console.log("Imported Reports: ", importedReports);
+        const validReports = importedReports.filter(Boolean); // Filter out invalid reports
+        console.log('Total Reports Imported: ', validReports.length);
+        console.log('Imported Reports: ', validReports);
   
-        const crimesCollection = collection(db, "crimes");
+        const crimesCollection = collection(db, 'crimes');
   
         try {
-          const addReportsPromises = importedReports.map(async (report) => {
-            console.log("Adding report to Firestore:", report);
+          const addReportsPromises = validReports.map(async (report) => {
+            console.log('Adding report to Firestore:', report);
             try {
               await addDoc(crimesCollection, report);
             } catch (error) {
-              console.error("Error adding report to Firestore:", error);
+              console.error('Error adding report to Firestore:', error);
             }
           });
   
           await Promise.all(addReportsPromises);
   
-          alert("Reports successfully added.");
+          alert('Reports successfully added.');
           await fetchIncidents();
         } catch (error) {
-          console.error("Error adding reports to Firestore:", error);
-          alert("Failed to add reports. Please try again.");
+          console.error('Error adding reports to Firestore:', error);
+          alert('Failed to add reports. Please try again.');
         }
       };
   
       reader.readAsBinaryString(data);
     } catch (error) {
-      console.error("Error during file import:", error);
-      alert("An error occurred during file import. Please check the file format.");
+      console.error('Error during file import:', error);
+      alert('An error occurred during file import. Please check the file format.');
     }
   };
+  
   
   // Helper function to parse the date format in the CSV
   
@@ -371,54 +380,90 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
   // Import GeoPoint from Firebase Firestore
 
   const handleExport = () => {
-    if (filteredReports.length === 0) {
+    // Validate if there are any reports to export
+    if (!filteredReports || filteredReports.length === 0) {
       alert("No reports to export.");
       return;
     }
-
+  
     // Prepare data for export
     const dataToExport = filteredReports.map((report, index) => {
+      // Validate and format the date
       let formattedDate = "N/A"; // Default to N/A if date is invalid
       let date = report.timeOfCrime || null;
       if (date) {
-        console.log(format(date, "yyyy-MM-dd"));
-      } else {
-        console.log("Date is null");
-      }
-      if (date) {
-        if (typeof date === "object") {
-          formattedDate = format(date, "yyyy-MM-dd");
-        } else if (report.timeOfCrime instanceof Timestamp) {
-          formattedDate = format(date, "yyyy-MM-dd");
+        try {
+          if (typeof date === "object") {
+            formattedDate = format(date, "yyyy-MM-dd");
+          } else if (report.timeOfCrime instanceof Timestamp) {
+            formattedDate = format(report.timeOfCrime.toDate(), "yyyy-MM-dd");
+          }
+        } catch (error) {
+          console.error("Error formatting date:", error);
+          formattedDate = "Invalid Date";
         }
       }
-
-      // Ensure report.coordinate is a GeoPoint
-      let FirestoregeoPoint = report.coordinate;
-      if (FirestoregeoPoint && !(FirestoregeoPoint instanceof FirestoreGeoPoint)) {
-        FirestoregeoPoint = new FirestoreGeoPoint(FirestoregeoPoint.latitude, FirestoregeoPoint.longitude);
+  
+      // Validate and format the coordinates
+      let FirestoregeoPoint = report.coordinate || null;
+      if (FirestoregeoPoint) {
+        try {
+          if (
+            !(FirestoregeoPoint instanceof FirestoreGeoPoint) &&
+            FirestoregeoPoint.latitude !== undefined &&
+            FirestoregeoPoint.longitude !== undefined
+          ) {
+            FirestoregeoPoint = new FirestoreGeoPoint(
+              FirestoregeoPoint.latitude,
+              FirestoregeoPoint.longitude
+            );
+          }
+        } catch (error) {
+          console.error("Error processing GeoPoint:", error);
+          FirestoregeoPoint = { latitude: 0, longitude: 0 };
+        }
       }
-
-      // Ensure the location is available or default to 'Unknown'
-      const location = report.location || "Unknown";
-
-      // Now geoPoint is guaranteed to be a GeoPoint
+  
+      // Validate the location field
+      const location =
+        report.location && typeof report.location === "string"
+          ? report.location
+          : "Unknown";
+  
+      // Capitalize category field
+      const category =
+        report.category && typeof report.category === "string"
+          ? report.category.charAt(0).toUpperCase() + report.category.slice(1)
+          : "Uncategorized";
+  
+      // Validate description field
+      const description =
+        report.additionalInfo && typeof report.additionalInfo === "string"
+          ? report.additionalInfo
+          : "N/A";
+  
+      // Ensure each report object is properly structured
       return {
         "S. No.": index + 1,
-        Category:
-          report.category.charAt(0).toUpperCase() + report.category.slice(1),
+        Category: category,
         Date: formattedDate,
         Coordinates: FirestoregeoPoint
           ? `${FirestoregeoPoint.latitude}, ${FirestoregeoPoint.longitude}`
           : "N/A", // Show coordinates as string
-        Location: location, // Add the location field here
-  
-        Description: report.additionalInfo || "N/A", // Assuming there's a description field
-        
+        Location: location,
+        Title: report.title || "Untitled",
+        Description: description,
+        Status: report.status || "Unknown", // Assuming there's a status field
       };
     });
-
-    // Ensure that the columns have proper headers and the data is in the correct format
+  
+    // Ensure the data array is not empty
+    if (dataToExport.length === 0) {
+      alert("No valid data available for export.");
+      return;
+    }
+  
+    // Define headers explicitly to ensure proper order
     const headers = [
       "S. No.",
       "Category",
@@ -429,18 +474,17 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
       "Description",
       "Status",
     ];
-
+  
     // Create a new worksheet with the provided data and header
     const worksheet = XLSX.utils.json_to_sheet(dataToExport, {
       header: headers,
     });
-
+  
     // Automatically adjust column widths based on content
     const colWidths = headers.map((header) => {
-      // Find the maximum length of content in each column and adjust width accordingly
       let maxLength = header.length;
-      dataToExport.forEach((report: { [key: string]: any }) => {
-        const cellValue = report[header];
+      dataToExport.forEach((report) => {
+        const cellValue = report[header as keyof typeof report];
         if (
           cellValue &&
           typeof cellValue === "string" &&
@@ -454,20 +498,19 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
           maxLength = String(cellValue).length;
         }
       });
-
-      // Increase the width padding more significantly
-      return { wch: maxLength + 100 }; // Increased padding for better readability
+  
+      return { wch: maxLength + 2 }; // Add padding for readability
     });
-
+  
     worksheet["!cols"] = colWidths; // Apply the column widths to the worksheet
-
+  
     // Convert worksheet to CSV
     const csvData = XLSX.utils.sheet_to_csv(worksheet);
-
+  
     // Trigger download of the CSV file
     const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-
+  
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", "FilteredReports.csv"); // Save as CSV
@@ -475,6 +518,7 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
     link.click();
     document.body.removeChild(link);
   };
+  
 
   interface Report {
     id: string;
@@ -650,7 +694,27 @@ const geocodeAddress = async (address: string): Promise<FirestoreGeoPoint | null
           ]}
         >
           <TitleCard />
-
+          <View style={{ marginBottom: 10, paddingHorizontal: 15 }}>
+  <Text style={{ fontSize: 14, color: "#DA4B46", fontWeight: "bold" }}>
+    Reminder when importing:
+  </Text>
+  <Text style={{ fontSize: 14, color: "#333", marginTop: 5 }}>
+    Ensure that the following fields are in the first row:
+  </Text>
+  <Text style={{ fontSize: 14, color: "#333", marginTop: 5 }}>
+    <Text style={{ fontWeight: "bold" }}>Category</Text>, 
+    <Text style={{ fontWeight: "bold" }}> Title</Text>, 
+    <Text style={{ fontWeight: "bold" }}> Additional Info</Text>, 
+    <Text style={{ fontWeight: "bold" }}> Time</Text>, 
+    <Text style={{ fontWeight: "bold" }}> Time of Crime</Text>, and 
+    <Text style={{ fontWeight: "bold" }}> Time Reported</Text>.
+  </Text>
+  <Text style={{ fontSize: 14, color: "#333", marginTop: 5 }}>
+    <Text style={{ fontWeight: "bold" }}>Note:</Text> Time of Crime and Time Reported must follow this format: 
+    <Text style={{ fontWeight: "bold", color: "#DA4B46" }}> MM/DD/YYYY HH:mm AM/PM</Text> 
+    (e.g., <Text style={{ fontStyle: "italic" }}>12/25/2024 12:30 PM</Text>).
+  </Text>
+</View>
           <SearchSort
             reports={crimes}
             setCategoryModalVisible={setCategoryModalVisible}

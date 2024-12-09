@@ -29,6 +29,7 @@ import {
   setDoc,
   doc,
 } from "@react-native-firebase/firestore";
+import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
 import { getIconName } from "../../assets/utils/getIconName";
 import { SideBar } from "@/components/SideBar";
 import { crimeImages, CrimeType } from "../(tabs)/data/marker";
@@ -110,6 +111,7 @@ export default function NewAdminReports({
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [title, setTitle] = useState("");
+  const [phone, setPhone] = useState("");
   const [name, setName] = useState("ADMIN"); //TO set the reporter's name
   const [selectedImage, setSelectedImage] = useState<string | undefined>(
     undefined
@@ -127,9 +129,9 @@ export default function NewAdminReports({
 
   //GEOCODING
 
-  const geocodeAddress = async (
+ const geocodeAddress = async (
     address: string
-  ): Promise<GeoPoint | string | null | undefined> => {
+  ): Promise<FirestoreGeoPoint | string | null | undefined> => {
     if (!address || address.trim() === "") return null;
     const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
     const bounds = {
@@ -140,13 +142,13 @@ export default function NewAdminReports({
 
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
       address
-    )}&bounds=${bounds.northeast},${bounds.southwest}&region=${region}&key=${apiKey}`;
+    )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`;
 
     try {
       const response = await fetch(url);
       const data = await response.json();
-
-      if (data.status === "OK" && data.results.length > 0) {
+      if (data.status === "OK") {
+        console.log(data.results[0]);
         const { lat, lng } = data.results[0].geometry.location;
         console.log("Geocoded location:", lat, lng);
 
@@ -154,17 +156,19 @@ export default function NewAdminReports({
         const [swLat, swLng] = bounds.southwest.split(",").map(Number);
         console.log(bounds);
         const isWithinBounds =
-          lat >= swLat && lat <= neLat && lng >= swLng && lng <= neLng;
+          lat <= neLat && lat >= swLat && lng <= neLng && lng >= swLng;
         console.log("Within the bounds:", isWithinBounds);
+        console.log("Parsed bounds:", {
+          northwest: { lat: neLat, lng: neLng },
+          southeast: { lat: swLat, lng: swLng },
+        });
+        console.log(data.results[0].geometry.bounds);
 
         if (isWithinBounds) {
-          return new firebase.firestore.GeoPoint(lat, lng);
-        } else {
-          console.warn("Location is out of bounds.");
-          return null;
+          return new FirestoreGeoPoint(lat, lng);
         }
       } else {
-        console.error("Geocoding error or no results:", data.status);
+        console.error("Geocoding error:", data.status);
         return null;
       }
     } catch (error) {
@@ -175,72 +179,134 @@ export default function NewAdminReports({
 
   const handleSubmit = async () => {
     let resizedImage = null;
+    let fileName = ""; // Define fileName here
+  
+    console.log("Starting handleSubmit function...");
+  
     if (selectedImage) {
       try {
+        console.log("Resizing image...");
+        // Resize the image
         resizedImage = await ImageManipulator.manipulateAsync(
           selectedImage,
           [{ resize: { width: 800 } }],
           { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
+  
+        if (resizedImage !== null) {
+          // Firebase storage reference
+          fileName = Date.now() + ".jpg"; // Generate a unique file name
+          console.log("Resized image:", resizedImage);
+  
+          // Web Platform: Use FileReader to convert image to base64
+          if (Platform.OS === "web") {
+            const base64Image = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                resolve(reader.result as string);
+              };
+              reader.onerror = reject;
+  
+              fetch(resizedImage.uri)
+                .then((response) => response.blob())
+                .then((blob) => reader.readAsDataURL(blob));
+            });
+  
+            const reference = storage().ref("/reportImages/" + fileName);
+            await reference.putString(base64Image.split(",")[1], "base64", {
+              contentType: "image/jpeg",
+            });
+            console.log("Image uploaded to Firebase Storage (Web).");
+          } else {
+            // Native (iOS/Android) Platform
+            const base64Image = await FileSystem.readAsStringAsync(resizedImage.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+  
+            const reference = storage().ref("/reportImages/" + fileName);
+            await reference.putString(base64Image, "base64", {
+              contentType: "image/jpeg",
+            });
+            console.log("Image uploaded to Firebase Storage (Native).");
+          }
+          alert("Image uploaded successfully!");
+        } else {
+          alert("Failed to resize image. Please try again.");
+        }
       } catch (error) {
-        console.error("Error resizing image:", error);
-        alert("Failed to process the image. Please try again.");
+        console.error("Error processing and uploading the image:", error);
+        alert("Failed to process and upload the image. Please try again.");
         return;
       }
+    } else {
+      alert("No image selected, proceeding to create report.");
     }
-
+  
+    // Geocode address to get Firestore GeoPoint
     const locationString = location;
-    const geoPoint = await geocodeAddress(locationString);
-
-    if (!geoPoint) {
+    console.log("Geocoding location:", locationString);
+    const firestoreGeoPoint = await geocodeAddress(locationString);
+  
+    if (!firestoreGeoPoint) {
       console.warn("Skipping invalid location:", locationString);
       alert(`Does not accept locations beyond Quezon City: ${locationString}`);
       return;
     }
-
+  
+    if (!selectedValue) {
+      alert("Select a valid category!");
+      return;
+    }
+  
+    // Default image if no image selected
     const defaultImage = require("../../assets/images/default-image.jpg");
     const defaultURI = Asset.fromModule(defaultImage).uri;
-
+  
     const timestamp = new Date();
     const unixTimestamp = Math.floor(timestamp.getTime() / 1000);
-    console.log(defaultURI);
-
-    const newCrime = {
-      id: uuidv4(),
-      icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
-      name: name,
-      category: selectedValue.toLowerCase(),
-      title: title || "Untitled Report",
-      location: location,
-      coordinate: geoPoint,
+  
+    const newReport = {
+      accountid: "admin",
+      phone: phone || 'No phone',
+      name: name || 'admin',
+      category: selectedValue ? selectedValue.toLowerCase() : 'Unknown',
+      location: location || 'Unknown location',
+      coordinate: firestoreGeoPoint || new FirestoreGeoPoint(0, 0), // GeoPoint fallback
       additionalInfo: additionalInfo || "Undescribed Report",
-      date: new Date(date) || ["Unknown Date: ", new Date().toDateString()],
-      time: time || ["Unknown Time: ", new Date().toTimeString()],
       image: resizedImage
-        ? { filename: imageFilename, uri: resizedImage.uri }
+        ? { filename: fileName, uri: resizedImage.uri }
         : { filename: "Untitled Image", uri: defaultURI },
-      status: true,
+      status: 2, // Default to 1
+      time: time || 'Unknown time',
+      timeOfCrime: timestamp,
+      timeReported: timestamp,
+      date: new Date(date) || new Date(),
+      unixTOC: unixTimestamp,
       timestamp: unixTimestamp,
     };
-
+  
+    console.log("New report to be saved:", newReport);
+  
     try {
-      console.log(newCrime);
-      const crimeRef = collection(database, "crimes"); // Save to 'crimes' collection
-      await addDoc(crimeRef, newCrime);
-      navigation.navigate("ViewAdminEmergencyList", { updatedCrime: newCrime }); // Make sure to navigate to the right screen
+      const reportRef = collection(database, "reports");
+      await addDoc(reportRef, newReport);
+      console.log("Report successfully saved to Firestore.");
+      navigation.navigate("ViewReports", { updatedReport: newReport });
     } catch (error) {
-      console.error("Error saving crime:", error);
-      alert("Failed to save crime. Please try again.");
+      console.error("Error saving report:", error);
+      alert("Failed to save report. Please try again.");
     }
   };
-
-  //Dropdown Values
+  
+  
+  // Dropdown Values
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState(crimeType);
-  //Date
+  
+  // Date
   const [startDate, setStartDate] = useState<Date | null>(new Date());
-
+  
   useEffect(() => {
     const dateInput = dayjs(startDate).format("YYYY-MM-DD");
     const timeInput = dayjs(startDate).format("hh:mm A");
@@ -248,16 +314,17 @@ export default function NewAdminReports({
     setDate(dateInput);
     setTime(timeInput);
   }, [startDate]);
-  const minDate =
-    value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
-  //Image
+  
+  const minDate = value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
+  
+  // Image Picker
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
-
+  
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
       setImageFileName(result.assets[0].fileName);
@@ -265,6 +332,7 @@ export default function NewAdminReports({
       alert("You did not select any image.");
     }
   };
+  
   const PlaceholderImage = require("../../assets/images/background-image.jpg");
 
   const Button = ({ label, theme, onPress }: ImageProps) => {
@@ -308,6 +376,7 @@ export default function NewAdminReports({
 
     return <Image source={imageSource} style={webstyles.image} />;
   };
+
 
   //Animation to Hide side bar
   const { width: screenWidth } = Dimensions.get("window"); // Get the screen width

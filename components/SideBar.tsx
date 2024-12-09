@@ -55,7 +55,7 @@ export const SideBar = ({
   // Fetch the count and titles of new reports whenever the component mounts or updates
   useEffect(() => {
     const reportsCollection = collection(db, "reports");
-    const q = query(reportsCollection, where("status", "==", "PENDING"));
+    const q = query(reportsCollection, where("status", "==", 1));
 
     // Fetch the reports initially
     const fetchReports = async () => {
