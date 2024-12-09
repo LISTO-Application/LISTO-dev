@@ -754,6 +754,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               defaultCenter={position}
               disableDoubleClickZoom={true}
               defaultZoom={15}
+              mapId={isHeatmapVisible ? "7a9e2ebecd32a903" : "5cc51025f805d25d"}
               mapTypeControl={true}
               streetViewControl={false}
               mapTypeId="roadmap"
