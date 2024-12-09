@@ -191,7 +191,10 @@ export default function Forgot() {
             >
               Forgot Password?
             </ThemedText>
-            <SpacerView height="5%" />
+            <SpacerView height="2%" />
+            <ThemedText lightColor="#115272" darkColor="#115272" type="default">
+              An link will be sent to your email to change your password.
+            </ThemedText>
             <ThemedInput
               width="75%"
               backgroundColor="white"
@@ -202,9 +205,13 @@ export default function Forgot() {
               onChangeText={setEmail}
               style={{ fontSize: 20, fontWeight: 400 }}
             />
-            <SpacerView height="5%" />
+            <SpacerView height="2%" />
             {!loading && (
-              <ThemedButton title="Submit" onPress={handlePasswordReset} />
+              <ThemedButton
+                width="75%"
+                title="Submit"
+                onPress={handlePasswordReset}
+              />
             )}
 
             {loading && (
@@ -212,7 +219,7 @@ export default function Forgot() {
                 style={{
                   backgroundColor: "#DA4B46",
                   height: 36,
-                  width: "100%",
+                  width: "75%",
                   borderRadius: 50,
                   justifyContent: "center",
                   marginVertical: "5%",

@@ -595,7 +595,7 @@ export default function OTPForgot() {
                     style={{
                       backgroundColor: "#DA4B46",
                       height: 36,
-                      width: "100%",
+                      width: "50%",
                       borderRadius: 50,
                       justifyContent: "center",
                       marginVertical: "5%",
@@ -662,95 +662,83 @@ export default function OTPForgot() {
                           setAccountCreated(true);
                         } else {
                           if (result.message == "INVALID_OTP") {
-                            Alert.alert(
-                              "Invalid OTP",
-                              "The OTP entered is incorrect, please try again."
+                            window.confirm(
+                              "Invalid OTP. The OTP entered is incorrect, please try again."
                             );
                             setLoading(false);
                           }
                           if (result.message == "BLACKLISTED") {
-                            Alert.alert(
-                              "Blacklisted",
-                              "Account was deleted recently, please try again soon or contact support."
+                            window.confirm(
+                              "Blacklisted. Account was deleted recently, please try again soon or contact support."
                             );
                             setLoading(false);
                             router.replace({ pathname: "/(auth)/login" });
                           }
                           if (result.message === "TOO_MANY_REQUESTS") {
-                            Alert.alert(
-                              "Limit exceeded",
-                              "Too many attempts, please try again later."
+                            window.confirm(
+                              "Limit exceeded. Too many attempts, please try again later."
                             );
                             setLoading(false);
                             router.replace({ pathname: "/(auth)/login" });
                           }
                           if (result.message === "auth/INVALID_CREDENTIAL") {
-                            Alert.alert(
-                              "Invalid credentials",
+                            window.confirm(
                               "Invalid credentials, please try again."
                             );
                             setLoading(false);
                             router.back();
                           }
                           if (result.message === "NETWORK_REQUEST_FAILED") {
-                            Alert.alert(
-                              "Poor connection",
-                              "Internet connection is unstable, please try again later."
+                            window.confirm(
+                              "Poor connection. Internet connection is unstable, please try again later."
                             );
                             setLoading(false);
                           }
 
                           if (result.message === "INVALID_EMAIL") {
-                            Alert.alert(
-                              "Invalid email",
-                              "The email entered is invalid, please try again."
+                            window.confirm(
+                              "Invalid email. The email entered is invalid, please try again."
                             );
                             setLoading(false);
                             router.back();
                           }
                           if (result.message === "INVALID_PASSWORD") {
-                            Alert.alert(
-                              "Invalid password",
-                              "The password entered is invalid, please try again."
+                            window.confirm(
+                              "Invalid password. The password entered is invalid, please try again."
                             );
                             setLoading(false);
                             router.back();
                           }
                           if (result.message === "WEAK_PASSWORD") {
-                            Alert.alert(
-                              "Weak password",
-                              "The password entered is too weak, please try again. Passwords need 1 uppercase, 1 lowercase, 1 number, and 1 special character."
+                            window.confirm(
+                              "Weak password The password entered is too weak, please try again. Passwords need 1 uppercase, 1 lowercase, 1 number, and 1 special character."
                             );
                             setLoading(false);
                             router.back();
                           }
                           if (result.message === "EMAIL_EXISTS") {
-                            Alert.alert(
-                              "Email already in use",
-                              "The email entered is already in use, please try again with a different email address."
+                            window.confirm(
+                              "Email already in use. The email entered is already in use, please try again with a different email address."
                             );
                             setLoading(false);
                             router.back();
                           }
                           if (result.message === "PHONE_EXISTS") {
-                            Alert.alert(
-                              "Phone number already in use",
-                              "The phone number entered is already in use, please try again with a different phone number."
+                            window.confirm(
+                              "Phone number already in use. The phone number entered is already in use, please try again with a different phone number."
                             );
                             setLoading(false);
                             router.back();
                           }
                           if (result.message === "UKKNOWN_ERROR") {
-                            Alert.alert(
-                              "Sign in error",
-                              "There was an error signing in as admin, please try again later."
+                            window.confirm(
+                              "Sign in error. There was an error signing in as admin, please try again later."
                             );
                             setLoading(false);
                           } else {
                             console.log(result.message);
-                            Alert.alert(
-                              "Uh oh",
-                              "There was an error, please try again later."
+                            window.confirm(
+                              "Uh oh! There was an error, please try again later."
                             );
                             setLoading(false);
                           }
@@ -764,7 +752,7 @@ export default function OTPForgot() {
                     style={{
                       backgroundColor: "#DA4B46",
                       height: 36,
-                      width: "100%",
+                      width: "50%",
                       borderRadius: 50,
                       justifyContent: "center",
                       marginVertical: "5%",

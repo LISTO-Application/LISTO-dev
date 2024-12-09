@@ -265,8 +265,8 @@ export default function NewReports({
       const reference = ref(storage, storagePath);
       const snapshot = await uploadBytesResumable(reference, file, metadata);
 
-      console.log("Image uploaded successfully!", snapshot);
-      const downloadURL = await getDownloadURL(reference);
+      console.log("Image uploaded successfully!", snapshot.metadata.fullPath);
+      const downloadURL = snapshot.metadata.fullPath;
       return downloadURL;
     }
 

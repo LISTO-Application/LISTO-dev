@@ -210,7 +210,7 @@ export default function Login() {
     );
   } else if (Platform.OS === "web") {
     const [user, setUser] = useState<User | null>(null);
-
+    const [isPasswordVisible, setPasswordVisibility] = useState(false);
     useEffect(() => {
       const subscriber = onAuthStateChanged(authWeb, (user) => {
         setUser(user);
@@ -227,7 +227,8 @@ export default function Login() {
 
     const handleLogin = async (email: string, password: string) => {
       const auth = authWeb;
-
+      console.log(auth);
+      console.log(auth.currentUser?.displayName);
       if (auth.currentUser == null) {
         try {
           const result = await authenticateWeb(email, password);
@@ -243,7 +244,7 @@ export default function Login() {
         }
       } else {
         // User is already logged in
-        Alert.alert("Sign in failed", "User is already logged in!");
+        window.confirm("Sign in failed. User is already logged in!");
         router.replace("/(tabs)");
       }
     };
@@ -311,12 +312,11 @@ export default function Login() {
             <ThemedText lightColor="#115272" darkColor="#115272" type="display">
               Login
             </ThemedText>
-            <SpacerView height="10%" />
-            <ThemedInput
+            <SpacerView height="5%" />
+            <TextInput
               style={{
                 width: "75%",
                 backgroundColor: "white",
-                marginVertical: "2.5%",
                 borderWidth: 2,
                 borderRadius: 50,
                 height: "9%",
@@ -336,13 +336,13 @@ export default function Login() {
                 Please enter a valid email
               </Text>
             )}
+            <SpacerView height="5%" />
             <TextInput
               style={{
                 fontSize: 20,
                 fontWeight: 400,
                 width: "75%",
                 backgroundColor: "white",
-                marginVertical: "2.5%",
                 borderWidth: 2,
                 borderRadius: 50,
                 height: "9%",
@@ -353,14 +353,22 @@ export default function Login() {
               placeholderTextColor="#155f84"
               onChangeText={setPassword}
               onChange={() => setPasswordError(false)}
-              secureTextEntry
+              secureTextEntry={!isPasswordVisible}
             />
-            {passwordError && (
-              <Text style={loginStyle.errorText}>
-                Please enter a valid password{" "}
-              </Text>
-            )}
 
+            {passwordError && (
+              <Text style={loginStyle.errorText}>Password is incorrect.</Text>
+            )}
+            <TouchableOpacity
+              onPress={() => setPasswordVisibility(!isPasswordVisible)}
+              style={{
+                width: "100%",
+              }}
+            >
+              <Text style={{ fontSize: 16, color: "#155f84" }}>
+                {isPasswordVisible ? "Hide" : "Show"}
+              </Text>
+            </TouchableOpacity>
             <Pressable
               style={[
                 loginStyle.forgotPassword,
@@ -399,7 +407,7 @@ export default function Login() {
                   setIsLoading(true);
                   if (emailRegex.test(email) && passwordRegex.test(password)) {
                     handleLogin(email, password);
-                    console.log("true?");
+                    console.log("");
                   }
                   if (emailRegex.test(email) == false) {
                     setEmailError(true);
@@ -492,7 +500,6 @@ const loginStyle = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 2,
-    marginVertical: 2,
   },
   inputField: {
     flexDirection: "column",

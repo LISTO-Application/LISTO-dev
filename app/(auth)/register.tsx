@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   View,
+  TouchableOpacity,
 } from "react-native";
 
 //Expo Imports
@@ -230,7 +231,8 @@ export default function Register() {
             {fieldState[4] && (
               <Text style={registerStyle.errorText}>
                 {" "}
-                Please enter a valid password{" "}
+                At least 1 uppercase, 1 lowercase, 1 special character, and 1
+                number with a minimum of 8 characters
               </Text>
             )}
           </View>
@@ -311,6 +313,8 @@ export default function Register() {
       </ScrollView>
     );
   } else if (Platform.OS === "web") {
+    const [isPasswordVisible, setPasswordVisibility] = useState(false);
+
     const user = authWeb.currentUser;
     if (user != null) {
       return <Redirect href="/(tabs)" />;
@@ -442,9 +446,8 @@ export default function Register() {
               inputMode="numeric"
             />
             {fieldState[2] && (
-              <Text style={registerStyle.errorText}>
-                {" "}
-                Please enter a valid phone number{" "}
+              <Text style={[registerStyle.errorText, { width: "75%" }]}>
+                Phone no. must be at least 11 digits
               </Text>
             )}
             <ThemedInput
@@ -461,9 +464,8 @@ export default function Register() {
               value={email}
             />
             {fieldState[3] && (
-              <Text style={registerStyle.errorText}>
-                {" "}
-                Please enter a valid email address{" "}
+              <Text style={[registerStyle.errorText, { width: "75%" }]}>
+                Must be a valid email address. e.g: user@example.com
               </Text>
             )}
             <ThemedInput
@@ -478,16 +480,25 @@ export default function Register() {
               onFocus={() => handleFocus(4)}
               onBlur={() => handleFocus(4)}
               value={password}
-              secureTextEntry
+              secureTextEntry={!isPasswordVisible}
             />
             {fieldState[4] && (
-              <Text style={registerStyle.errorText}>
-                {" "}
-                Please enter a valid password{" "}
+              <Text style={[registerStyle.errorText, { width: "75%" }]}>
+                At least 1 uppercase, 1 lowercase, 1 special character, and 1
+                number with a minimum of 8 characters
               </Text>
             )}
             <SpacerView height="2%" />
-
+            <TouchableOpacity
+              onPress={() => setPasswordVisibility(!isPasswordVisible)}
+              style={{
+                width: "100%",
+              }}
+            >
+              <Text style={{ fontSize: 16, color: "#155f84" }}>
+                {isPasswordVisible ? "Hide" : "Show"}
+              </Text>
+            </TouchableOpacity>
             <BouncyCheckbox
               style={{
                 flexDirection: "row",
@@ -574,7 +585,7 @@ const registerStyle = StyleSheet.create({
   },
   errorText: {
     color: "#DA4B46",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     marginLeft: 2,
     marginVertical: 0,

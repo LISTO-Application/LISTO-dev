@@ -12,7 +12,10 @@ import {
 //Component Imports
 import { TabBar } from "@/components/navigation/TabBar";
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  NavigationIndependentTree,
+} from "@react-navigation/native";
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
 import CrimeMap from "./crimemap";
