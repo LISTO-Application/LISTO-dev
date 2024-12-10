@@ -27,7 +27,7 @@ import DrawerScreenOptions from "../../components/navigation/DrawerScreenOptions
 import RootReports from "../(drawer)/RootReports";
 import Index from "./crimemap";
 import { Drawer } from "expo-router/drawer";
-import ViewReports from "../(drawer)/viewReports";
+import ViewReports from "./(drawer)/viewReports";
 
 const report = require("../../assets/images/report-icon.png");
 
@@ -35,39 +35,27 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const navigation = useNavigation();
-  const Drawer = createDrawerNavigator();
 
   if (Platform.OS === "web") {
     return (
-      <AuthProvider>
-        <Drawer.Navigator
-          initialRouteName="Crimemap"
-          screenOptions={({ route, navigation }) =>
-            DrawerScreenOptions({ route, navigation })
-          }
-          drawerContent={(props) => {
-            return <UserBanner {...props} />;
+      <Drawer
+        initialRouteName="crimemap"
+        screenOptions={({ route, navigation }) =>
+          DrawerScreenOptions({ route, navigation })
+        }
+        drawerContent={(props) => {
+          return <UserBanner {...props} />;
+        }}
+      >
+        <Drawer.Screen name="crimemap" options={{ title: "Report Incident" }} />
+        <Drawer.Screen name="account" options={{ title: "Account" }} />
+        <Drawer.Screen
+          name="(drawer)"
+          options={{
+            title: "View Reports",
           }}
-        >
-          <Drawer.Screen
-            name="Crimemap"
-            component={CrimeMap}
-            options={{ title: "Report Incident" }}
-          />
-          <Drawer.Screen
-            name="Account"
-            component={UserAccount}
-            options={{ title: "Account" }}
-          />
-          <Drawer.Screen
-            name="Reports"
-            component={RootReports}
-            options={{
-              title: "View Reports",
-            }}
-          />
-        </Drawer.Navigator>
-      </AuthProvider>
+        />
+      </Drawer>
     );
   } else if (Platform.OS === "android") {
     return (

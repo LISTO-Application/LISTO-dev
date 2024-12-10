@@ -15,7 +15,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DropDownPicker from "react-native-dropdown-picker";
 import { webstyles } from "@/styles/webstyles"; // For web styles
-import { app, dbWeb } from "../(auth)"; // Adjust the import path to your Firebase config
+import { app, dbWeb } from "../../(auth)"; // Adjust the import path to your Firebase config
 import {
   collection,
   addDoc,
@@ -36,7 +36,7 @@ import { Image as Img, type ImageSource } from "expo-image";
 import { getUnixTime, parse, subDays, subYears } from "date-fns";
 import TitleCard from "@/components/TitleCard";
 import * as FileSystem from "expo-file-system";
-import { authWeb, strWeb } from "../(auth)";
+import { authWeb, strWeb } from "../../(auth)";
 import {
   getDownloadURL,
   getStorage,
@@ -45,6 +45,7 @@ import {
   uploadBytesResumable,
   UploadMetadata,
 } from "firebase/storage";
+import { router } from "expo-router";
 
 const database = dbWeb;
 
@@ -314,7 +315,7 @@ export default function NewReports({
       const reportRef = collection(database, "reports");
       await addDoc(reportRef, newReport);
       console.log("Report successfully saved to Firestore.");
-      navigation.navigate("ViewReports", { updatedReport: newReport });
+      router.push("/viewReports");
     } catch (error) {
       console.error("Error saving report:", error);
       alert("Failed to save report. Please try again.");
@@ -554,7 +555,7 @@ export default function NewReports({
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}
-                onPress={() => navigation.navigate("ViewReports")}
+                onPress={() => router.push("/viewReports")}
               >
                 <Text style={webstyles.buttonTexteditReport}>CANCEL</Text>
               </TouchableOpacity>

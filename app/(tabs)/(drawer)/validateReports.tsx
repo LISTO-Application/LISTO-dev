@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,11 +16,11 @@ import {
   StyleSheet,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { styles } from "@/styles/styles"; // For mobile styles
-import { db } from "../FirebaseConfig";
-import { Report } from "../(tabs)/data/reports";
+import { db } from "../../FirebaseConfig";
+import { Report } from "../../../constants/data/reports";
 import "firebase/database";
 import {
   GeoPoint as FirestoreGeoPoint,
@@ -45,7 +45,7 @@ import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
 import dayjs from "dayjs";
 import { getDownloadURL, getStorage, ref } from "firebase/storage";
-import { app, dbWeb } from "../(auth)";
+import { app, dbWeb } from "../../(auth)";
 
 const database = db;
 
@@ -56,12 +56,15 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const handleTitlePress = (report: Report) => {
     console.log("Navigating to details page for report:", report);
-    navigation.navigate("ReportDetails", {
-      id: report.id,
-      category: report.category,
-      status: report.status,
-      additionalInfo: report.additionalInfo,
-      image: report.image,
+    router.push({
+      pathname: "/reportDetails",
+      params: {
+        id: report.id,
+        category: report.category,
+        status: report.status,
+        additionalInfo: report.additionalInfo,
+        image: report.image,
+      },
     });
   };
   const handleStatusChange = async (id: string, newStatus: number) => {
@@ -125,60 +128,60 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
     }
   };
 
-  useEffect(() => {
-    const fetchReports = async () => {
-      try {
-        const reportsCollectionRef = collection(db, "reports");
-        const reportsSnapshot = await getDocs(reportsCollectionRef);
+  const fetchReports = async () => {
+    try {
+      const reportsCollectionRef = collection(db, "reports");
+      const reportsSnapshot = await getDocs(reportsCollectionRef);
 
-        if (reportsSnapshot.empty) {
-          console.log("No reports found in Firestore.");
-          return;
+      if (reportsSnapshot.empty) {
+        console.log("No reports found in Firestore.");
+        return;
+      }
+
+      const reportsArray = reportsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+
+        // Handle GeoPoint for coordinates
+        let coordinate = data.coordinate;
+        if (coordinate instanceof FirestoreGeoPoint) {
+          coordinate = coordinate;
+        } else {
+          coordinate = new FirestoreGeoPoint(0, 0);
         }
 
-        const reportsArray = reportsSnapshot.docs.map((doc) => {
-          const data = doc.data();
+        return {
+          uid: data.uid,
+          id: doc.id,
+          additionalInfo: data.additionalInfo || "No additional info",
+          category: data.category || "Unknown",
+          location: data.location || "Unknown location",
+          coordinate,
+          image: data.image || { filename: "", uri: "" },
+          name: data.name || "Anonymous",
+          phone: data.phone || "No phone",
+          status: data.status || 1,
+          time: data.time || "Unknown time",
+          timeOfCrime: data.timeOfCrime,
+          timeReported: data.timeReported,
+          unixTOC: data.unixTOC || 0,
+          date: data.date || new Date(),
+          timestamp: data.timestamp || Date.now(),
+        };
+      });
 
-          // Handle GeoPoint for coordinates
-          let coordinate = data.coordinate;
-          if (coordinate instanceof FirestoreGeoPoint) {
-            coordinate = coordinate;
-          } else {
-            coordinate = new FirestoreGeoPoint(0, 0);
-          }
+      console.log("Mapped Reports:", reportsArray);
+      setReports(reportsArray);
+      setFilteredReports(reportsArray);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    }
+  };
 
-          return {
-            uid: data.uid,
-            id: doc.id,
-            additionalInfo: data.additionalInfo || "No additional info",
-            category: data.category || "Unknown",
-            location: data.location || "Unknown location",
-            coordinate,
-            image: data.image || { filename: "", uri: "" },
-            name: data.name || "Anonymous",
-            phone: data.phone || "No phone",
-            status: data.status || 1,
-            time: data.time || "Unknown time",
-            timeOfCrime: data.timeOfCrime,
-            timeReported: data.timeReported,
-            unixTOC: data.unixTOC || 0,
-            date: data.date || new Date(),
-            timestamp: data.timestamp || Date.now(),
-          };
-        });
-
-        console.log("Mapped Reports:", reportsArray);
-        setReports(reportsArray);
-        setFilteredReports(reportsArray);
-      } catch (error) {
-        console.error("Error fetching reports:", error);
-      }
-    };
-
-    const unsubscribe = navigation.addListener("focus", fetchReports);
-
-    return unsubscribe;
-  }, [navigation]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchReports();
+    }, [])
+  );
 
   const [reports, setReports] = useState<Report[]>([]);
 

@@ -42,10 +42,10 @@ export const SideBar = ({
 
   //Icon assets
   const menuItems = [
-    { name: "Crime Map", route: "Crimemap" },
-    { name: "Account", route: "Account" },
-    { name: "View Reports", route: "ViewReports" },
-    { name: "Validate Tickets", route: "Validate" },
+    { name: "Crime Map", route: "crimemap" },
+    { name: "Account", route: "account" },
+    { name: "View Reports", route: "viewReports" },
+    { name: "Validate Tickets", route: "validateReports" },
     { name: "View Admin Emergency List", route: "ViewAdminEmergencyList" },
   ];
 
@@ -96,7 +96,7 @@ export const SideBar = ({
         resizeMode="cover"
         style={webstyles.userSection}
       >
-        <TouchableOpacity onPress={() => navigation.navigate("account")}>
+        <TouchableOpacity onPress={() => router.push("/account")}>
           <Image
             source={require("../assets/images/user-icon.png")}
             style={webstyles.userImage}
@@ -123,7 +123,7 @@ export const SideBar = ({
             <TouchableOpacity
               key={index}
               style={webstyles.sidebarItem}
-              onPress={() => navigation.navigate(item.route)}
+              onPress={() => router.push(`/${item.route}`)}
             >
               <View style={{ flex: 1, flexDirection: "row", gap: 20 }}>
                 <Ionicons

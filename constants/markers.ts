@@ -1,4 +1,4 @@
-import { CrimeType, MarkerType } from "@/app/(tabs)/data/marker";
+import { CrimeType, MarkerType } from "@/constants/data/marker";
 import { db } from "@/app/FirebaseConfig";
 
 import {

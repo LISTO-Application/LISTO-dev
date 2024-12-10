@@ -22,11 +22,11 @@ export interface MarkerType {
 }
 
 export const crimeImages: { [key in CrimeType]: any } = {
-  murder: require("../../../assets/images/knife-icon.png"),
-  homicide: require("../../../assets/images/homicide-icon.png"),
-  robbery: require("../../../assets/images/robbery-icon.png"),
-  carnapping: require("../../../assets/images/car-icon.png"),
-  injury: require("../../../assets/images/injury-icon.png"),
-  theft: require("../../../assets/images/thief-icon.png"),
-  rape: require("../../../assets/images/rape-icon.png"),
+  murder: require("@/assets/images/knife-icon.png"),
+  homicide: require("@/assets/images/homicide-icon.png"),
+  robbery: require("@/assets/images/robbery-icon.png"),
+  carnapping: require("@/assets/images/car-icon.png"),
+  injury: require("@/assets/images/injury-icon.png"),
+  theft: require("@/assets/images/thief-icon.png"),
+  rape: require("@/assets/images/rape-icon.png"),
 };

@@ -11,6 +11,7 @@ import { useRoute } from "@react-navigation/native";
 import firestore from "@react-native-firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { router } from "expo-router";
 
 interface ReportDetailsType {
   id: string;
@@ -27,7 +28,7 @@ interface ReportDetailsType {
   };
 }
 
-const ReportDetails = ({ navigation }: { navigation: any }) => {
+const ReportDetails = () => {
   const route = useRoute(); // Using useRoute to access params
   const { id } = route.params as {
     id: string;
@@ -98,10 +99,7 @@ const ReportDetails = ({ navigation }: { navigation: any }) => {
   return (
     <ScrollView style={styles.container}>
       {/* Back Button */}
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backButton}
-      >
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
         <Ionicons name="arrow-back" size={32} color="#fff" />
       </TouchableOpacity>
 

@@ -21,6 +21,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { authWeb } from "./(auth)";
 import { SessionProvider } from "@/auth";
+import CrimeMap from "./(tabs)/crimemap";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -42,7 +43,6 @@ export default function RootLayout() {
   }
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(authWeb, (user) => {
       setIsLoggedIn(!!user);
@@ -64,6 +64,7 @@ export default function RootLayout() {
           >
             <Stack initialRouteName={isLoggedIn ? "(tabs)" : "(auth)"}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen
                 name="changeAdminInformation"

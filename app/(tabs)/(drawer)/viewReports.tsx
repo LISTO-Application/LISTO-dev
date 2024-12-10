@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import https from "https";
 import {
   Animated,
@@ -19,11 +25,11 @@ import {
   Pressable,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { SpacerView } from "@/components/SpacerView";
 import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
-import { Report } from "../(tabs)/data/reports";
+import { Report } from "../../../constants/data/reports";
 import { Route } from "expo-router/build/Route";
 import { useRoute } from "@react-navigation/native";
 import { getIconName } from "@/assets/utils/getIconName";
@@ -37,8 +43,8 @@ import {
   getFirestore,
 } from "@react-native-firebase/firestore";
 import { GeoPoint, Timestamp } from "firebase/firestore";
-import { db } from "../FirebaseConfig";
-import { AuthContext } from "../AuthContext";
+import { db } from "../../FirebaseConfig";
+import { AuthContext } from "../../AuthContext";
 import SideBar from "@/components/SideBar";
 import ImageViewer from "@/components/ImageViewer";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -68,6 +74,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const authID = auth.currentUser;
   console.log("AuthID", authID?.uid);
   //FETCH REPORTS
+
   const fetchReports = async () => {
     try {
       const reportsCollectionRef = collection(db, "reports");
@@ -79,33 +86,29 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       }
       // Process records from Firestore
       const reportsArray: Report[] = reportsSnapshot.docs
+        .filter((doc) => {
+          const data = doc.data();
+          return data.uid === authID;
+        })
         .map((doc) => {
           const data = doc.data();
-          console.log("doc", doc);
-
-          if (data.uid === authID) {
-            // Handle GeoPoint for coordinates
-            let coordinate = data.coordinate;
-            return {
-              uid: data.uid,
-              additionalInfo: data.additionalInfo || "No additional info",
-              category: data.category || "Unknown category",
-              location: data.location || "Unknown location",
-              coordinate: coordinate, // FirestoreGeoPoint directly from Firestore
-              image: data.image || { filename: "", uri: "" }, // Handle image data
-              name: data.name || "Anonymous",
-              phone: data.phone || "No phone",
-              status: data.status || 1, // Default to 1
-              id: doc.id || "Unknown account",
-              timeOfCrime: data.timeOfCrime,
-              timeReported: data.timeReported,
-              time: data.time,
-              unixTOC: data.unixTOC,
-            };
-          }
-
-          // Return nothing if authID doesn't match
-          return null;
+          let coordinate = null;
+          return {
+            uid: data.uid,
+            additionalInfo: data.additionalInfo || "No additional info",
+            category: data.category || "Unknown category",
+            location: data.location || "Unknown location",
+            coordinate: coordinate, // FirestoreGeoPoint directly from Firestore
+            image: data.image || { filename: "", uri: "" }, // Handle image data
+            name: data.name || "Anonymous",
+            phone: data.phone || "No phone",
+            status: data.status || 1, // Default to 1
+            id: doc.id || "Unknown account",
+            timeOfCrime: data.timeOfCrime,
+            timeReported: data.timeReported,
+            time: data.time,
+            unixTOC: data.unixTOC,
+          };
         })
         .filter((report) => report !== null);
       console.log("Mapped Reports:", reportsArray);
@@ -116,12 +119,11 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     }
   };
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
+  useFocusEffect(
+    useCallback(() => {
       fetchReports();
-    });
-    return unsubscribe;
-  }, [navigation]);
+    }, [])
+  );
 
   //PAGINATIONS
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,13 +145,13 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       console.error("Error deleting report: ", error);
     }
   };
-  const handleEditReport = (report: Report) => {
+  const handleEditReport = (report: any) => {
     // Redirect to the report edit page with the report ID in the query
     console.log("Report UID:", report.uid);
-    navigation.navigate("EditReports", { report });
+    router.push({ pathname: "/editReport", params: { report } });
   };
   const handleSubmitReport = () => {
-    navigation.navigate("newReports");
+    router.push("/newReports");
   };
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -521,7 +523,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         </Animated.View>
         <TouchableOpacity
           style={webstyles.fab}
-          onPress={() => navigation.navigate("NewReports")}
+          onPress={() => router.push("/newReports")}
         >
           <View
             style={{

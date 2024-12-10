@@ -75,9 +75,13 @@ import { Ionicons } from "@expo/vector-icons";
 import FilterHeatMap from "@/components/FilterHeatMap";
 import DateModal from "@/components/modal/DateModal";
 import { MarkerWithInfoWindow } from "@/components/MarkerWithInfoWindow";
-import heatmapData from "./data/heatmap";
+import heatmapData from "../../constants/data/heatmap";
 import dayjs, { Dayjs, locale } from "dayjs";
-import { CrimeType, MarkerType, crimeImages } from "./data/marker";
+import {
+  CrimeType,
+  MarkerType,
+  crimeImages,
+} from "../../constants/data/marker";
 import {
   collection,
   doc,
@@ -564,61 +568,61 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
     // console.log("markers", pins);
 
     //Fetching the Data
-    // const fetchCrimes = async () => {
-    //   try {
-    //     const querySnapshot = await getDocs(collection(db, "crimes"));
-    //     const crimeList: MarkerType[] = await Promise.all(
-    //       querySnapshot.docs.map(async (doc) => {
-    //         let coordinate = doc.data().coordinate;
-    //         const location = doc.data().location;
-    //         let date = doc.data().date;
+    const fetchCrimes = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "crimes"));
+        const crimeList: MarkerType[] = await Promise.all(
+          querySnapshot.docs.map(async (doc) => {
+            let coordinate = doc.data().coordinate;
+            const location = doc.data().location;
+            let date = doc.data().date;
 
-    //         if (date && date._seconds) {
-    //           date = dayjs(date._seconds * 1000);
-    //         } else {
-    //           date = dayjs(date, ["MM/DD/YYYY", "MM-DD-YYYY"], true);
-    //         }
+            if (date && date._seconds) {
+              date = dayjs(date._seconds * 1000);
+            } else {
+              date = dayjs(date, ["MM/DD/YYYY", "MM-DD-YYYY"], true);
+            }
 
-    //         console.log("Date marker", date.format("YYYY-MM-DD"));
-    //         if (!coordinate) {
-    //           console.warn("Skipping invalid location:", location);
-    //           return null;
-    //         }
+            console.log("Date marker", date.format("YYYY-MM-DD"));
+            if (!coordinate) {
+              console.warn("Skipping invalid location:", location);
+              return null;
+            }
 
-    //         if (coordinate instanceof GeoPoint) {
-    //           // If it's already a GeoPoint, keep it as is
-    //           coordinate = coordinate;
-    //         } else if (coordinate && coordinate._lat && coordinate._long) {
-    //           // If it's an object with _lat and _long, convert it to GeoPoint
-    //           coordinate = new GeoPoint(coordinate._lat, coordinate._long);
-    //         } else if (coordinate && coordinate._lat && coordinate._long) {
-    //           // If it's from coordinates (old format), convert to GeoPoint
-    //           coordinate = new GeoPoint(coordinate._lat, coordinate._long);
-    //         }
-    //         console.log(coordinate);
+            if (coordinate instanceof GeoPoint) {
+              // If it's already a GeoPoint, keep it as is
+              coordinate = coordinate;
+            } else if (coordinate && coordinate._lat && coordinate._long) {
+              // If it's an object with _lat and _long, convert it to GeoPoint
+              coordinate = new GeoPoint(coordinate._lat, coordinate._long);
+            } else if (coordinate && coordinate._lat && coordinate._long) {
+              // If it's from coordinates (old format), convert to GeoPoint
+              coordinate = new GeoPoint(coordinate._lat, coordinate._long);
+            }
+            console.log(coordinate);
 
-    //         return {
-    //           id: doc.id,
-    //           title: doc.data().title,
-    //           location: doc.data().location,
-    //           coordinate: coordinate,
-    //           date: date.isValid() ? date.format("YYYY-MM-DD") : null,
-    //           details: doc.data().additionalInfo,
-    //           crime: doc.data().category,
-    //           image: crimeImages[doc.data().category as CrimeType],
-    //         };
-    //       })
-    //     );
+            return {
+              id: doc.id,
+              title: doc.data().title,
+              location: doc.data().location,
+              coordinate: coordinate,
+              date: date.isValid() ? date.format("YYYY-MM-DD") : null,
+              details: doc.data().additionalInfo,
+              crime: doc.data().category,
+              image: crimeImages[doc.data().category as CrimeType],
+            };
+          })
+        );
 
-    //     const validCrimes = crimeList.filter((crime) => crime !== null);
-    //     console.log("Valid Crimes: ", validCrimes);
-    //     console.log("markers", crimeList);
-    //     setMarkers(validCrimes);
-    //     setAllMarkers(validCrimes);
-    //   } catch (error) {
-    //     console.error("Error fetching reports:", error);
-    //   }
-    // };
+        const validCrimes = crimeList.filter((crime) => crime !== null);
+        console.log("Valid Crimes: ", validCrimes);
+        console.log("markers", crimeList);
+        setMarkers(validCrimes);
+        setAllMarkers(validCrimes);
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+      }
+    };
 
     // useEffect(() => {
     //   const unsubscribe = navigation.addListener("focus", () => {
@@ -734,7 +738,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
 
     console.log(displayMarkers);
 
-    const map = useMap("test");
     return (
       <GestureHandlerRootView>
         <SpacerView
@@ -749,7 +752,6 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
             region="PH"
           >
             <Map
-              id="test"
               style={style.map}
               defaultCenter={position}
               disableDoubleClickZoom={true}

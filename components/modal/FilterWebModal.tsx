@@ -1,7 +1,7 @@
 import { CrimeFilter } from "@/app/(tabs)/crimemap";
 import { View, Pressable, Image, Text, StyleSheet } from "react-native";
 import { useState } from "react";
-import { dummyMarkers } from "@/app/(tabs)/data/marker";
+import { dummyMarkers } from "@/constants/data/marker";
 
 const FilterWebModal = ({
   confirmFilter,

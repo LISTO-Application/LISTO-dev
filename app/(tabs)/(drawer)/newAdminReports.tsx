@@ -20,7 +20,7 @@ import { styles } from "@/styles/styles"; // For mobile styles
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { useRoute } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
-import { db } from "../FirebaseConfig"; // Adjust the import path to your Firebase config
+import { db } from "../../FirebaseConfig"; // Adjust the import path to your Firebase config
 import {
   collection,
   addDoc,
@@ -31,7 +31,7 @@ import {
 } from "@react-native-firebase/firestore";
 import { getIconName } from "@/assets/utils/getIconName";
 import { SideBar } from "@/components/SideBar";
-import { crimeImages, CrimeType } from "@/app/(tabs)/data/marker";
+import { crimeImages, CrimeType } from "@/constants/data/marker";
 import dayjs, { Dayjs } from "dayjs";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -227,7 +227,7 @@ export default function NewAdminReports({
       console.log(newCrime);
       const crimeRef = collection(database, "crimes"); // Save to 'crimes' collection
       await addDoc(crimeRef, newCrime);
-      navigation.navigate("ViewAdminEmergencyList", { updatedCrime: newCrime }); // Make sure to navigate to the right screen
+      router.push("/ViewAdminEmergencyList"); // Make sure to navigate to the right screen
     } catch (error) {
       console.error("Error saving crime:", error);
       alert("Failed to save crime. Please try again.");
@@ -463,7 +463,7 @@ export default function NewAdminReports({
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}
-                onPress={() => navigation.navigate("ViewAdminEmergencyList")}
+                onPress={() => router.push("/ViewAdminEmergencyList")}
               >
                 <Text style={webstyles.buttonTexteditReport}>CANCEL</Text>
               </TouchableOpacity>

@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, { ModeType, DateType } from "react-native-ui-datepicker";
 import dayjs from "dayjs";
 import { TouchableOpacity } from "react-native-gesture-handler";
-import { MarkerType } from "@/app/(tabs)/data/marker";
+import { MarkerType } from "@/constants/data/marker";
 import isBetween from "dayjs/plugin/isBetween";
 
 const DateModal = ({

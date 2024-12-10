@@ -15,7 +15,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { webstyles } from "@/styles/webstyles"; // For web styles
-import { db } from "../FirebaseConfig";
+import { db } from "@/app/FirebaseConfig";
 import { Timestamp } from "@react-native-firebase/firestore";
 import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
 import "firebase/database";
@@ -32,21 +32,17 @@ import SideBar from "@/components/SideBar";
 import { styles } from "@/styles/styles";
 import TitleCard from "@/components/TitleCard";
 import SearchSort from "@/components/SearchSort";
-import { Report } from "../(tabs)/data/reports";
+import { Report } from "../../../constants/data/reports";
 import PaginationReport from "@/components/PaginationReport";
 import { format, formatDate } from "date-fns";
 import dayjs, { Dayjs } from "dayjs";
 import * as XLSX from "xlsx";
 import * as DocumentPicker from "expo-document-picker"; // For mobile file selection
 import { v4 as uuidv4 } from "uuid";
-import { crimeImages, CrimeType } from "../(tabs)/data/marker";
+import { crimeImages, CrimeType } from "../../../constants/data/marker";
 import { Asset } from "expo-asset";
 
-export default function ViewAdminEmergencyList({
-  navigation,
-}: {
-  navigation: any;
-}) {
+export default function ViewAdminEmergencyList() {
   const [crimes, setCrimes] = useState<Report[]>([]);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -896,7 +892,7 @@ export default function ViewAdminEmergencyList({
         </Animated.View>
         <TouchableOpacity
           style={webstyles.fab}
-          onPress={() => navigation.navigate("newAdminReports")}
+          onPress={() => router.push("/newAdminReports")}
         >
           <View
             style={{

@@ -3,7 +3,6 @@ import {
   DrawerItemList,
 } from "@react-navigation/drawer";
 import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../app/AuthContext";
 import { router } from "expo-router";
 import {
   ImageBackground,
@@ -27,11 +26,8 @@ const UserBanner: React.FC<UserBannerProps> = (props) => {
   const [username, setUsername] = useState("");
   const id = "John Doe";
   const image = require("../../assets/images/texture.svg");
-  const authContext = useContext(AuthContext);
-  if (!authContext) {
-    throw new Error("UserBanner must be within an AuthProvider");
-  }
-  const { setIsLoggedIn } = authContext;
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     // Listen to authentication state changes
@@ -64,9 +60,7 @@ const UserBanner: React.FC<UserBannerProps> = (props) => {
       >
         {" "}
         <View style={layoutStyles.drawer}>
-          <TouchableOpacity
-            onPress={() => props.navigation.navigate("Account")}
-          >
+          <TouchableOpacity onPress={() => router.push("/account")}>
             <Image source={require("../../assets/images/user-icon.png")} />
             <ThemedText>{username}</ThemedText>
           </TouchableOpacity>

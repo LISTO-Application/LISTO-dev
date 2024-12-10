@@ -1,4 +1,4 @@
-import { MarkerType } from "@/app/(tabs)/data/marker";
+import { MarkerType } from "@/constants/data/marker";
 import { Ionicons } from "@expo/vector-icons";
 import { addMonths, format, setDate, subMonths } from "date-fns";
 import dayjs from "dayjs";

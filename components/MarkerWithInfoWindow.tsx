@@ -6,7 +6,7 @@
 //Cannot be separated into a different component, Image props is not functioning well
 
 import { CrimeFilter } from "@/app/(tabs)/crimemap";
-import { crimeImages, CrimeType, MarkerType } from "@/app/(tabs)/data/marker";
+import { crimeImages, CrimeType, MarkerType } from "@/constants/data/marker";
 import { AdvancedMarker, Pin, InfoWindow } from "@vis.gl/react-google-maps";
 import dayjs from "dayjs";
 import React from "react";
