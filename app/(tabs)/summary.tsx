@@ -14,7 +14,11 @@ import * as FileSystem from "expo-file-system"
 import firestore, { Timestamp } from '@react-native-firebase/firestore';
 
 //Date-FNS Imports
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
 import { toDate, isToday, isThisWeek, isThisMonth, compareDesc, set, formatDate, subYears, isThisYear, isAfter, isBefore, getTime} from "date-fns";
+=======
+import { toDate, isToday, isThisWeek, isThisMonth, compareDesc, set, startOfDay, getUnixTime, endOfDay, getTime, startOfMonth, endOfMonth, startOfWeek, endOfWeek, formatDate, isThisYear, isAfter, isBefore, subYears, parse} from "date-fns";
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
 
 //XLSX Imports
 import xlsx from 'xlsx';
@@ -56,6 +60,43 @@ export default function Summary() {
     { id: 4, name: 'Custom'},
   ];
 
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
+=======
+  interface DateRange {
+    start: Date | null;
+    end: Date | null;
+  }
+
+  const calendarSheetRef = useRef<BottomSheet>(null);
+  const [current, setCurrent] = useState(Timestamp.now().toDate());
+  const [isCalendarSheetOpen, setIsCalendarSheetOpen] = useState(false);
+  const initialDate = {timestamp: Timestamp.now().toMillis(), date: Timestamp.now().toDate()}
+  const minDate = formatDate(subYears(initialDate.date, 4), "yyyy-MM-dd");
+  const maxDate = formatDate(initialDate.date, "yyyy-MM-dd");
+  const [markedDates, setMarkedDates] = useState<{
+    [key: string]: { selected: boolean; selectedColor: string };
+  }>({});
+  const [selectedDate, setSelectedDate] = useState<DateRange>({start: null, end: null});
+
+  const handleCalendarSheetChange = useCallback((index: any) => {
+    setIsCalendarSheetOpen(index !== -1);
+  }, []);
+  const handleCalendarSnapPress = useCallback((index: number) => {
+    calendarSheetRef.current?.snapToIndex(index);
+  }, []);
+  const handleCalendarClosePress = useCallback(() => {
+    calendarSheetRef.current?.close();
+  }, []);
+  const calendarSnapPoints = useMemo(() => ["70%"], []);
+
+  const load = useDynamicAnimation(() => {
+    return {
+      opacity: 1,
+    }
+  });
+
+  
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
   //Circular Progress Constants
   const circularProgressSize = 125;
 
@@ -89,14 +130,20 @@ export default function Summary() {
   const [selectedDate, setSelectedDate] = useState(formatDate(initialDate.date, "yyyy-MM-dd").toString());
   
   //State for managing loading state
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
   const [loading, setLoading] = useState(true);
+=======
+  const [loading, setLoading] = useState(false);
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
 
   const handleTimeRangePress = useCallback((index: number) => {
     setTimeRangeState(index);
   }, [timeRangeState]);
 
+
   const timeRangeIndex = useRef(1);
 
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
   //Fetch Data from Database, set incidents array and bar data array for use in the Bar Chart
   const handleDataChange = async () => {
     setLoading(true);
@@ -109,16 +156,21 @@ export default function Summary() {
     //Error Handling Function
     const fetchError =  (error : any) => {console.log(error);}
 
+=======
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
     //Attaches a Listener to the Incident Collection and cleans up when the component is unmounted
     useEffect(() => {
       const unsubscribe = incidentCollection.onSnapshot(handleDataChange, fetchError);
       return () => unsubscribe();
     }, [timeRangeIndex.current]);
 
-  const setBarData = useCallback ((incidents : any, chosenDateRange: number) => {
+  useMemo(() => {
+    console.log("Setting Bar Data");
+    setBarData(incidents);
+  }, [incidents]);
 
+  function setBarData(incidents : any) {
     setLoading(true);
-
     // Initialize counters
     let homicideCount = 0;
     let injuryCount = 0;
@@ -141,101 +193,178 @@ export default function Summary() {
 
     // Iterate through incidents once
     incidents.map((incident: any) => {
-      if (incident.date) {
-        const incidentDate = toDate(incident.date.toDate());
-        if (chosenDateRange === 1) {
+      if (incident.timeOfCrime) {
+        console.log("YES THERE IS TIME")
+        const incidentDate = incident.timeOfCrime.toDate();
+        console.log(incidentDate);
+        if (timeRangeState == 1) {
           if (isToday(incidentDate)) {
-            switch (incident.type) {
-              case 'Homicide':
+            switch (incident.category) {
+              case 'homicide':
                 homicideCount++;
+                console.log("+1 Homicide");
                 break;
-              case 'Injury':
+              case 'injury':
                 injuryCount++;
+                console.log("+1 Injury");
                 break;
-              case 'Theft':
+              case 'theft':
                 theftCount++;
+                console.log("+1 Theft");
                 break;
-              case 'Robbery':
+              case 'robbery':
                 robberyCount++;
+                console.log("+1 Robbery");
                 break;
-              case 'Kidnapping':
+              case 'kidnapping':
                 kidnappingCount++;
+                console.log("+1 Kidnapping");
                 break;
-              case 'Carnapping':
+              case 'carnapping':
                 carnappingCount++;
+                console.log("+1 Carnapping");
                 break;
-              case 'Rape':
+              case 'rape':
                 rapeCount++;
+                console.log("+1 Rape");
                 break;
               default:
                 break;
             }
             setCounts();
           }
-        } else if (chosenDateRange === 2) {
+        } else if (timeRangeState == 2) {
           if (isThisWeek(incidentDate)) {
-            switch (incident.type) {
-              case 'Homicide':
+            switch (incident.category) {
+              case 'homicide':
                 homicideCount++;
+                console.log("+1 Homicide");
                 break;
-              case 'Injury':
+              case 'injury':
                 injuryCount++;
+                console.log("+1 Injury");
                 break;
-              case 'Theft':
+              case 'theft':
                 theftCount++;
+                console.log("+1 Theft");
                 break;
-              case 'Robbery':
+              case 'robbery':
                 robberyCount++;
+                console.log("+1 Robbery");
                 break;
-              case 'Kidnapping':
+              case 'kidnapping':
                 kidnappingCount++;
+                console.log("+1 Kidnapping");
                 break;
-              case 'Carnapping':
+              case 'carnapping':
                 carnappingCount++;
+                console.log("+1 Carnapping");
                 break;
-              case 'Rape':
+              case 'rape':
                 rapeCount++;
+                console.log("+1 Rape");
                 break;
               default:
                 break;
             }
             setCounts();
           }
-        } else if (chosenDateRange === 3) {
+        } else if (timeRangeState == 3) {
           if (isThisMonth(incidentDate)) {
-            switch (incident.type) {
-              case 'Homicide':
+            switch (incident.category) {
+              case 'homicide':
                 homicideCount++;
+                console.log("+1 Homicide");
                 break;
-              case 'Injury':
+              case 'injury':
                 injuryCount++;
+                console.log("+1 Injury");
                 break;
-              case 'Theft':
+              case 'theft':
                 theftCount++;
+                console.log("+1 Theft");
                 break;
-              case 'Robbery':
+              case 'robbery':
                 robberyCount++;
+                console.log("+1 Robbery");
                 break;
-              case 'Kidnapping':
+              case 'kidnapping':
                 kidnappingCount++;
+                console.log("+1 Kidnapping");
                 break;
-              case 'Carnapping':
+              case 'carnapping':
                 carnappingCount++;
+                console.log("+1 Carnapping");
                 break;
-              case 'Rape':
+              case 'rape':
                 rapeCount++;
+                console.log("+1 Rape");
                 break;
               default:
                 break;
             }
             setCounts();
           }
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
         } else if (chosenDateRange === 4) {
 
         }
       }
     });
   },[incidents, timeRangeState]);
+=======
+        } else if (timeRangeState == 4) {
+          if (selectedDate.start && selectedDate.end) {
+            if (isAfter(incidentDate, selectedDate.start) && isBefore(incidentDate, selectedDate.end)) {
+              switch (incident.category) {
+                case 'homicide':
+                  homicideCount++;
+                  console.log("+1 Homicide");
+                  break;
+                case 'injury':
+                  injuryCount++;
+                  console.log("+1 Injury");
+                  break;
+                case 'theft':
+                  theftCount++;
+                  console.log("+1 Theft");
+                  break;
+                case 'robbery':
+                  robberyCount++;
+                  console.log("+1 Robbery");
+                  break;
+                case 'kidnapping':
+                  kidnappingCount++;
+                  console.log("+1 Kidnapping");
+                  break;
+                case 'carnapping':
+                  carnappingCount++;
+                  console.log("+1 Carnapping");
+                  break;
+                case 'rape':
+                  rapeCount++;
+                  console.log("+1 Rape");
+                  break;
+                default:
+                  break;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Set counts
+    setHomicideIncidentCount(homicideCount);
+    setInjuryIncidentCount(injuryCount);
+    setTheftIncidentCount(theftCount);
+    setRobberyIncidentCount(robberyCount);
+    setKidnappingIncidentCount(kidnappingCount);
+    setCarnappingIncidentCount(carnappingCount);
+    setRapeIncidentCount(rapeCount);
+    setLoading(false);
+  }
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
 
 
   const saveData = async (file: string, filename: string, mimeType: any) => {
@@ -312,29 +441,117 @@ export default function Summary() {
     { value: rapeIncidents, label: 'Rape', labelTextStyle: { color: '#850456', fontWeight: 'bold' }, frontColor: '#115272' }]
 
   if(Platform.OS === 'android') {
+
+      //Fetch Data from Database, set incidents array and bar data array for use in the Bar Chart
+  async function handleDataChange () {
+    if(timeRangeState === 1) {
+      console.log("DAY");
+      crimesCollection
+      .where("unixTOC", ">", getTime(startOfDay(new Date())))
+      .where("unixTOC", "<", getTime(endOfDay(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        let data: FirebaseFirestoreTypes.DocumentData[] = [];
+        querySnapshot.docs.forEach(doc => {
+          data.push({...doc.data() });
+        });
+        setIncidents(data);
+      })
+    reportsCollection
+    .where("unixTOC", ">", getTime(startOfDay(new Date())))
+    .where("unixTOC", "<", getTime(endOfDay(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        let data: FirebaseFirestoreTypes.DocumentData[] = [];
+        querySnapshot.docs.forEach(doc => {
+          data.push({...doc.data() });
+        });
+        setReports(data);
+      })
+    } else if(timeRangeState == 2) {
+      console.log("WEEK");
+      crimesCollection
+      .where("unixTOC", ">", getTime(startOfWeek(new Date())))
+      .where("unixTOC", "<", getTime(startOfWeek(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        let data: FirebaseFirestoreTypes.DocumentData[] = [];
+        querySnapshot.docs.forEach(doc => {
+          data.push({...doc.data() });
+        });
+        setIncidents(data);
+      })
+    reportsCollection
+    .where("unixTOC", ">", getTime(startOfWeek(new Date())))
+    .where("unixTOC", "<", getTime(endOfWeek(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        let data: FirebaseFirestoreTypes.DocumentData[] = [];
+        querySnapshot.docs.forEach(doc => {
+          data.push({...doc.data() });
+        });
+        setReports(data);
+      })
+    } else if (timeRangeState == 3) {
+      console.log("Month")
+      crimesCollection
+      .where("unixTOC", ">", getTime(startOfMonth(new Date())))
+      .where("unixTOC", "<", getTime(endOfMonth(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        let data: FirebaseFirestoreTypes.DocumentData[] = [];
+        querySnapshot.docs.forEach(doc => {
+          data.push({...doc.data() });
+        });
+        setIncidents(data);
+      })
+    reportsCollection
+    .where("unixTOC", ">", getTime(startOfMonth(new Date())))
+    .where("unixTOC", "<", getTime(endOfMonth(new Date())))
+      .get()
+      .then((querySnapshot) => {
+        let data: FirebaseFirestoreTypes.DocumentData[] = [];
+        querySnapshot.docs.forEach(doc => {
+          data.push({...doc.data() });
+        });
+        setReports(data);
+      })
+    } else if (timeRangeState == 4) {
+      console.log("Custom")
+      const start = selectedDate.start ? getTime(selectedDate.start) : 0;
+      const end = selectedDate.end ? getTime(selectedDate.end) : 0;
+      crimesCollection
+      .where("unixTOC", "<=", end)
+      .where("unixTOC", ">=", start)
+      .get()
+      .then((querySnapshot) => {
+        let data: FirebaseFirestoreTypes.DocumentData[] = [];
+        querySnapshot.docs.forEach(doc => {
+          data.push({...doc.data() });
+        });
+        setIncidents(data);
+      })
+    reportsCollection
+    .where("unixTOC", "<=", end)
+    .where("unixTOC", ">=", start)
+      .get()
+      .then((querySnapshot) => {
+        let report: FirebaseFirestoreTypes.DocumentData[] = [];
+        querySnapshot.docs.forEach(doc => {
+          report.push({...doc.data() });
+        });
+        setReports(report);
+    })
+    console.log(incidents.length)
+  }
+};
+
     return (
     
       <ThemedView
-      style={[styles.mainContainer]}
+      style={[styles.mainContainer, {opacity: loading ? 0.5 : 1}]}
       >
-            <TouchableOpacity onPress={() => {
-            router.replace({
-                pathname: "/",
-            })}}>
-
-                <Image 
-                style = {{
-                width: 40, 
-                height: 40,
-                position: 'absolute',
-                top: 40,
-                left: 20
-                }} 
-                source={backArrow} />
-
-          </TouchableOpacity>
-
-          <ScrollView style = {{backgroundColor: '#DADADA'}} contentContainerStyle = {{justifyContent: 'center', alignItems: 'center'}}>
+          <ScrollView style = {{backgroundColor: '#DADADA',}} contentContainerStyle = {{justifyContent: 'center', alignItems: 'center'}}>
   
             {/* MAIN CONTAINER */}
             <ImageBackground
@@ -350,9 +567,20 @@ export default function Summary() {
                   style = {[{flex:1, justifyContent: 'center', alignItems: 'center',}, timeRange.id === 1 && {borderTopLeftRadius: 50, borderBottomLeftRadius: 50}, timeRange.id === 4 && {borderTopRightRadius: 50, borderBottomRightRadius: 50}]}
                   key={timeRange.id}
                   onPress={() => {
+                    setLoading(true);
                     handleTimeRangePress(index + 1);
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
+=======
+                    if(timeRange.id === 4) {
+                      handleCalendarSnapPress(0);
+                    } else {
+                      handleCalendarClosePress();
+                    }
+                    setTimeout(() => {
+                      setLoading(false);
+                    }, 1000);
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
                     timeRangeIndex.current = timeRange.id;
-                    setBarData(incidents, timeRangeIndex.current);
                     }}>
                     <Text style = {[{width: '100%', height: 'auto', paddingVertical: 5, fontSize: 16, fontWeight: 'bold', textAlign: 'center'}, !(timeRangeIndex.current == timeRange.id) && {color: '#115272', backgroundColor: '#FFF'}, timeRangeIndex.current == timeRange.id && {color: '#FFF', backgroundColor: '#115272'}, timeRange.id === 1 && {borderTopLeftRadius: 50, borderBottomLeftRadius: 50}, timeRange.id === 4 && {borderTopRightRadius: 50, borderBottomRightRadius: 50}]}>{timeRange.name}</Text>
                   </TouchableOpacity>
@@ -361,7 +589,7 @@ export default function Summary() {
                 </View>
             </ImageBackground>
   
-            <View style = {{width: '85%', justifyContent: 'space-around', flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 20, marginVertical: '5%'}}>
+            <View style = {{width: '85%', justifyContent: 'space-around', backgroundColor: '#FFF', borderRadius: 20, marginVertical: '5%'}}>
               
               {/*CRIMES COUNT*/}
               <View style = {{flexDirection: 'column', justifyContent: 'center', alignItems:'center'}}>
@@ -369,7 +597,7 @@ export default function Summary() {
                 <AnimatedCircularProgress
                 style = {{height: "auto", aspectRatio: 1/1}}
                 size={circularProgressSize}
-                width={20}
+                width={subtitle + 5}
                 fill={incidents.length}
                 arcSweepAngle={220}
                 rotation={250}
@@ -380,7 +608,7 @@ export default function Summary() {
                 duration={5}>
                 {
                   (fill: number) => (
-                    <Text style = {[{fontSize: 48, fontWeight:'900', color: '#115272'}, loading && {opacity: 0}]}>
+                    <Text style = {[{fontSize: 48, fontWeight:'900', color: '#115272'},]}>
                       {fill}
                     </Text>
                   )
@@ -388,14 +616,25 @@ export default function Summary() {
                 </AnimatedCircularProgress>
               </View>
 
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
               {/*REPORTS COUNT*/}
+=======
+              </View>
+
+              <View style = {{width: '85%', justifyContent: 'space-around', backgroundColor: '#FFF', borderRadius: 20, marginVertical: '5%'}}>
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
               <View style = {{flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
                 <Text style = {{width: '100%', fontSize: 28, fontWeight:'bold', textAlign: 'center', color: '#115272'}}>Reports</Text>
                   <AnimatedCircularProgress
                   style = {{height: "auto"}}
                   size={circularProgressSize}
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
                   width={20}
                   fill={24}
+=======
+                  width={subtitle + 5}
+                  fill={reports.length}
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
                   arcSweepAngle={220}
                   rotation={250}
                   tintColor='#DA4B46'
@@ -427,13 +666,34 @@ export default function Summary() {
               </ScrollView>
             </View>
 
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
             {/*GENERATE REPORTS BUTTON*/}
             <TouchableOpacity style = {{width: '50%', height: 'auto', backgroundColor: '#DA4B46', paddingVertical: '1.5%', borderRadius: 50, justifyContent: 'center', marginVertical: "5%"}} 
+=======
+            <TouchableOpacity style = {{width: '50%', height: 'auto', backgroundColor: '#115272', marginVertical: "2.5%", paddingVertical: '1.5%', borderRadius: 50, justifyContent: 'center'}} 
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
             onPress={ async () =>
               {
+                setLoading(true);
+                console.log(timeRangeState)
+                handleDataChange();
+                setTimeout(() => {
+                  setLoading(false);
+                }, 1000);
+              } }>
+
+                  <ThemedText style = {{width: "100%", textAlign: 'center'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Filter</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style = {{width: '50%', height: 'auto', backgroundColor: '#DA4B46', marginVertical: "2.5%", paddingVertical: '1.5%', borderRadius: 50, justifyContent: 'center'}} 
+            onPress={ async () =>
+              {
+                setLoading(true);
+
                 try{
                   // Check for Permission (check if permission is already given or not)
                   let isPermitedExternalStorage = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
+                  console.log(isPermitedExternalStorage)
                   if (!isPermitedExternalStorage) {
 
                     // Ask for permission
@@ -455,6 +715,7 @@ export default function Summary() {
                     } else {
                         // Permission denied
                         console.log("Permission denied");
+                        Alert.alert("Need permissions", "The application needs storage permissions to generate the report.");
                     }
                 } else {
                     // Already have Permission (calling our writeDataAndDownloadExcelFile function)
@@ -464,12 +725,19 @@ export default function Summary() {
                   console.log("Error checking permisison");
                   console.log(e);
                 }
-                {/*router.replace({
-                pathname: "/",
-              });}*/}
+                setTimeout(() => {
+                  setLoading(false);
+                }, 1000);
               } }>
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
                   <Text style = {{width: "100%", fontSize: subtitle, color: "#FFF", fontWeight: "bold", textAlign: 'center'}} >Generate Reports</Text>
+=======
+
+                  <ThemedText style = {{width: "100%", textAlign: 'center'}} lightColor='#FFF' darkColor='#FFF' type="subtitle" >Generate Report</ThemedText>
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
             </TouchableOpacity>
+
+            <SpacerView height={display} />
   
           </ScrollView>
 
@@ -485,7 +753,11 @@ export default function Summary() {
                 }}
               >
                 <Calendar
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
                   style={{width: "100%", height: "80%",}}
+=======
+                  style={{width: "100%", height: "85%", marginBottom: "5%"}}
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
                   current={formatDate(current, "yyyy-MM-dd")}
                   key={formatDate(current, "yyyy-MM-dd")}
                   theme={{
@@ -500,6 +772,7 @@ export default function Summary() {
                   hideExtraDays={true}
                   markingType="dot"
                   markedDates={markedDates}
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
                   onMonthChange={(month) => {
                       if(isThisYear(month.dateString) && !isAfter(month.dateString, maxDate) && !isBefore(month.dateString, minDate)) {
                         setDateMode("month");
@@ -516,6 +789,41 @@ export default function Summary() {
                         selectedColor: "#DA4B46",
                       },
                     });
+=======
+                  onDayPress={(day: { dateString: string }) => {
+                    setLoading(true);
+                    if(selectedDate.start == null) {
+                      setSelectedDate({start: parse(day.dateString, "yyyy-MM-dd", new Date()), end: null});
+                      setMarkedDates({
+                        [String(day.dateString)]: {
+                          selected: true,
+                          selectedColor: "#DA4B46",
+                        }, 
+                      });
+                    } else if (selectedDate.start != null && selectedDate.end == null) {
+                      if(!isBefore(parse(day.dateString, "yyyy-MM-dd", new Date()), selectedDate.start)) {
+                        setSelectedDate({start: selectedDate.start, end: parse(day.dateString, "yyyy-MM-dd", new Date())});
+                        setMarkedDates({
+                          ...markedDates,
+                          [String(day.dateString)]: {
+                            selected: true,
+                            selectedColor: "#FECF1A",
+                          },
+                        });
+                      } else {
+                        Alert.alert("Invalid Date Range", "End date cannot be before start date.");
+                      }
+                    }  else if (selectedDate.start != null && selectedDate.end != null) {
+                      setSelectedDate({start: parse(day.dateString, "yyyy-MM-dd", new Date()), end: null});
+                      setMarkedDates({
+                        [String(day.dateString)]: {
+                          selected: true,
+                          selectedColor: "#DA4B46",
+                        },
+                      });
+                    }
+                    setLoading(false);
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
                   }}
                 />
 
@@ -531,11 +839,21 @@ export default function Summary() {
                     alignSelf: "center",
                   }}
                 onPress={async () => {
+<<<<<<< Updated upstream:app/(tabs)/summary.tsx
 
+=======
+                  setLoading(true);
+                  handleCalendarClosePress();
+                  if (selectedDate.start && selectedDate.end) {
+                    handleDataChange();
+                  } else {
+                    console.log("Start date is null");
+                  }
+>>>>>>> Stashed changes:app/(tabs)/adminSummary.tsx
                 }}>
                   <Text
                     style = {{width: '100%', height: "100%", color: "#FFF", fontWeight: "bold", fontSize: 16, textAlign: "center", textAlignVertical: "center"}}>
-                      Search
+                      Filter
                   </Text>
                 </Pressable>}
 

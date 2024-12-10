@@ -68,7 +68,7 @@ import {
     );
   
     // Regex for form validation
-    const nameRegex = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+    const unameRegex = /^[A-Za-z0-9]{6,}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Email validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$^*.[\]{}()?"!@#%&/\\,><':;|_~])[A-Za-z\d$^*.[\]{}()?"!@#%&/\\,><':;|_~]{6,}$/; // Minimum eight characters, at least one letter and one number
     const phoneRegex = /^\+639\d{9}$/; // 11-digit phone number
@@ -179,9 +179,9 @@ import {
               placeholder="********" 
               placeholderTextColor= "#BBB"
               onChangeText={setPassword}
-              onChange = {() => handleChangedField(4)}
-              onFocus={() => handleFocus(4)}
-              onBlur={() => handleFocus(4)}
+              onChange = {() => handleChangedField(3)}
+              onFocus={() => handleFocus(3)}
+              onBlur={() => handleFocus(3)}
               value={password}
               secureTextEntry
               />
@@ -194,11 +194,14 @@ import {
               <ThemedButton
                 title="Submit"
                 onPress={() => {
-                  if(nameRegex.test(userName) && emailRegex.test(email) && passwordRegex.test(password) && phoneRegex.test(phone)) {
+                  if(unameRegex.test(userName) && emailRegex.test(email) && passwordRegex.test(password) && phoneRegex.test(phone)) {
                     handleSignUp()
                   } 
-                  if (!nameRegex.test(userName)) {
+                  if (!unameRegex.test(userName)) {
                     handleInvalidField(0);
+                    if(userName.length < 6) {
+                      Alert.alert("Username must be at least 6 characters long")
+                    }
                   }
                   if (!phoneRegex.test(phone)) {
                     handleInvalidField(1);
@@ -208,6 +211,9 @@ import {
                   }
                   if (!passwordRegex.test(password)) {
                     handleInvalidField(3);
+                    if(password.length < 6 && userName.length >= 6) {
+                      Alert.alert("Invalid Password","Password must be at least 6 characters long and contain 1 uppercase character, 1 lowercase character, 1 number, and 1 special character");
+                    };
                   }
                 }}
               />

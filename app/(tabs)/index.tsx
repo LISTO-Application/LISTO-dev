@@ -82,20 +82,6 @@ export default function CrimeMap() {
     router.replace("../(auth)/login");
   }
 
-  // GOOGLE MAPS
-  const PlacesLibrary = () => {
-    const map = useMap();
-    const placesLib = useMapsLibrary("places");
-    const [markers, setMarkers] = useState<google.maps.places.PlaceResult[]>([]);
-  
-    useEffect(() => {
-      if (!placesLib || !map) return;
-      const svc = new placesLib.PlacesService(map);
-    }, [placesLib, map]);
-  
-    return null;
-  };
-
   const mapRef = useRef<MapView>(null);
 
   useEffect(() => {

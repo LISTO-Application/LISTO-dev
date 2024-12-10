@@ -23,6 +23,8 @@ const AuthContext = createContext<{
         pnumber: string,
         otp: string ) => Promise<{success: boolean; message: string;}>;
 
+    penalizeUser: (uid: string) => void;
+
     distress: (
       reportTo: string,
       emergency: {
@@ -37,6 +39,7 @@ const AuthContext = createContext<{
     signOut: () => null,
     adminRegister: async () => ({ success: false, message: 'Not implemented' }),
     distress: async () => ({ success: false, message: 'Not implemented' }),
+    penalizeUser: () => null,
   });
 
   // This hook can be used to access the user session methods and data.
@@ -127,11 +130,10 @@ export function useSession() {
             firebase.auth().signOut();
             router.replace("/(auth)/login");
           },
-
           adminRegister: async (email, password, uname, pnumber, otp) => {
             console.log("Creating user...");
             console.log(typeof email, typeof password, typeof uname, typeof pnumber, typeof otp);
-            const createAdminResult = await firebase.app().functions("asia-east1").httpsCallable("createAdmin")({
+            const createAdminResult = await firebase.app().functions("asia-east1").httpsCallable("makeAdmin")({
               email: email,
               password: password,
               uname: uname,
@@ -147,7 +149,11 @@ export function useSession() {
                 console.log("User created successfully, signing in...");
                 return await firebase.app().auth().signInWithEmailAndPassword(email, password)
                 .then((result) => {
-                  return { success: true, message: "ADMIN_CREATED" };
+                  if (result.user) {
+                    return { success: true, message: "ADMIN_CREATED" };
+                  } else {
+                    return { success: false, message: "ADMIN_NOT_CREATED" };
+                  }
                 })
                 .catch((error) => {
                   console.log("Error signing in admin:", error);
@@ -156,7 +162,6 @@ export function useSession() {
               }
               // If response failed, return server response
               else {
-                console.log("Error creating admin: ", response.message);
                 return { success: false, message: response.message };
               }
             })
@@ -189,6 +194,11 @@ export function useSession() {
               return { success: false, message: error.code };
             });
           },
+          penalizeUser: async (uid) => {
+            await firebase.app().functions("asia-east1").httpsCallable("makeAdmin")({
+              uid: uid,
+            })
+          }
         }}>
         {children}
       </AuthContext.Provider>

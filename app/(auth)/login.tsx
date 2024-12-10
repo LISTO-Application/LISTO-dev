@@ -21,7 +21,7 @@ import { FirebaseAuthTypes, firebase } from "@react-native-firebase/auth";
 import crashlytics from '@react-native-firebase/crashlytics';
 
 //Auth Imports
-import { useSession } from "@/auth";
+import { useSession } from "@/auth/adminIndex";
 
 //JWT Imports
 import "core-js/stable/atob";

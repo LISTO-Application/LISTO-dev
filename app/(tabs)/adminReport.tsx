@@ -43,6 +43,7 @@ import { styles } from '@/styles/styles'; // Adjust the path if necessary
 //Icon Imports
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSession } from '@/auth/adminIndex';
 
 // Image Imports
 const add = require("../../assets/images/add-button.png");
@@ -66,6 +67,7 @@ export default function adminReport() {
   if(session == null) {
     router.replace("../(auth)/login");
   }
+  const auth = useSession()
   
   // RESPONSIVE VALUES
   const { display, subDisplay, title, subtitle, body, small, height, tiny} = useResponsive();
@@ -100,6 +102,8 @@ export default function adminReport() {
     northEast: { latitude: 14.693963, longitude: 121.101193 },
     southWest: { latitude: 14.649732, longitude: 121.067052 }
   };
+  // Pagination
+  const [lastReport, setLastReport] = useState<FirebaseFirestoreTypes.QueryDocumentSnapshot>();
   
   // Loading States
   const [loading, setLoading] = useState(false);
@@ -112,6 +116,7 @@ export default function adminReport() {
   const [addReportVisible, AddReportVisible] = useState(false);
   const [geoLocateVisible, setGeoLocateVisible] = useState(false);
   const [addCrime, setAddCrime] = useState(false);
+  
 
   // FORM INPUTS
   const [selectedValue, setSelectedValue] = useState({ label: 'Select Crime Type', value: '' });
@@ -191,8 +196,10 @@ export default function adminReport() {
       if(session != null) {
         await firebase.firestore().collection("reports")
           .where("status", "==", 1)
+          .limit(1)
           .get()
           .then((querySnapshot) => {
+            setLastReport(querySnapshot.docs[querySnapshot.docs.length-1]);
             querySnapshot.forEach((doc) => {
               setReports((prevData) => [...prevData, doc]);
             });
@@ -219,7 +226,7 @@ export default function adminReport() {
 
   // INITIALIZE MAP
   useEffect(() => {
-    Geocoder.init("AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0");
+    Geocoder.init("AIzaSyDoWF8JDzlhT2xjhuInBtMmkhWGXg2My0g");
     if (mapRef.current) {
       mapRef.current.setMapBoundaries(
         mapBoundaries.northEast,
@@ -285,6 +292,25 @@ export default function adminReport() {
               </MotiView>
             );
           }) }
+          {reports.length > 0 && 
+          <TouchableOpacity style = {{backgroundColor: "#115272", borderRadius: 10, width: "50%", marginHorizontal: "auto", marginTop: "5%"}}
+          onPress={async ()=> {
+            setLoading(true);
+            await firebase.firestore().collection("reports")
+            .where("status", "==", 1)
+            .startAfter(lastReport)
+            .limit(5)
+            .get()
+            .then((querySnapshot) => {
+              setLastReport(querySnapshot.docs[querySnapshot.docs.length-1]);
+              querySnapshot.forEach((doc) => {
+              setReports((prevData) => [...prevData, doc]);
+            });
+              setLoading(false);
+            });
+          }}>
+            {!loading ? <Text style = {{fontSize: body, fontWeight: "bold", color: "#FFF", textAlign: "center", marginVertical: "5%"}}>Load more</Text> : <ActivityIndicator size="large" color="#DA4B46"/>}
+            </TouchableOpacity>}
           </ScrollView>
           :
           <View style = {{width: "100%", height: "75%", flexDirection: "column", justifyContent: "center", marginHorizontal: "auto", marginVertical: "0.5%"}}>
@@ -461,7 +487,7 @@ export default function adminReport() {
                 <Image style = {{width: display, height: display, aspectRatio: 1/1, backgroundColor: "#DA4B46", borderRadius: 10, marginHorizontal: "2.5%"}} source={categories[selectedValue.value as keyof typeof categories]}/>
                 <View style = {{flexDirection: "column"}}>
                   <Text style = {{ color: "#FFF", fontWeight: 'bold', fontSize: subDisplay, marginHorizontal: "2.5%"}}>{selectedValue.value.charAt(0).toUpperCase() + selectedValue.value.slice(1)}</Text>
-                  <Text style = {{ color: "#D4D4D4", fontWeight: 'bold', fontSize: small, marginHorizontal: "2.5%"}}>Reported on {formatDate(fromUnixTime(details.timestamp / 1000), "MMMM dd, yyyy")}</Text>
+                  <Text style = {{ color: "#D4D4D4", fontWeight: 'bold', fontSize: small, marginHorizontal: "2.5%"}}>Reported on {formatDate(details.timeReported.toDate(), "MMMM dd, yyyy")}</Text>
                 </View>
               </View>
 
@@ -605,6 +631,23 @@ export default function adminReport() {
                   }}>
                   <Text style={{color: "#FFF", fontSize: subtitle, fontWeight: "bold", textAlign: "center"}}>
                     Back
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{width: "50%", marginTop: "5%", backgroundColor: "#DA4B46", justifyContent: "center", borderRadius: 50, paddingVertical: "2.5%", marginVertical: "2.5%"}} 
+                onPress={() => {
+                  Alert.alert("Penalize User", "Are you sure you want to penalize this user?", [{text: "Cancel", onPress: () => {}}, {text: "Penalize", onPress: () => {
+                    auth.penalizeUser(details.uid);
+                    firebase.firestore().collection("reports")
+                      .doc(detailID)
+                      .delete();
+                    resetData();
+                    setDetails(null);
+                    Alert.alert("User Penalized", "User has been penalized for mischievous report.");
+                  } }]);
+                  }}>
+                  <Text style={{color: "#FFF", fontSize: subtitle, fontWeight: "bold", textAlign: "center"}}>
+                    Penalize User
                   </Text>
                 </TouchableOpacity>
 

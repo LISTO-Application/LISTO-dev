@@ -1,5 +1,5 @@
 //Expo Imports
-import { useSession } from "@/auth";
+import { useSession } from "@/auth/adminIndex";
 import { Redirect } from "expo-router"
 import "core-js/stable/atob";
 import { firebase } from "@react-native-firebase/firestore";

@@ -52,7 +52,7 @@ import {
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
     const { display, subDisplay, title, subtitle, body, small, height, tiny} = useResponsive();
     
-    // Chcek if user is logged in
+    // Check if user is logged in
     useEffect(() => {
       const subscriber = firebase.auth().onAuthStateChanged((user) => {
         setUser(user);
@@ -131,23 +131,23 @@ import {
                     title="Send OTP"
                     marginVertical='5%'
                     onPress={async () => {
-                      setLoading(true);
-                      await firebase.app().functions("asia-east1").httpsCallable("verifyOTP")({
-                        pnumber: phone,
-                      })
-                      .then((result) => {
-                        setLoading(false);
-                        const data = result.data as { success: boolean, message: string };
-                        if (data.success == true) {
-                          setConfirm(true);
-                        } else {
-                          Alert.alert("OTP request failed", "LISTO may be experiencing technical issues or the phone number is invalid, please try again.")
-                        }
-                      })
-                      .catch(error => {
-                        console.log(error);
-                        Alert.alert("OTP request failed", "LISTO is experiencing technical issues, please try again later.")
-                      });
+                      setConfirm(true);
+                      // await firebase.app().functions("asia-east1").httpsCallable("verifyOTP")({
+                      //   pnumber: phone,
+                      // })
+                      // .then((result) => {
+                      //   setLoading(false);
+                      //   const data = result.data as { success: boolean, message: string };
+                      //   if (data.success == true) {
+                      //     setConfirm(true);
+                      //   } else {
+                      //     Alert.alert("OTP request failed", "LISTO may be experiencing technical issues or the phone number is invalid, please try again.")
+                      //   }
+                      // })
+                      // .catch(error => {
+                      //   console.log(error);
+                      //   Alert.alert("OTP request failed", "LISTO is experiencing technical issues, please try again later.")
+                      // });
                     }}
                   />}
   
@@ -183,67 +183,68 @@ import {
                   title="Submit"
                   marginVertical='10%'
                   onPress={async () => {
-                    setLoading(true);
-                    const result = await auth.adminRegister(email, password, userName, phone, code)
-                    console.log(result);
-                    if(result.success == true) {
-                      setLoading(false);
-                      setAccountCreated(true);
-                    }
-                    else {
-                      if (result.message == "INVALID_OTP") {
-                        Alert.alert("Invalid OTP", "The OTP entered is incorrect, please try again.");
+                    if (code.length < 6) {
+                      Alert.alert("Invalid OTP", "The OTP entered is invalid, please try again.");
+                      return;
+                    } else {
+                      setLoading(true);
+                      const result = await auth.adminRegister(email, password, userName, phone, code)
+                      console.log("AWOOOOOOOOOOGA",result);
+                      console.log(result.message == "INVALID_OTP");
+                      if(result.success == true) {
                         setLoading(false);
-                      }
-                      if (result.message == "BLACKLISTED") {
-                        Alert.alert("Blacklisted", "Account was deleted recently, please try again soon or contact support.");
-                        setLoading(false);
-                        router.replace({pathname: "/(auth)/login"});
-                      }
-                      if (result.message === "TOO_MANY_REQUESTS") {
-                        Alert.alert("Limit exceeded", "Too many attempts, please try again later.");
-                        setLoading(false);
-                        router.replace({pathname: "/(auth)/login"});
-                      } 
-                      if (result.message === "auth/INVALID_CREDENTIAL") {
-                        Alert.alert("Invalid credentials", "Invalid credentials, please try again.");
-                        setLoading(false);
-                        router.back();
-                      } 
-                      if (result.message === "NETWORK_REQUEST_FAILED") {
-                        Alert.alert("Poor connection", "Internet connection is unstable, please try again later.");
-                        setLoading(false);}
-  
-                      if (result.message === "INVALID_EMAIL") {
-                        Alert.alert("Invalid email", "The email entered is invalid, please try again.");
-                        setLoading(false);
-                        router.back();
-                      } 
-                      if (result.message === "INVALID_PASSWORD") {
-                        Alert.alert("Invalid password", "The password entered is invalid, please try again.");
-                        setLoading(false);
-                        router.back();
-                      } 
-                      if (result.message === "WEAK_PASSWORD") {
-                        Alert.alert("Weak password", "The password entered is too weak, please try again. Passwords need 1 uppercase, 1 lowercase, 1 number, and 1 special character.");
-                        setLoading(false);
-                        router.back();
-                      } 
-                      if (result.message === "EMAIL_EXISTS") {
-                        Alert.alert("Email already in use", "The email entered is already in use, please try again with a different email address.");
-                        setLoading(false);
-                        router.back();
-                      } if (result.message === "PHONE_EXISTS") {
-                        Alert.alert("Phone number already in use", "The phone number entered is already in use, please try again with a different phone number.");
-                        setLoading(false);
-                        router.back();
-                      } if (result.message === "UKKNOWN_ERROR") {
-                        Alert.alert("Sign in error", "There was an error signing in as admin, please try again later.");
-                        setLoading(false);
+                        setAccountCreated(true);
                       } else {
-                        console.log(result.message);
-                        Alert.alert("Uh oh", "There was an error, please try again later.");
-                        setLoading(false);
+                        if (result.message == "INVALID_OTP") {
+                          Alert.alert("Invalid OTP", "The OTP entered is incorrect, please try again.");
+                          setLoading(false);
+                        }
+                        if (result.message == "BLACKLISTED") {
+                          Alert.alert("Blacklisted", "Account was deleted recently, please try again soon or contact support.");
+                          setLoading(false);
+                          router.replace({pathname: "/(auth)/login"});
+                        }
+                        if (result.message === "TOO_MANY_REQUESTS") {
+                          Alert.alert("Limit exceeded", "Too many attempts, please try again later.");
+                          setLoading(false);
+                          router.replace({pathname: "/(auth)/login"});
+                        } 
+                        if (result.message === "auth/INVALID_CREDENTIAL") {
+                          Alert.alert("Invalid credentials", "Invalid credentials, please try again.");
+                          setLoading(false);
+                          router.back();
+                        } 
+                        if (result.message === "NETWORK_REQUEST_FAILED") {
+                          Alert.alert("Poor connection", "Internet connection is unstable, please try again later.");
+                          setLoading(false);}
+    
+                        if (result.message === "INVALID_EMAIL") {
+                          Alert.alert("Invalid email", "The email entered is invalid, please try again.");
+                          setLoading(false);
+                          router.back();
+                        } 
+                        if (result.message === "INVALID_PASSWORD") {
+                          Alert.alert("Invalid password", "The password entered is invalid, please try again.");
+                          setLoading(false);
+                          router.back();
+                        } 
+                        if (result.message === "WEAK_PASSWORD") {
+                          Alert.alert("Weak password", "The password entered is too weak, please try again. Passwords need 1 uppercase, 1 lowercase, 1 number, and 1 special character.");
+                          setLoading(false);
+                          router.back();
+                        } 
+                        if (result.message === "EMAIL_EXISTS") {
+                          Alert.alert("Email already in use", "The email entered is already in use, please try again with a different email address.");
+                          setLoading(false);
+                          router.back();
+                        } if (result.message === "PHONE_EXISTS") {
+                          Alert.alert("Phone number already in use", "The phone number entered is already in use, please try again with a different phone number.");
+                          setLoading(false);
+                          router.back();
+                        } if (result.message === "UKKNOWN_ERROR") {
+                          Alert.alert("Sign in error", "There was an error signing in as admin, please try again later.");
+                          setLoading(false);
+                        }
                       }
                     }
                   }}

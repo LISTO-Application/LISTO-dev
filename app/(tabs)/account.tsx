@@ -21,7 +21,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { Redirect, router} from "expo-router";
 
 //Auth Imports
-import { useSession } from "@/auth";
+import { useSession } from "@/auth/adminIndex";
 
 //Firebase Imports
 import { FirebaseAuthTypes} from "@react-native-firebase/auth";
@@ -65,8 +65,7 @@ export default function Account() {
   //User Details Display
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
-  const [fname, setFname] = useState("");
-  const [lname, setLname] = useState("");
+  const [uname, setUname] = useState("");
   const [phone, setPhone] = useState("");
 
   //Re-authentication
@@ -109,48 +108,22 @@ export default function Account() {
   }, []);
 
 useEffect( () => {
-  const fetchUserData = async () => {
-    firebase.firestore().collection('users')
-      .doc(user?.uid)
-      .get().then((doc) => {
-        if (doc.exists) {
-          setEmail(user?.email ?? "");
-          const data = doc.data();
-          if (data) {
-            setFname(data.fname);
-            setLname(data.lname);
-            setPhone(data.pnumber);
-          }
-        }
-      })
-      .then(() => {
-        setLoading(false);
-      })
-      .catch((error) => {
-        if(error.code === "firestore/permission-denied") {
-          if(user != null) {
-            Alert.alert("User not found", "Account does not exist; please sign up again.",)
-              user?.delete().catch(error => {
-                if(error.code === 'auth/requires-recent-login') {
-                  firebase.app().functions("asia-east1").useEmulator("localhost", 5001)
-                  firebase.app().functions("asia-east1").httpsCallable("deleteUser")({uid: user?.uid})
-                }
-              });
-            }
-          }
-        }
-      );    
-  };
   if(user != null) {
     setTimeout(() => {
-      fetchUserData();
-    }, 5000);
+      console.log("User found, loading user details...");
+      setUname(user?.displayName ?? "");
+      setEmail(user?.email ?? "");
+      setPhone(user?.phoneNumber ?? "");
+      setLoading(false);
+    }, 3000);
   }
 }, [user]);
 
   if (initializing) return <LoadingScreen/>;
 
-  if (!user) {return <Redirect href="../(auth)/login"/>;}
+  if (!user) {
+    return <Redirect href="../(auth)/login"/>;
+  }
 
   //Delete account and prevent user from signing up again with same credentials for 1 month
 function deleteAccount(email: string, phone: string, uid: string) {
@@ -235,7 +208,7 @@ async function updateDetails (userDetails: {email?: string | null, password?: st
             <SpacerView height={20} />
             {!loading ? 
             <Text style = {{width: "100%", fontSize: title, fontWeight: "bold", color: "#FFF", textAlign:"center"}}>
-              {fname} {lname}
+              {uname}
             </Text> :                 
             <View style = {{opacity: 0.1}}>
               <Skeleton colorMode="light" width={display * 5} height={36} show={loading} radius={20}/>
@@ -276,33 +249,12 @@ async function updateDetails (userDetails: {email?: string | null, password?: st
               <View style = {utility.row}>
                 {!loading ? 
                 <ThemedText style = {accountStyle.info}>
-                  {fname}
+                  {uname}
                 </ThemedText> :
                 <View style = {{marginBottom: 6}}>
                   <Skeleton colorMode="light" width={240} height={24} show={loading} radius={20}/>
                 </View>}
               </View>
-            </SpacerView>
-
-            <SpacerView
-              height='auto'
-              borderBottomWidth={3}
-              borderBottomColor="#C3D3DB"
-              flexDirection="column"
-              marginBottom={5}>
-              <ThemedText
-                lightColor="#115272"
-                darkColor="#115272"
-                type="subtitle"
-                paddingVertical={2}>
-                Last Name
-              </ThemedText>
-              {!loading ? <ThemedText style = {accountStyle.info}>
-                {lname}
-              </ThemedText> :                 
-                <View style = {{marginBottom: 6}}>
-                  <Skeleton colorMode="light" width={240} height={24} show={loading} radius={20}/>
-                </View>}
             </SpacerView>
 
             <SpacerView

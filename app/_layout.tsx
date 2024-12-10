@@ -19,7 +19,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { PortalProvider } from "@gorhom/portal";
 
 //Auth Imports
-import { SessionProvider } from "@/auth";
+import { SessionProvider } from "@/auth/adminIndex";
 
 //Hooks
 import { useColorScheme } from "@/hooks/useColorScheme";
