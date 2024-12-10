@@ -55,10 +55,10 @@ export const MarkerWithInfoWindow = ({
 
   const handleMarkerClick = (marker: MarkerType) => {
     setActiveMarkerId(marker.id);
-    setMarkerDetails(marker.details);
+    setMarkerDetails(marker.additionalInfo);
     setMarkerDate(marker.date);
     setMarkerCrime(marker.crime);
-    setMarkerName(marker.title);
+    setMarkerName(marker.crime);
   };
 
   // if (selectedCrimeFilters.length > 0) {
@@ -170,9 +170,7 @@ export const MarkerWithInfoWindow = ({
           onClose={() => setActiveMarkerId(null)}
         >
           <div className="custom-info-window">
-            <h2>
-              {markerCrime?.charAt(0).toUpperCase() + markerCrime?.slice(1)}
-            </h2>
+            <h2>{markerName.charAt(0).toUpperCase() + markerName.slice(1)}</h2>
             <div>
               <p>
                 <strong>Details:</strong> {markerDetails}

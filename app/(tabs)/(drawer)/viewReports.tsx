@@ -39,10 +39,18 @@ import {
   deleteDoc,
   doc,
   firebase,
+  FirebaseFirestoreTypes,
   getDocs,
   getFirestore,
+  query,
+  where,
 } from "@react-native-firebase/firestore";
-import { GeoPoint, Timestamp } from "firebase/firestore";
+import {
+  DocumentData,
+  GeoPoint,
+  QueryDocumentSnapshot,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import { AuthContext } from "../../AuthContext";
 import SideBar from "@/components/SideBar";
@@ -61,7 +69,9 @@ import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { authWeb } from "@/app/(auth)";
 export default function ViewReports({ navigation }: { navigation: any }) {
-  const [reports, setReports] = useState<Report[]>([]);
+  const [reports, setReports] = useState<FirebaseFirestoreTypes.DocumentData[]>(
+    []
+  );
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
   const [currentStatusSort, setCurrentStatusSort] = useState<"1" | "0" | "2">(
     "1"
@@ -73,58 +83,30 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const auth = authWeb;
   const authID = auth.currentUser;
   console.log("AuthID", authID?.uid);
+
   //FETCH REPORTS
-
   const fetchReports = async () => {
-    try {
-      const reportsCollectionRef = collection(db, "reports");
-      const reportsSnapshot = await getDocs(reportsCollectionRef);
-
-      if (reportsSnapshot.empty) {
-        console.log("No reports found in Firestore.");
-        return;
-      }
-      // Process records from Firestore
-      const reportsArray: Report[] = reportsSnapshot.docs
-        .filter((doc) => {
-          const data = doc.data();
-          return data.uid === authID;
-        })
-        .map((doc) => {
-          const data = doc.data();
-          let coordinate = null;
-          return {
-            uid: data.uid,
-            additionalInfo: data.additionalInfo || "No additional info",
-            category: data.category || "Unknown category",
-            location: data.location || "Unknown location",
-            coordinate: coordinate, // FirestoreGeoPoint directly from Firestore
-            image: data.image || { filename: "", uri: "" }, // Handle image data
-            name: data.name || "Anonymous",
-            phone: data.phone || "No phone",
-            status: data.status || 1, // Default to 1
-            id: doc.id || "Unknown account",
-            timeOfCrime: data.timeOfCrime,
-            timeReported: data.timeReported,
-            time: data.time,
-            unixTOC: data.unixTOC,
-          };
-        })
-        .filter((report) => report !== null);
-      console.log("Mapped Reports:", reportsArray);
-      setReports(reportsArray);
-      setFilteredReports(reportsArray);
-    } catch (error) {
-      console.error("Error fetching reports:", error);
-    }
+    // Connect database and collection
+    const reportsCollectionRef = collection(db, "reports");
+    // Fetch query snapshot
+    await query(reportsCollectionRef, where("uid", "==", authID?.uid))
+      .get()
+      .then((querySnapshot) => {
+        console.log("MUAHAHAHA", querySnapshot.size);
+        const updatedReport = querySnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setReports(updatedReport);
+      })
+      .catch((error) => {
+        console.error("Error fetching reports: ", error);
+      });
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchReports();
-    }, [])
-  );
-
+  useEffect(() => {
+    fetchReports();
+  }, []);
+  console.log("REPORTS: ", reports);
   //PAGINATIONS
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10;
@@ -147,8 +129,26 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   };
   const handleEditReport = (report: any) => {
     // Redirect to the report edit page with the report ID in the query
-    console.log("Report UID:", report.uid);
-    router.push({ pathname: "/editReport", params: { report } });
+    console.log("Report UID:", report.id);
+    router.setParams({
+      pathname: "/editReport",
+      params: {
+        id: report.id,
+        timeReported: report.timeReported,
+        timeOfCrime: report.timeOfCrime,
+        location: report.location,
+        category: report.category,
+        additionalInfo: report.additionalInfo,
+        phone: report.phone,
+        name: report.name,
+        status: report.status,
+        imageURI: report.image.uri,
+        filename: report.image.filename,
+        uid: report.uid,
+        time: report.time,
+        unixTOC: report.unixTOC,
+      },
+    });
   };
   const handleSubmitReport = () => {
     router.push("/newReports");
@@ -367,7 +367,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               isAlignedRight && { width: "75%" },
             ]}
           >
-            {currentReports.map((report) => {
+            {reports.map((report) => {
               let iconSource;
               if (report.category === "carnapping") {
                 iconSource = require("@/assets/images/car-icon.png");
@@ -499,7 +499,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={webstyles.editIcon}
-                      onPress={() => handleDeleteReport(report.uid)}
+                      onPress={() => handleDeleteReport(report.id)}
                     >
                       <Ionicons
                         name="trash-bin-outline"

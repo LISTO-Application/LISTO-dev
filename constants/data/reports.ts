@@ -20,7 +20,7 @@ export interface Report {
     filename: string;
     uri: string;
   };
-  name: string | null;
+  name: string;
   status: number;
   time: string;
   timeOfCrime: Date; // Ensure it's a Date object

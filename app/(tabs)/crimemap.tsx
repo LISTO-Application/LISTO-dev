@@ -39,7 +39,7 @@ import {
 import { Calendar, CalendarUtils } from "react-native-calendars";
 
 //Expo Imports
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 //Component Imports
 import { ThemedText } from "@/components/ThemedText";
@@ -574,46 +574,26 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
         const crimeList: MarkerType[] = await Promise.all(
           querySnapshot.docs.map(async (doc) => {
             let coordinate = doc.data().coordinate;
-            const location = doc.data().location;
-            let date = doc.data().date;
-
-            if (date && date._seconds) {
-              date = dayjs(date._seconds * 1000);
-            } else {
-              date = dayjs(date, ["MM/DD/YYYY", "MM-DD-YYYY"], true);
-            }
-
-            console.log("Date marker", date.format("YYYY-MM-DD"));
-            if (!coordinate) {
-              console.warn("Skipping invalid location:", location);
-              return null;
-            }
-
-            if (coordinate instanceof GeoPoint) {
-              // If it's already a GeoPoint, keep it as is
-              coordinate = coordinate;
-            } else if (coordinate && coordinate._lat && coordinate._long) {
-              // If it's an object with _lat and _long, convert it to GeoPoint
-              coordinate = new GeoPoint(coordinate._lat, coordinate._long);
-            } else if (coordinate && coordinate._lat && coordinate._long) {
-              // If it's from coordinates (old format), convert to GeoPoint
-              coordinate = new GeoPoint(coordinate._lat, coordinate._long);
-            }
-            console.log(coordinate);
+            const dateCrime = doc.data().timeOfCrime;
+            const parsedDate = dateCrime._seconds * 1000;
+            const convertDate = new Date(parsedDate);
+            const formattedDateToString =
+              dayjs(convertDate).format("YYYY-MM-DD");
+            console.log(convertDate);
+            console.log(doc.data());
 
             return {
               id: doc.id,
-              title: doc.data().title,
               location: doc.data().location,
               coordinate: coordinate,
-              date: date.isValid() ? date.format("YYYY-MM-DD") : null,
-              details: doc.data().additionalInfo,
+              date: formattedDateToString,
+              additionalInfo: doc.data().additionalInfo,
               crime: doc.data().category,
               image: crimeImages[doc.data().category as CrimeType],
             };
           })
         );
-
+        console.log("LOG THIS", crimeList);
         const validCrimes = crimeList.filter((crime) => crime !== null);
         console.log("Valid Crimes: ", validCrimes);
         console.log("markers", crimeList);
@@ -624,6 +604,11 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
       }
     };
 
+    useFocusEffect(
+      useCallback(() => {
+        fetchCrimes();
+      }, [])
+    );
     // useEffect(() => {
     //   const unsubscribe = navigation.addListener("focus", () => {
     //     fetchCrimes();
@@ -656,11 +641,25 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
           const selectedYear = dayjs(selectedDate).year();
 
           filteredMarkers = filteredMarkers.filter((marker) => {
-            const markerDate = dayjs(marker.date);
+            const dayJSMarkerDate = dayjs(marker.date);
+            console.log("Dayjs", dayJSMarkerDate);
+            const stringDate = dayJSMarkerDate;
+            console.log(
+              "String date",
+              stringDate.date(),
+              stringDate.month() + 1,
+              stringDate.year()
+            );
+            console.log(
+              "Selected Day",
+              selectedDay,
+              selectedMonth,
+              selectedYear
+            );
             return (
-              markerDate.date() === selectedDay &&
-              markerDate.month() + 1 === selectedMonth &&
-              markerDate.year() === selectedYear
+              stringDate.date() === selectedDay &&
+              stringDate.month() + 1 === selectedMonth &&
+              stringDate.year() === selectedYear
             );
           });
         }
@@ -834,6 +833,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               setDateFunction={setDateFunction}
               setMode={setMode}
               filteredCrimeItems={filteredCrimeItems}
+              selectedCrimeFilters={selectedCrimeFilters}
             />
           </Modal>
           <Modal
@@ -884,9 +884,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
               alignItems: "center",
               backgroundColor: "#fff", // Center icon within circle
             }}
-            onPress={() =>
-              navigation.navigate("Reports", { screen: "NewReports" })
-            } // Navigate to NewReports screen
+            onPress={() => router.push("/newReports")} // Navigate to NewReports screen
           >
             <Ionicons
               name="megaphone" // Ionicons megaphone icon

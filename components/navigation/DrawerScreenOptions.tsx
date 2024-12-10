@@ -24,7 +24,7 @@ const DrawerScreenOptions = ({
         iconName = focused ? "megaphone" : "megaphone-outline";
       } else if (route.name === "emergency") {
         iconName = focused ? "call" : "call-outline";
-      } else if (route.name === "Account") {
+      } else if (route.name === "account") {
         iconName = focused ? "person" : "person-outline";
       } else if (route.name === "(drawer)") {
         iconName = focused ? "ticket" : "ticket-outline";
@@ -33,7 +33,7 @@ const DrawerScreenOptions = ({
       }
       return <Ionicons name={iconName} size={size} color={color} />;
     },
-    headerShown: !["(drawer)", "summary"].includes(route.name),
+    headerShown: !["(drawer)"].includes(route.name),
     header: () => <MyHeader navigation={navigation} />,
     drawerStyle: {
       backgroundColor: "#f0f0f0",

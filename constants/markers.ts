@@ -49,11 +49,9 @@ export async function loadMarkersFromFirestore(): Promise<MarkerProps> {
         id: doc.id, // Use Firestore document ID
         location: data.location || "",
         coordinate: coordinate, // Cast to GeoPoint
-        title: data.title || "",
-        date: data.date || "",
-        details: data.details,
-        crime: data.crime as CrimeType, // Cast to CrimeType
-        image: data.image,
+        timeOfCrime: data.timeOfCrime || "",
+        additionalInfo: data.additionalInfo,
+        crime: data.category as CrimeType, // Cast to CrimeType
       };
     });
     console.log("Markers.ts", markers);

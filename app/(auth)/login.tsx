@@ -222,7 +222,7 @@ export default function Login() {
     if (initializing) return null;
 
     if (user != null) {
-      return router.replace("../(tabs)");
+      return router.push("/crimemap");
     }
 
     const handleLogin = async (email: string, password: string) => {
@@ -235,7 +235,7 @@ export default function Login() {
           if (result?.success) {
             console.log("Login Successful!", user);
             console.log("Redirecting to the home page...");
-            router.replace("../(tabs)"); // Replace with your target route
+            router.push("/crimemap"); // Replace with your target route
           }
         } catch (error) {
           const errorMessage = getErrorMessage(error);

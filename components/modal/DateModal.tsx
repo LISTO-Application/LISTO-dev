@@ -19,6 +19,7 @@ const DateModal = ({
   setMode,
   setFilteredCrimeItems,
   filteredCrimeItems,
+  selectedCrimeFilters,
 }: {
   setSelectedDate: any;
   setToggleModal: (visible: boolean) => void;
@@ -31,6 +32,7 @@ const DateModal = ({
   setMode: (mode: ModeType) => void;
   setFilteredCrimeItems: any;
   filteredCrimeItems: any;
+  selectedCrimeFilters: any;
 }) => {
   dayjs.extend(isBetween);
   //States
@@ -64,26 +66,42 @@ const DateModal = ({
     setFilteredCrimeItems(() => {
       return allMarkers.filter((marker: any) => {
         const markerDate = dayjs(marker.date, "MM-DD-YYYY").toDate();
+        let dateMatch = false;
+        console.log(markerDate);
+
         // console.log("Date Function: ", dateFunction.format("YYYY-MM-DD"));
         if (mode === "single") {
-          return dayjs(markerDate).isSame(selectedDates as Date, "day");
+          dateMatch = dayjs(markerDate).isSame(selectedDates as Date, "day");
         } else if (mode === "range") {
           const { startDate, endDate } = selectedDates as {
             startDate: Date;
             endDate: Date;
           };
-          return dayjs(markerDate).isBetween(startDate, endDate, "day", "[]");
+          dateMatch = dayjs(markerDate).isBetween(
+            startDate,
+            endDate,
+            "day",
+            "[]"
+          );
         } else if (mode === "multiple") {
           const datesArray = selectedDates as Date[];
-          return datesArray.some((date) =>
+          dateMatch = datesArray.some((date) =>
             dayjs(markerDate).isSame(date, "day")
           );
+        } else {
+          dateMatch = true; // Fallback for unexpected cases
         }
-        return true;
+        const crimeMatch =
+          selectedCrimeFilters.length === 0 ||
+          selectedCrimeFilters.some(
+            (filter: { label: any }) => filter.label === marker.crime
+          );
+        console.log("Is matched", crimeMatch && dateMatch);
+        return dateMatch && crimeMatch;
       });
     });
   };
-
+  console.log(filteredCrimeItems);
   const confirmDateSelection = () => {
     let selectedDateInput: any;
     if (mode === "single" && dateFunction) {

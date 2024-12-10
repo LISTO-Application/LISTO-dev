@@ -14,9 +14,8 @@ export interface MarkerType {
   id: string;
   location: string;
   coordinate: GeoPoint;
-  title: string;
   date: string;
-  details: string | undefined;
+  additionalInfo: string | undefined;
   crime: CrimeType;
   image: any;
 }

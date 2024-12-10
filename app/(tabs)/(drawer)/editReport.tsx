@@ -16,14 +16,14 @@ import {
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { styles } from "@/styles/styles"; // Adjust the path if necessary
-import { router } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { SpacerView } from "@/components/SpacerView"; // Adjust the path if necessary
 import { useLocalSearchParams } from "expo-router"; // Ensure you have expo-router installed
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { RouteProp, useRoute } from "@react-navigation/native";
 import EditReportMobile from "./mobile/EditReport";
-import { doc, getDoc, updateDoc } from "@react-native-firebase/firestore";
-import { db } from "../../FirebaseConfig";
+import { doc, GeoPoint, getDoc, updateDoc } from "firebase/firestore";
+import { dbWeb } from "@/app/(auth)";
 import { getIconName } from "@/assets/utils/getIconName";
 import SideBar from "@/components/SideBar";
 import { crimeImages, CrimeType } from "../../../constants/data/marker";
@@ -33,43 +33,87 @@ import { add, format, subDays, subYears } from "date-fns";
 import DatePicker from "react-datepicker";
 import dayjs from "dayjs";
 import TitleCard from "@/components/TitleCard";
+import { collection, Timestamp } from "firebase/firestore";
+import { useSearchParams } from "expo-router/build/hooks";
+import { Report } from "@/constants/data/reports";
 
 function EditReport({ navigation }: { navigation: any }) {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const route = useRoute();
-  const { report }: { report: any } = route.params as { report: Report };
+  const {
+    id,
+    timeReported,
+    timeOfCrime,
+    location,
+    category,
+    additionalInfo,
+    phone,
+    name,
+    status,
+    imageURI,
+    filename,
+    uid,
+    time,
+    unixTOC,
+  } = route.params;
+  const [report, setReport] = useState<Report | null>(null);
 
-  if (!report.uid) {
-    console.error("UID is missing or invalid.");
-    Alert.alert("Error", "Unable to identify the report.");
-    return;
-  }
-  //Parsing the date
-  console.log(report.date);
-  console.log(format(report.date, "yyyy-MM-dd"));
-  const editDate = format(report.date, "yyyy-MM-dd");
-  // const editDate = report.date; //11-20-2024
-  const editTime = report.time; //04:02 PM
-  const editedDateTime = `${editDate} ${editTime}`;
-  const parsedEditedDateTime = new Date(editedDateTime);
-  console.log(parsedEditedDateTime);
-  // console.log(editDate, editTime);
+  // useEffect(() => {
+  //   if (reportId) {
+  //     const fetchReport = async () => {
+  //       try {
+  //         const reportRef = doc(dbWeb, "reports", reportId);
+  //         console.log(reportRef);
+  //         const reportDoc = await getDoc(reportRef);
+  //         console.log(reportDoc);
+  //         console.log(reportDoc.data());
+  //         if (reportDoc.exists()) {
+  //           setReport(reportDoc.data() as Report);
+  //         } else {
+  //           window.Error("No such document found.");
+  //         }
+  //       } catch (err) {
+  //         window.Error(`Error fetching report details: ${err}`);
+  //       }
+  //     };
 
-  const [category, setCategory] = useState<DropdownCrimeTypes | null>(null);
-  const [title, setTitle] = useState(report.title);
-  const [name, setName] = useState(report.name || "Anonymous");
-  const [date, setDate] = useState(editDate);
+  //     fetchReport();
+  //   }
+  // }, [reportId]);
+
+  console.log(report);
+  const [newName, setNewName] = useState(name);
+  const [newTime, setNewTime] = useState(time);
+  const [newdate, setNewDate] = useState(new Date(timeOfCrime));
   const [dateTime, setDateTime] = useState();
-  const [time, setTime] = useState(report.time);
-  const [selectedValue, setSelectedValue] = useState(report.category);
-  const [location, setLocation] = useState(report.location);
-  const [additionalInfo, setAdditionalInfo] = useState(report.additionalInfo);
+  const [selectedValue, setSelectedValue] = useState("");
+  const [newLocation, setNewLocation] = useState(report?.location);
+  const [newAdditionalInfo, setNewAdditionalInfo] = useState(
+    report?.additionalInfo
+  );
+  const [newCategory, setNewCategory] = useState<DropdownCrimeTypes | null>(
+    null
+  );
 
   const handleSelect = (item: DropdownCrimeTypes | undefined) => {
     setSelectedValue(item?.label); // Update the selected value
     setIsDropdownVisible(false); // Close the dropdown
   };
-
+  // if (!report.uid) {
+  //   console.error("UID is missing or invalid.");
+  //   Alert.alert("Error", "Unable to identify the report.");
+  //   return;
+  // }
+  //Parsing the date
+  // console.log(report.date);
+  // console.log(format(report.date, "yyyy-MM-dd"));
+  // const editDate = format(report.date, "yyyy-MM-dd");
+  // const editDate = report.date; //11-20-2024
+  // const editTime = report.time; //04:02 PM
+  // const editedDateTime = `${editDate} ${editTime}`;
+  // const parsedEditedDateTime = new Date(editedDateTime);
+  // console.log(parsedEditedDateTime);
+  // console.log(editDate, editTime);
   const handleSubmit = async () => {
     console.log("Crime Type:", selectedValue);
     console.log("Location:", location);
@@ -89,7 +133,7 @@ function EditReport({ navigation }: { navigation: any }) {
         return;
       }
 
-      const formattedDate = new Date(date);
+      // const formattedDate = new Date(date);
       const updatedReport = {
         ...report,
         additionalInfo: additionalInfo,
@@ -103,7 +147,7 @@ function EditReport({ navigation }: { navigation: any }) {
 
       console.log("Report updated successfully:", updatedReport);
       Alert.alert("Success", "Report updated successfully");
-      router.push("/viewReports");
+      router.push({ pathname: "/viewReports", params: { updatedReport } });
     } catch (error) {
       console.error("Error updating report:", error);
       Alert.alert("Error", "Error updating report. Please try again.");
@@ -112,21 +156,21 @@ function EditReport({ navigation }: { navigation: any }) {
   };
 
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(report.category);
+  const [value, setValue] = useState(report?.category || null);
   const [items, setItems] = useState(crimeType);
 
   //Date
-  const [startDate, setStartDate] = useState<Date | null>(parsedEditedDateTime);
+  const [startDate, setStartDate] = useState<Date | null>("");
 
   useEffect(() => {
-    const dateInput = startDate;
-    console.log("Date Input", format(dateInput, "yyyy-MM-dd"));
-    const timeInput = dayjs(startDate).format("hh:mm A");
-    setDate(format(dateInput, "yyyy-MM-dd"));
-    setTime(timeInput);
-    console.log(startDate);
-    console.log(dateInput, timeInput);
-    console.log(date);
+    // const dateInput = startDate;
+    // console.log("Date Input", format(dateInput, "yyyy-MM-dd"));
+    // const timeInput = dayjs(startDate).format("hh:mm A");
+    // setDate(format(dateInput, "yyyy-MM-dd"));
+    // setTime(timeInput);
+    // console.log(startDate);
+    // console.log(dateInput, timeInput);
+    // console.log(date);
   }, [startDate]);
   const minDate =
     value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
@@ -203,7 +247,7 @@ function EditReport({ navigation }: { navigation: any }) {
             <Text>Reporter's Username:</Text>
             <TextInput
               style={webstyles.inputField}
-              value={name}
+              value={newName}
               editable={true}
               aria-disabled
             />
