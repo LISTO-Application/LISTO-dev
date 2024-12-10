@@ -41,6 +41,7 @@ import * as DocumentPicker from "expo-document-picker"; // For mobile file selec
 import { v4 as uuidv4 } from "uuid";
 import { crimeImages, CrimeType } from "../../../constants/data/marker";
 import { Asset } from "expo-asset";
+import { authWeb } from "@/app/(auth)";
 
 export default function ViewAdminEmergencyList() {
   const [crimes, setCrimes] = useState<Report[]>([]);
@@ -298,7 +299,7 @@ export default function ViewAdminEmergencyList() {
             );
 
             const report = {
-              id: uuidv4(),
+              uid: authWeb.currentUser?.uid,
               additionalInfo: item["Additional Info"] || "No additional info",
               category: item["Category"] || "Unknown",
               location: item["Location"] || "Unknown location",
@@ -448,10 +449,10 @@ export default function ViewAdminEmergencyList() {
         Date: formattedDate,
         Coordinates: FirestoregeoPoint
           ? `${FirestoregeoPoint.latitude}, ${FirestoregeoPoint.longitude}`
-          : "N/A", // Show coordinates as string
-        Location: location, // Add the location field here
+          : "N/A",
+        Location: location,
 
-        Description: report.additionalInfo || "N/A", // Assuming there's a description field
+        Description: report.additionalInfo || "N/A",
       };
     });
 
@@ -462,9 +463,7 @@ export default function ViewAdminEmergencyList() {
       "Date",
       "Coordinates",
       "Location",
-      "Title",
       "Description",
-      "Status",
     ];
 
     // Create a new worksheet with the provided data and header
@@ -504,10 +503,16 @@ export default function ViewAdminEmergencyList() {
     // Trigger download of the CSV file
     const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-
+    const generateFileName = () => {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, "0");
+      const month = String(now.getMonth() + 1).padStart(2, "0"); // Month is 0-based
+      const year = now.getFullYear();
+      return `LISTO-crimes-${month}-${day}-${year}.csv`;
+    };
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "FilteredReports.csv"); // Save as CSV
+    link.setAttribute("download", generateFileName()); // Save as CSV
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

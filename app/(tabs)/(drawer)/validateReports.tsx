@@ -103,7 +103,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
         const crimeRef = collection(db, "crimes");
         await addDoc(crimeRef, newCrime);
         window.confirm(`Report ${id} transferred to crimes.`);
-        navigation.navigate("ViewAdminEmergencyList");
+        router.push("/ViewAdminEmergencyList");
       }
 
       // If status is 0 (archived), just log the action
@@ -113,7 +113,7 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
         await addDoc(archiveRef, archivedCrime);
         window.confirm(`Report ${id} transferred to archives.`);
         window.confirm(`Report ${id} archived.`);
-        navigation.navigate("ViewReports");
+        router.push("/viewReports");
       }
 
       // Re-sort the reports (optional)
@@ -131,7 +131,11 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   const fetchReports = async () => {
     try {
       const reportsCollectionRef = collection(db, "reports");
-      const reportsSnapshot = await getDocs(reportsCollectionRef);
+      const reportsQuery = query(
+        reportsCollectionRef,
+        where("status", "==", 1)
+      );
+      const reportsSnapshot = await getDocs(reportsQuery);
 
       if (reportsSnapshot.empty) {
         console.log("No reports found in Firestore.");

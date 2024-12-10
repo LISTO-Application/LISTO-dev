@@ -69,9 +69,7 @@ import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { authWeb } from "@/app/(auth)";
 export default function ViewReports({ navigation }: { navigation: any }) {
-  const [reports, setReports] = useState<FirebaseFirestoreTypes.DocumentData[]>(
-    []
-  );
+  const [reports, setReports] = useState<Report[]>([]);
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
   const [currentStatusSort, setCurrentStatusSort] = useState<"1" | "0" | "2">(
     "1"
@@ -97,7 +95,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           ...doc.data(),
           id: doc.id,
         }));
-        setReports(updatedReport);
+        setReports(updatedReport as Report[]);
       })
       .catch((error) => {
         console.error("Error fetching reports: ", error);
@@ -120,9 +118,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     try {
       await deleteDoc(doc(db, "reports", reportId));
       setFilteredReports((prevReports) =>
-        prevReports.filter((r) => r.uid !== reportId)
+        prevReports.filter((r) => r.id !== reportId)
       );
-      Alert.alert("Report deleted successfully");
+      window.alert("Report deleted successfully");
+      window.location.reload();
     } catch (error) {
       console.error("Error deleting report: ", error);
     }
@@ -130,24 +129,8 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const handleEditReport = (report: any) => {
     // Redirect to the report edit page with the report ID in the query
     console.log("Report UID:", report.id);
-    router.setParams({
+    router.push({
       pathname: "/editReport",
-      params: {
-        id: report.id,
-        timeReported: report.timeReported,
-        timeOfCrime: report.timeOfCrime,
-        location: report.location,
-        category: report.category,
-        additionalInfo: report.additionalInfo,
-        phone: report.phone,
-        name: report.name,
-        status: report.status,
-        imageURI: report.image.uri,
-        filename: report.image.filename,
-        uid: report.uid,
-        time: report.time,
-        unixTOC: report.unixTOC,
-      },
     });
   };
   const handleSubmitReport = () => {
@@ -191,18 +174,22 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       filtered = filtered.filter((report) => report.category === category);
     }
     if (searchQuery) {
-      filtered = filtered.filter((report) => {
-        const query = searchQuery.toLowerCase();
-        return (
-          report.location.toLowerCase().includes(query) ||
-          report.category.toLowerCase().includes(query) ||
-          dayjs(new Date(report.date))
-            .format("YYYY-MM-DD")
-            .toLowerCase()
-            .includes(query) ||
-          report.additionalInfo.toLowerCase().includes(query)
-        );
-      });
+      filtered = filtered.filter(
+        (report: {
+          time: any;
+          location: string;
+          category: string;
+          timeOfCrime: Date;
+        }) => {
+          const query = searchQuery.toLowerCase();
+          const date = dayjs(report.timeOfCrime).format("YYYY-MM-DD");
+          return (
+            report.location.toLowerCase().includes(query) ||
+            report.category.toLowerCase().includes(query) ||
+            date.toLowerCase().includes(query)
+          );
+        }
+      );
     }
     setFilteredReports(filtered);
   };
@@ -254,7 +241,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                 {/* Trash Icon (Delete) */}
                 <TouchableOpacity
                   style={styles.editIcon}
-                  onPress={() => handleDeleteReport(report.uid)}
+                  onPress={() => handleDeleteReport(report.id)}
                 >
                   <Ionicons name="trash-bin" size={24} color="white" />
                 </TouchableOpacity>

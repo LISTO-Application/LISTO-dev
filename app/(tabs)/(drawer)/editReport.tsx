@@ -39,61 +39,46 @@ import { Report } from "@/constants/data/reports";
 
 function EditReport({ navigation }: { navigation: any }) {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const route = useRoute();
-  const {
-    id,
-    timeReported,
-    timeOfCrime,
-    location,
-    category,
-    additionalInfo,
-    phone,
-    name,
-    status,
-    imageURI,
-    filename,
-    uid,
-    time,
-    unixTOC,
-  } = route.params;
-  const [report, setReport] = useState<Report | null>(null);
+  const route = useRouter();
+  const { reportId } = useSearchParams() as { reportId?: string };
+  const [report, setReport] = useState<Report>();
+  useEffect(() => {
+    if (reportId) {
+      const fetchReport = async () => {
+        try {
+          const reportRef = doc(dbWeb, "reports", reportId);
+          console.log(reportRef);
+          const reportDoc = await getDoc(reportRef);
+          console.log(reportDoc);
+          console.log(reportDoc.data());
+          if (reportDoc.exists()) {
+            setReport(reportDoc.data() as Report);
+          } else {
+            window.Error("No such document found.");
+          }
+        } catch (err) {
+          window.Error(`Error fetching report details: ${err}`);
+        }
+      };
 
-  // useEffect(() => {
-  //   if (reportId) {
-  //     const fetchReport = async () => {
-  //       try {
-  //         const reportRef = doc(dbWeb, "reports", reportId);
-  //         console.log(reportRef);
-  //         const reportDoc = await getDoc(reportRef);
-  //         console.log(reportDoc);
-  //         console.log(reportDoc.data());
-  //         if (reportDoc.exists()) {
-  //           setReport(reportDoc.data() as Report);
-  //         } else {
-  //           window.Error("No such document found.");
-  //         }
-  //       } catch (err) {
-  //         window.Error(`Error fetching report details: ${err}`);
-  //       }
-  //     };
-
-  //     fetchReport();
-  //   }
-  // }, [reportId]);
+      fetchReport();
+    }
+  }, [reportId]);
 
   console.log(report);
-  const [newName, setNewName] = useState(name);
-  const [newTime, setNewTime] = useState(time);
-  const [newdate, setNewDate] = useState(new Date(timeOfCrime));
-  const [dateTime, setDateTime] = useState();
-  const [selectedValue, setSelectedValue] = useState("");
-  const [newLocation, setNewLocation] = useState(report?.location);
-  const [newAdditionalInfo, setNewAdditionalInfo] = useState(
-    report?.additionalInfo
-  );
-  const [newCategory, setNewCategory] = useState<DropdownCrimeTypes | null>(
-    null
-  );
+  // const { name, time, category, location, additionalInfo } = report;
+  // const [newName, setNewName] = useState(name);
+  // // const [newTime, setNewTime] = useState(time);
+  // const [newdate, setNewDate] = useState();
+  // const [dateTime, setDateTime] = useState();
+  // const [selectedValue, setSelectedValue] = useState("");
+  // const [newLocation, setNewLocation] = useState(report?.location);
+  // const [newAdditionalInfo, setNewAdditionalInfo] = useState(
+  //   report?.additionalInfo
+  // );
+  // const [newCategory, setNewCategory] = useState<DropdownCrimeTypes | null>(
+  //   null
+  // );
 
   const handleSelect = (item: DropdownCrimeTypes | undefined) => {
     setSelectedValue(item?.label); // Update the selected value
@@ -110,14 +95,14 @@ function EditReport({ navigation }: { navigation: any }) {
   // const editDate = format(report.date, "yyyy-MM-dd");
   // const editDate = report.date; //11-20-2024
   // const editTime = report.time; //04:02 PM
-  // const editedDateTime = `${editDate} ${editTime}`;
+  // const editedDateTime = ${editDate} ${editTime};
   // const parsedEditedDateTime = new Date(editedDateTime);
   // console.log(parsedEditedDateTime);
   // console.log(editDate, editTime);
   const handleSubmit = async () => {
-    console.log("Crime Type:", selectedValue);
-    console.log("Location:", location);
-    console.log("Additional Information:", additionalInfo);
+    // console.log("Crime Type:", selectedValue);
+    // console.log("Location:", location);
+    // console.log("Additional Information:", additionalInfo);
 
     try {
       // Update the Firestore document with the new report data\
@@ -207,9 +192,9 @@ function EditReport({ navigation }: { navigation: any }) {
         selectedValue={selectedValue}
         crimeTypes={crimeType}
         location={location}
-        setLocation={setLocation}
-        additionalInfo={additionalInfo}
-        setAdditionalInfo={setAdditionalInfo}
+        // setLocation={setLocation}
+        // additionalInfo={additionalInfo}
+        // setAdditionalInfo={setAdditionalInfo}
         handleSelect={handleSelect}
         handleSubmit={handleSubmit}
       />
@@ -247,7 +232,7 @@ function EditReport({ navigation }: { navigation: any }) {
             <Text>Reporter's Username:</Text>
             <TextInput
               style={webstyles.inputField}
-              value={newName}
+              // value={newName}
               editable={true}
               aria-disabled
             />
@@ -271,20 +256,20 @@ function EditReport({ navigation }: { navigation: any }) {
             <TextInput
               style={webstyles.inputField}
               value={location}
-              onChangeText={setLocation}
+              // onChangeText={setLocation}
             />
             <Text>Date and Time Happened:</Text>
             <View style={{ flex: 1, flexDirection: "row" }}>
               <TextInput
                 style={webstyles.inputField}
-                value={date}
-                onChangeText={setDate}
+                // value={date}
+                // onChangeText={setDate}
                 aria-disabled
               />
               <TextInput
                 style={webstyles.inputField}
-                value={time}
-                onChangeText={setTime}
+                // value={time}
+                // onChangeText={setTime}
                 aria-disabled
               />
             </View>
@@ -292,7 +277,7 @@ function EditReport({ navigation }: { navigation: any }) {
               <DatePicker
                 selected={startDate}
                 onChange={(date: Date | null) => setStartDate(date)}
-                value={dateTime}
+                // value={dateTime}
                 maxDate={new Date()}
                 minDate={minDate}
                 showTimeInput
@@ -305,8 +290,8 @@ function EditReport({ navigation }: { navigation: any }) {
               style={webstyles.textArea}
               multiline
               numberOfLines={4}
-              value={additionalInfo}
-              onChangeText={setAdditionalInfo}
+              // value={additionalInfo}
+              // onChangeText={setAdditionalInfo}
             />
             <Text>Image Upload:</Text>
             <TextInput

@@ -46,6 +46,7 @@ import firestore from "@react-native-firebase/firestore";
 import { getUnixTime, parse, subDays, subYears } from "date-fns";
 import TitleCard from "@/components/TitleCard";
 import { Asset } from "expo-asset";
+import { authWeb } from "@/app/(auth)";
 const database = db;
 
 export interface DropdownCrimeTypes {
@@ -108,6 +109,7 @@ export default function NewAdminReports({
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [dateTime, setDateTime] = useState("");
   const [date, setDate] = useState("");
+  const [reportTime, setReportTime] = useState<Date | null>(null);
   const [time, setTime] = useState("");
   const [title, setTitle] = useState("");
   const [name, setName] = useState("ADMIN"); //TO set the reporter's name
@@ -198,21 +200,25 @@ export default function NewAdminReports({
       return;
     }
 
+    //UID fetch
+    const auth = authWeb.currentUser?.uid;
+    const uid = auth;
+    const authPhone = authWeb.currentUser?.phoneNumber;
+    const authName = authWeb.currentUser?.displayName;
+
     const defaultImage = require("@/assets/images/default-image.jpg");
     const defaultURI = Asset.fromModule(defaultImage).uri;
 
+    //Timestamp
     const timestamp = new Date();
-    const unixTimestamp = Math.floor(timestamp.getTime() / 1000);
+    const unixTimestamp = timestamp.getTime();
     console.log(defaultURI);
 
     const newCrime = {
-      id: uuidv4(),
-      icon: crimeImages[selectedValue.toLowerCase() as CrimeType] || undefined,
-      name: name,
-      category: selectedValue.toLowerCase(),
-      title: title || "Untitled Report",
-      location: location,
-      coordinate: geoPoint,
+      uid: uid,
+      category: selectedValue ? selectedValue.toLowerCase() : "Unknown",
+      location: location || "Unknown Location",
+      coordinate: geoPoint || new GeoPoint(0, 0),
       additionalInfo: additionalInfo || "Undescribed Report",
       date: new Date(date) || ["Unknown Date: ", new Date().toDateString()],
       time: time || ["Unknown Time: ", new Date().toTimeString()],
@@ -220,7 +226,10 @@ export default function NewAdminReports({
         ? { filename: imageFilename, uri: resizedImage.uri }
         : { filename: "Untitled Image", uri: defaultURI },
       status: true,
-      timestamp: unixTimestamp,
+      time: time || "Unknown time",
+      timeOfCrime: reportTime,
+      timeReported: timestamp,
+      unixTOC: unixTimestamp,
     };
 
     try {
@@ -247,6 +256,7 @@ export default function NewAdminReports({
     console.log(dateInput);
     setDate(dateInput);
     setTime(timeInput);
+    setReportTime(startDate);
   }, [startDate]);
   const minDate =
     value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
@@ -303,11 +313,11 @@ export default function NewAdminReports({
     </View>;
   };
 
-  const ImageViewer = ({ imgSource, selectedImage }: IMGViewerProps) => {
-    const imageSource = selectedImage ? { uri: selectedImage } : imgSource;
+  // const ImageViewer = ({ imgSource, selectedImage }: IMGViewerProps) => {
+  //   const imageSource = selectedImage ? { uri: selectedImage } : imgSource;
 
-    return <Image source={imageSource} style={webstyles.image} />;
-  };
+  //   return <Image source={imageSource} style={webstyles.image} />;
+  // };
 
   //Animation to Hide side bar
   const { width: screenWidth } = Dimensions.get("window"); // Get the screen width
@@ -442,7 +452,7 @@ export default function NewAdminReports({
               }
               placeholderTextColor={"#8c8c8c"}
             />
-            <Text>Image Upload:</Text>
+            {/* <Text>Image Upload:</Text>
             <Text>{imageFilename}</Text>
             <View style={webstyles.footerContainer}>
               <Button
@@ -459,7 +469,7 @@ export default function NewAdminReports({
                   selectedImage={selectedImage}
                 />
               </View>
-            </View>
+            </View> */}
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}

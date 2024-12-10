@@ -36,6 +36,7 @@ import {
   InfoWindow,
   useAdvancedMarkerRef,
 } from "@vis.gl/react-google-maps";
+import { router } from "expo-router";
 // Type for Navigation
 type DrawerParamList = {
   emergency: undefined;
@@ -88,7 +89,9 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
       try {
         const snapshot = await getDocs(q);
         setNewReportsCount(snapshot.size);
-        const titles: string[] = snapshot.docs.map((doc) => doc.data().title);
+        const titles: string[] = snapshot.docs.map(
+          (doc) => doc.data().category
+        );
         setReportTitles(titles);
       } catch (error) {
         console.error("Error fetching reports:", error);
@@ -225,6 +228,17 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
     console.log("Selected Location:", selectedLocation);
   }, [selectedLocation]);
 
+  const groupReportsByType = (reports: any[]) => {
+    const grouped = {};
+    reports.forEach((report) => {
+      const type = report.charAt(0).toUpperCase() + report.slice(1);
+      grouped[type] = (grouped[type] || 0) + 1;
+    });
+    return grouped;
+  };
+
+  const groupedReports = groupReportsByType(reportTitles);
+
   return (
     <View style={layoutStyles.headerContainer}>
       <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
@@ -302,17 +316,27 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
                 : "No new reports to validate"}
             </Text>
             <ScrollView style={styles.reportListContainer}>
-              {reportTitles.map((title, index) => (
+              {Object.entries(groupedReports).map(([type, count], index) => (
                 <Text key={index} style={styles.reportTitle}>
-                  {title}
+                  {count} {type}
                 </Text>
               ))}
             </ScrollView>
-            <Button
-              title="Close"
-              onPress={() => setModalVisible(false)}
-              color="#115272"
-            />
+            <View style={{ flexDirection: "row", gap: 20 }}>
+              <Button
+                title="Validate"
+                onPress={() => {
+                  setModalVisible(false);
+                  router.push("/validateReports");
+                }}
+                color="#115272"
+              />
+              <Button
+                title="Close"
+                onPress={() => setModalVisible(false)}
+                color="#115272"
+              />{" "}
+            </View>
           </View>
         </View>
       </Modal>

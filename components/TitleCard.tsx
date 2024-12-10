@@ -13,7 +13,7 @@ export default function TitleCard() {
     editReport: "Edit a Report",
     reportDetails: "Report Details",
     ViewAdminEmergencyList: "Listed Crimes",
-    newAdminReports: "Add a Report",
+    newAdminReports: "Add a Crime",
     Default: "Default",
   };
 
