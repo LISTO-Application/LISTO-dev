@@ -116,13 +116,13 @@ export const SideBar = ({
         {menuItems.map((item, index) =>
           ([
             "Validate Tickets",
-            "View Admin Emergency List",
+            "View Crimes List",
             "View Distress List",
           ].includes(item.name) &&
             userRole === "Admin") ||
           ![
             "Validate Tickets",
-            "View Admin Emergency List",
+            "View Crimes List",
             "View Distress List",
           ].includes(item.name) ? (
             <TouchableOpacity
