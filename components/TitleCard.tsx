@@ -10,7 +10,7 @@ export default function TitleCard() {
     validateReports: "Validate Reports",
     viewReports: "User Reports",
     newReports: "Create a Report",
-    editReport: "Edit a Report",
+    "editReport/[id]": "Edit a Report",
     reportDetails: "Report Details",
     ViewAdminEmergencyList: "Listed Crimes",
     newAdminReports: "Add a Crime",

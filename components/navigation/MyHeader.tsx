@@ -408,7 +408,7 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <APIProvider
-            apiKey="AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"
+            apiKey="AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA"
             region="PH"
           >
             <View style={styles.mapModal}>

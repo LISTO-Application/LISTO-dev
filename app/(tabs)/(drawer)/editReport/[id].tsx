@@ -24,6 +24,7 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 import EditReportMobile from "../mobile/EditReport";
 import {
   doc,
+  DocumentReference,
   GeoPoint,
   getDoc,
   query,
@@ -58,7 +59,7 @@ function EditReport({ navigation }: { navigation: any }) {
     coordinate,
     time,
     timeOfCrime,
-    addtionalInfo,
+    additionalInfo,
     image,
   } = useLocalSearchParams();
   console.log("REPORT ID IN EDIT REPORTS", id, name);
@@ -86,100 +87,83 @@ function EditReport({ navigation }: { navigation: any }) {
       fetchReport();
     }
   }, [id]);
-
-  console.log(report);
+  // Parsing the date
+  const editedDateTime = `${timeOfCrime} ${time}`;
+  const parsedEditedDateTime = new Date(editedDateTime);
+  console.log(parsedEditedDateTime);
   // const { name, time, category, location, additionalInfo } = report;
   const [newName, setNewName] = useState(name);
   const [newTime, setNewTime] = useState(time);
-  const [newdate, setNewDate] = useState();
-  const [dateTime, setDateTime] = useState();
-  const [selectedValue, setSelectedValue] = useState("");
+  const [newDate, setNewDate] = useState(timeOfCrime);
+  const [dateTime, setDateTime] = useState(new Date(parsedEditedDateTime));
+  const [selectedValue, setSelectedValue] = useState(category);
   const [newLocation, setNewLocation] = useState(location);
-  const [newAdditionalInfo, setNewAdditionalInfo] = useState(addtionalInfo);
+  const [newAdditionalInfo, setNewAdditionalInfo] = useState(additionalInfo);
   const [newCategory, setNewCategory] = useState<DropdownCrimeTypes | null>(
     null
   );
-
+  console.log("DATETIMEEEEEEEEEEEEEE", dateTime);
   let stringCoordinate = coordinate;
   console.log(coordinate);
   const handleSelect = (item: DropdownCrimeTypes | undefined) => {
-    setSelectedValue(item?.label); // Update the selected value
-    setIsDropdownVisible(false); // Close the dropdown
+    setSelectedValue(item?.label);
+    setIsDropdownVisible(false);
   };
-  // if (!report.uid) {
-  //   console.error("UID is missing or invalid.");
-  //   Alert.alert("Error", "Unable to identify the report.");
-  //   return;
-  // }
-  // Parsing the date
-  time;
-  console.log(timeOfCrime);
-
-  console.log(convertedDate);
-  // const editDate = format(report.date, "yyyy-MM-dd");
-  // const editDate = report.date; //11-20-2024
-  // const editTime = report.time; //04:02 PM
-  // const editedDateTime = ${editDate} ${editTime};
-  // const parsedEditedDateTime = new Date(editedDateTime);
-  // console.log(parsedEditedDateTime);
-  // console.log(editDate, editTime);
+  if (!id) {
+    console.error("UID is missing or invalid.");
+    Alert.alert("Error", "Unable to identify the report.");
+    return;
+  }
   const handleSubmit = async () => {
-    // console.log("Crime Type:", selectedValue);
-    // console.log("Location:", location);
-    // console.log("Additional Information:", additionalInfo);
-
     try {
-      // Update the Firestore document with the new report data\
-      console.log("Report UID:", report.uid);
-      const reportRef = doc(db, "reports", report.uid); // Ensure 'report.id' holds the correct document ID
-
+      console.log("Report ID:", id);
+      const reportRef = doc(dbWeb, "reports", id);
+      console.log(reportRef);
       const docSnap = await getDoc(reportRef);
       console.log("Document ID:", docSnap);
       console.log("Document:", docSnap.data());
-      if (!docSnap.exists) {
-        console.error("Document not found:", report.uid);
-        Alert.alert("Error", "Document not found. Unable to update.");
+      if (!docSnap.exists()) {
+        console.error("Document not found:", id);
+        window.confirm("Error! Document not found. Unable to update.");
         return;
       }
 
-      // const formattedDate = new Date(date);
       const updatedReport = {
         ...report,
-        additionalInfo: additionalInfo,
-        date: formattedDate,
+        additionalInfo: newAdditionalInfo,
+        timeOfCrime: dateTime,
         time: time,
         category: selectedValue.toLowerCase(),
-        location: location,
+        location: newLocation,
+        coordinate: coordinate,
       };
-
       await updateDoc(reportRef, updatedReport);
-
       console.log("Report updated successfully:", updatedReport);
       Alert.alert("Success", "Report updated successfully");
-      router.push({ pathname: "/viewReports", params: { updatedReport } });
+      router.push({ pathname: "/viewReports" });
     } catch (error) {
       console.error("Error updating report:", error);
       Alert.alert("Error", "Error updating report. Please try again.");
     }
-    // console.log("UpdatedReport: ", updatedReport);
   };
 
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(category);
   const [items, setItems] = useState(crimeType);
+  console.log(timeOfCrime);
 
   //Date
-  const [startDate, setStartDate] = useState<Date | null>("");
+  const [startDate, setStartDate] = useState<Date | null>(parsedEditedDateTime);
 
   useEffect(() => {
-    // const dateInput = startDate;
-    // console.log("Date Input", format(dateInput, "yyyy-MM-dd"));
-    // const timeInput = dayjs(startDate).format("hh:mm A");
-    // setDate(format(dateInput, "yyyy-MM-dd"));
-    // setTime(timeInput);
-    // console.log(startDate);
-    // console.log(dateInput, timeInput);
-    // console.log(date);
+    const dateInput = format(startDate, "yyyy-MM-dd");
+    console.log(dateInput);
+    console.log("Formatted", parsedEditedDateTime);
+    const timeInput = format(startDate, "hh:mm a");
+    setNewDate(dateInput);
+    setNewTime(timeInput);
+    console.log(startDate);
+    setDateTime(startDate);
   }, [startDate]);
   const minDate =
     value === "rape" ? subYears(new Date(), 5) : subDays(new Date(), 365);
@@ -216,9 +200,9 @@ function EditReport({ navigation }: { navigation: any }) {
         selectedValue={selectedValue}
         crimeTypes={crimeType}
         location={location}
-        // setLocation={setLocation}
-        // additionalInfo={additionalInfo}
-        // setAdditionalInfo={setAdditionalInfo}
+        setLocation={setNewLocation}
+        additionalInfo={newAdditionalInfo}
+        setAdditionalInfo={setNewAdditionalInfo}
         handleSelect={handleSelect}
         handleSubmit={handleSubmit}
       />
@@ -279,21 +263,21 @@ function EditReport({ navigation }: { navigation: any }) {
             <Text>Location:</Text>
             <TextInput
               style={webstyles.inputField}
-              value={location}
-              // onChangeText={setLocation}
+              value={newLocation}
+              onChangeText={setNewLocation}
             />
             <Text>Date and Time Happened:</Text>
             <View style={{ flex: 1, flexDirection: "row" }}>
               <TextInput
                 style={webstyles.inputField}
-                // value={date}
-                // onChangeText={setDate}
+                value={newDate}
+                onChangeText={setNewDate}
                 aria-disabled
               />
               <TextInput
                 style={webstyles.inputField}
-                // value={time}
-                // onChangeText={setTime}
+                value={newTime}
+                onChangeText={setNewTime}
                 aria-disabled
               />
             </View>
@@ -301,7 +285,7 @@ function EditReport({ navigation }: { navigation: any }) {
               <DatePicker
                 selected={startDate}
                 onChange={(date: Date | null) => setStartDate(date)}
-                // value={dateTime}
+                value={dateTime}
                 maxDate={new Date()}
                 minDate={minDate}
                 showTimeInput
@@ -314,8 +298,8 @@ function EditReport({ navigation }: { navigation: any }) {
               style={webstyles.textArea}
               multiline
               numberOfLines={4}
-              // value={additionalInfo}
-              // onChangeText={setAdditionalInfo}
+              value={newAdditionalInfo}
+              onChangeText={setNewAdditionalInfo}
             />
             <Text>Image Upload:</Text>
             <TextInput
@@ -332,7 +316,17 @@ function EditReport({ navigation }: { navigation: any }) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={webstyles.submitButtoneditReport}
-                onPress={handleSubmit}
+                onPress={() => {
+                  if (
+                    window.confirm(
+                      "Are you sure you want to save your changes?"
+                    )
+                  ) {
+                    handleSubmit();
+                  } else {
+                    return;
+                  }
+                }}
               >
                 <Text
                   style={[webstyles.buttonTexteditReport, { color: "#FFF" }]}

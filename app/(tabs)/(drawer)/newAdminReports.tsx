@@ -133,7 +133,7 @@ export default function NewAdminReports({
     address: string
   ): Promise<GeoPoint | string | null | undefined> => {
     if (!address || address.trim() === "") return null;
-    const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0";
+    const apiKey = "AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA";
     const bounds = {
       northeast: "14.693963,121.101193", // Adjusted bounds
       southwest: "14.649732,121.067052",
@@ -479,7 +479,23 @@ export default function NewAdminReports({
               </TouchableOpacity>
               <TouchableOpacity
                 style={webstyles.submitButtoneditReport}
-                onPress={handleSubmit}
+                onPress={() => {
+                  if (value == null) {
+                    window.alert("Please select a crime type");
+                  } else if (!location) {
+                    window.alert("Please enter a location.");
+                  } else {
+                    if (
+                      window.confirm(
+                        "Are you sure that the information you have provided is valid and truthful?"
+                      )
+                    ) {
+                      handleSubmit();
+                    } else {
+                      return;
+                    }
+                  }
+                }}
               >
                 <Text
                   style={[webstyles.buttonTexteditReport, { color: "#FFF" }]}

@@ -63,9 +63,15 @@ export default function RootLayout() {
             value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
           >
             <Stack initialRouteName={isLoggedIn ? "(tabs)" : "(auth)"}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="(tabs)"
+                options={{ headerShown: false, title: "Home" }}
+              />
 
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="(auth)"
+                options={{ headerShown: false, title: "Login" }}
+              />
               <Stack.Screen
                 name="changeAdminInformation"
                 options={{ headerShown: false }}

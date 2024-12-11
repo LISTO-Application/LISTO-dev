@@ -119,7 +119,7 @@ export default function ViewAdminEmergencyList() {
       return null;
     }
 
-    const apiKey = "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"; // Replace with your API key
+    const apiKey = "AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA"; // Replace with your API key
     const encodedAddress = encodeURIComponent(address);
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&region=PH&key=${apiKey}`;
 

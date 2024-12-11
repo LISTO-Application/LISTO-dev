@@ -241,15 +241,11 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
   // Filter reports based on search query and selected category
   const filterReports = (searchQuery: string, category: string | null) => {
     let filtered = reports; // Start with all reports
-
-    // Apply category filter if a category is selected
     if (category) {
       filtered = filtered.filter(
         (report: { category: string }) => report.category === category
       );
     }
-
-    // Apply search query filter if a query is provided
     if (searchQuery) {
       filtered = filtered.filter(
         (report: {

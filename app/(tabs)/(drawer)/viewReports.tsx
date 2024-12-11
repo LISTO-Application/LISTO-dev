@@ -126,19 +126,43 @@ export default function ViewReports({ navigation }: { navigation: any }) {
       console.error("Error deleting report: ", error);
     }
   };
-  const handleEditReport = (report: any) => {
+  const handleEditReport = (report: {
+    id: string;
+    name: string;
+    category: string;
+    location: string;
+    coordinate: GeoPoint;
+    time: string;
+    timeOfCrime: Date;
+    additionalInfo: string;
+    image: any;
+  }) => {
     // Redirect to the report edit page with the report ID in the query
     console.log("Report UID:", report.id);
+    //Coordinate
+    const coordinateString = `${report.coordinate.latitude},${report.coordinate.longitude}`;
+    //Date
+    console.log(report.timeOfCrime);
+    const formattedDate = new Date(report.timeOfCrime._seconds * 1000);
+    console.log(formattedDate);
+    const stringDate = dayjs(formattedDate).format("YYYY-MM-DD");
     router.push({
-      pathname: "/editReport",
+      pathname: "/editReport/[id]",
+      params: {
+        id: report.id,
+        name: report.name,
+        category: report.category,
+        location: report.location,
+        coordinate: coordinateString,
+        time: report.time,
+        timeOfCrime: stringDate,
+        additionalInfo: report.additionalInfo,
+        image: report.image,
+      },
     });
   };
   const handleSubmitReport = () => {
     router.push("/newReports");
-  };
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    filterReports(query, selectedCategory);
   };
   reports.forEach((report) => {
     const image = report.image;
@@ -171,7 +195,9 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   const filterReports = (searchQuery: string, category: string | null) => {
     let filtered = reports;
     if (category) {
-      filtered = filtered.filter((report) => report.category === category);
+      filtered = filtered.filter(
+        (report: { category: string }) => report.category === category
+      );
     }
     if (searchQuery) {
       filtered = filtered.filter(
@@ -195,7 +221,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
   };
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category); // Set the selected category
-    // Close the modal
+    setCategoryModalVisible(false);
     filterReports(searchQuery, category); // Apply the category filter along with the current search query
   };
   const crimeCategories = Array.from(
@@ -220,36 +246,56 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         {/* Report List */}
         <SpacerView height={90} />
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          {currentReports.map((report) => (
-            <View key={report.uid} style={styles.reportContainer}>
-              <SpacerView height={20} />
-              <View style={styles.reportIcon}>
-                <Ionicons name="alert-circle-outline" size={24} color="white" />
-              </View>
-              <View style={styles.reportTextContainer}>
-                <Text style={styles.reportTitle}>{report.category}</Text>
-              </View>
-              <View style={styles.reportActions}>
-                {/* Edit Icon */}
-                <TouchableOpacity
-                  style={styles.editIcon}
-                  onPress={() => handleEditReport(report)}
-                >
-                  <Ionicons name="pencil" size={24} color="white" />
-                </TouchableOpacity>
+          {currentReports.length > 0 ? (
+            currentReports.map((report) => (
+              <View key={report.uid} style={styles.reportContainer}>
+                <SpacerView height={20} />
+                <View style={styles.reportIcon}>
+                  <Ionicons
+                    name="alert-circle-outline"
+                    size={24}
+                    color="white"
+                  />
+                </View>
+                <View style={styles.reportTextContainer}>
+                  <Text style={styles.reportTitle}>{report.category}</Text>
+                </View>
+                <View style={styles.reportActions}>
+                  {/* Edit Icon */}
+                  <TouchableOpacity
+                    style={styles.editIcon}
+                    onPress={() => handleEditReport(report)}
+                  >
+                    <Ionicons name="pencil" size={24} color="white" />
+                  </TouchableOpacity>
 
-                {/* Trash Icon (Delete) */}
-                <TouchableOpacity
-                  style={styles.editIcon}
-                  onPress={() => handleDeleteReport(report.id)}
-                >
-                  <Ionicons name="trash-bin" size={24} color="white" />
-                </TouchableOpacity>
+                  {/* Trash Icon (Delete) */}
+                  <TouchableOpacity
+                    style={styles.editIcon}
+                    onPress={() => {
+                      if (
+                        window.confirm(
+                          "Are you sure you want to delete report?"
+                        )
+                      ) {
+                        handleDeleteReport(report.id);
+                      } else {
+                        return;
+                      }
+                    }}
+                  >
+                    <Ionicons name="trash-bin" size={24} color="white" />
+                  </TouchableOpacity>
 
-                <Text style={styles.timeText}>{report.time}</Text>
+                  <Text style={styles.timeText}>{report.time}</Text>
+                </View>
               </View>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={{ textAlign: "center", marginTop: 20 }}>
+              No reports available.
+            </Text>
+          )}
 
           {/* Pagination Controls */}
           <PaginationReport
@@ -309,12 +355,6 @@ export default function ViewReports({ navigation }: { navigation: any }) {
             setFilteredReports={setFilteredReports}
             isAlignedRight={isAlignedRight}
             filterReports={filterReports}
-            handleExport={undefined}
-            handleImport={undefined}
-            pickFile={undefined}
-            excelData={undefined}
-            uploading={undefined}
-            uploadToFirestore={undefined}
           />
           <Modal
             visible={isCategoryModalVisible}
@@ -486,7 +526,17 @@ export default function ViewReports({ navigation }: { navigation: any }) {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={webstyles.editIcon}
-                      onPress={() => handleDeleteReport(report.id)}
+                      onPress={() => {
+                        if (
+                          window.confirm(
+                            "Are you sure you want to delete report?"
+                          )
+                        ) {
+                          handleDeleteReport(report.id);
+                        } else {
+                          return;
+                        }
+                      }}
                     >
                       <Ionicons
                         name="trash-bin-outline"

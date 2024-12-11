@@ -4,7 +4,7 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ViewReports from "./viewReports";
 import newReports from "./newReports";
-import EditReport from "./editReport";
+import EditReport from "../editReport";
 import ReportDetails from "./reportDetails";
 import ViewAdminEmergencyList from "./ViewAdminEmergencyList";
 import ValidateReports from "./validateReports";
@@ -23,7 +23,11 @@ const RootReports = () => {
         options={{ headerShown: false, title: "Create Reports" }}
       />
       <Stack.Screen
-        name="editReport"
+        name="[id]"
+        options={{ headerShown: false, title: "Edit Reports" }}
+      />
+      <Stack.Screen
+        name="editReport/[id]"
         options={{ headerShown: false, title: "Edit Reports" }}
       />
       <Stack.Screen

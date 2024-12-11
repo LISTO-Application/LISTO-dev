@@ -26,7 +26,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0"
+          "apiKey": "AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA"
         }
       },
       "permissions": ["android.permission.WRITE_EXTERNAL_STORAGE"],
@@ -34,6 +34,7 @@
       "googleServicesFile": "./google-services.json"
     },
     "web": {
+      "name": "Crimemap",
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
