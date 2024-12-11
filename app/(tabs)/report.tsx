@@ -210,7 +210,7 @@ export default function Report() {
 
   // INITIALIZE MAP
   useEffect(() => {
-    Geocoder.init("AIzaSyBa31nHNFvIEsYo2D9NXjKmMYxT0lwE6W0");
+    Geocoder.init("AIzaSyDoWF8JDzlhT2xjhuInBtMmkhWGXg2My0g");
     if (mapRef.current) {
       mapRef.current.setMapBoundaries(
         mapBoundaries.northEast,

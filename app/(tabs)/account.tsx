@@ -132,8 +132,9 @@ useEffect( () => {
             Alert.alert("User not found", "Account does not exist; please sign up again.",)
               user?.delete().catch(error => {
                 if(error.code === 'auth/requires-recent-login') {
-                  firebase.app().functions("asia-east1").useEmulator("localhost", 5001)
+                  firebase.auth().signOut();
                   firebase.app().functions("asia-east1").httpsCallable("deleteUser")({uid: user?.uid})
+                  router.replace("../(auth)/login");
                 }
               });
             }
