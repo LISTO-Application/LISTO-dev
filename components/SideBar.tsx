@@ -46,7 +46,8 @@ export const SideBar = ({
     { name: "Account", route: "account" },
     { name: "View Reports", route: "viewReports" },
     { name: "Validate Tickets", route: "validateReports" },
-    { name: "View Admin Emergency List", route: "ViewAdminEmergencyList" },
+    { name: "View Crimes List", route: "ViewAdminEmergencyList" },
+    { name: "View Distress List", route: "viewDistress" },
   ];
 
   const [newReportsCount, setNewReportsCount] = useState(0);
@@ -113,13 +114,17 @@ export const SideBar = ({
       >
         <Text style={webstyles.sidebarTitle}>{userRole}</Text>
         {menuItems.map((item, index) =>
-          (["Validate Tickets", "View Admin Emergency List"].includes(
-            item.name
-          ) &&
+          ([
+            "Validate Tickets",
+            "View Admin Emergency List",
+            "View Distress List",
+          ].includes(item.name) &&
             userRole === "Admin") ||
-          !["Validate Tickets", "View Admin Emergency List"].includes(
-            item.name
-          ) ? (
+          ![
+            "Validate Tickets",
+            "View Admin Emergency List",
+            "View Distress List",
+          ].includes(item.name) ? (
             <TouchableOpacity
               key={index}
               style={webstyles.sidebarItem}

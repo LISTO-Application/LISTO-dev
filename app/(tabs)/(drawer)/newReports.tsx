@@ -120,6 +120,8 @@ export default function NewReports({
   const [imageFilename, setImageFileName] = useState<string | null | undefined>(
     undefined
   );
+  const [crimeError, setCrimeError] = useState(false);
+  const [locationError, setLocationError] = useState(false);
 
   const [selectedValue, setSelectedValue] = useState("");
 
@@ -134,7 +136,7 @@ export default function NewReports({
     address: string
   ): Promise<FirestoreGeoPoint | string | null | undefined> => {
     if (!address || address.trim() === "") return null;
-    const apiKey = "AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA";
+    const apiKey = "AIzaSyDoWF8JDzlhT2xjhuInBtMmkhWGXg2My0g";
     const bounds = {
       northeast: "14.693963,121.101193", // Adjusted bounds
       southwest: "14.649732,121.067052",
@@ -352,6 +354,7 @@ export default function NewReports({
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
+      console.log(selectedImage);
       setImageFileName(result.assets[0].fileName);
     } else {
       alert("You did not select any image.");
@@ -458,14 +461,14 @@ export default function NewReports({
               isAlignedRight && { width: "75%" },
             ]}
           >
-            <Text>Reporter's Username:</Text>
+            <Text>Reporter's Username</Text>
             <TextInput
               style={webstyles.inputField}
               value={name}
               editable={true}
               aria-disabled
             />
-            <Text>Select Incident Type:</Text>
+            <Text>Select Incident Type*</Text>
             <DropDownPicker
               open={open}
               value={value}
@@ -481,7 +484,12 @@ export default function NewReports({
                 handleSelect(selectedItem);
               }}
             />
-            <Text>Location:</Text>
+            {crimeError && (
+              <Text style={{ fontWeight: "bold", fontSize: 16, color: "red" }}>
+                Please select a crime type
+              </Text>
+            )}
+            <Text>Location*</Text>
             <TextInput
               style={webstyles.inputField}
               value={location}
@@ -489,7 +497,12 @@ export default function NewReports({
               placeholder="House/Building No. Street Name , Subdivision/Village, Barangay, Nearest Landmark (e.g: 14 Faustino, Holy Spirit Drive, etc)"
               placeholderTextColor={"#8c8c8c"}
             />
-            <Text>Date and Time Happened:</Text>
+            {locationError && (
+              <Text style={{ fontWeight: "bold", fontSize: 16, color: "red" }}>
+                Please enter a location.
+              </Text>
+            )}
+            <Text>Date and Time Happened</Text>
             <View
               style={{
                 flexDirection: "row",
@@ -522,7 +535,7 @@ export default function NewReports({
                 inline
               />
             </View>
-            <Text>Additional Information:</Text>
+            <Text>Additional Information</Text>
             <TextInput
               style={webstyles.textArea}
               multiline
@@ -534,7 +547,7 @@ export default function NewReports({
               }
               placeholderTextColor={"#8c8c8c"}
             />
-            <Text>Image Upload:</Text>
+            <Text>Image Upload</Text>
             <Text>{imageFilename}</Text>
             <View style={webstyles.footerContainer}>
               <Button
@@ -564,8 +577,10 @@ export default function NewReports({
                 onPress={() => {
                   if (value == null) {
                     window.alert("Please select a crime type");
+                    setCrimeError(true);
                   } else if (!location) {
                     window.alert("Please enter a location.");
+                    setLocationError(true);
                   } else {
                     if (
                       window.confirm(

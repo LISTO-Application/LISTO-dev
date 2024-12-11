@@ -37,13 +37,16 @@ export default function ValidateReportCard({
   const parsedTimeCrime = format(date, "hh:mm");
   const parsedTimeReported = format(timeReported, "hh:mm a");
   console.log(parsedTimeReported);
-  // const parsedDate = format(report.date, "yyyy-MM-dd");
-  // console.log(parsedDate);
-  // console.log(new Date(report.timestamp * 1000));
-  // const timestamp = new Date(report.timestamp * 1000);
-  // const localTime = dayjs(timestamp).format("hh:mm A");
-  // console.log(format(new Date(report.timestamp * 1000), "hh:mm a"));
 
+  //Render Image
+  const bucketUrl =
+    "https://firebasestorage.googleapis.com/v0/b/listo-dev-18c26.firebasestorage.app/o/";
+  const imagePath = report.image.uri;
+  const encodedPath = encodeURIComponent(imagePath);
+  console.log(encodedPath);
+  console.log(imagePath);
+  const imageUrl = `${bucketUrl}${encodedPath}?alt=media`;
+  console.log(imageUrl);
   return (
     <View
       style={{
@@ -56,7 +59,9 @@ export default function ValidateReportCard({
           {report.image ? (
             <View style={style.imageContainer}>
               <Image
-                source={{ uri: report.image.uri }}
+                source={{
+                  uri: imageUrl,
+                }}
                 style={style.image}
                 resizeMode="cover"
               />
@@ -200,7 +205,9 @@ export default function ValidateReportCard({
               {report.image ? (
                 <View style={{ width: 500, height: 500 }}>
                   <Image
-                    source={{ uri: report.image.uri }}
+                    source={{
+                      uri: imageUrl,
+                    }}
                     style={style.image}
                     resizeMode="cover"
                   />

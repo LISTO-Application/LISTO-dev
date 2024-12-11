@@ -13,6 +13,8 @@ import {
   Image,
   Animated,
   Dimensions,
+  Button,
+  Pressable,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { styles } from "@/styles/styles"; // Adjust the path if necessary
@@ -31,7 +33,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { authWeb, dbWeb } from "@/app/(auth)";
+import { app, authWeb, dbWeb } from "@/app/(auth)";
 import { getIconName } from "@/assets/utils/getIconName";
 import SideBar from "@/components/SideBar";
 import { crimeImages, CrimeType } from "@/constants/data/marker";
@@ -44,6 +46,30 @@ import TitleCard from "@/components/TitleCard";
 import { collection, Timestamp } from "firebase/firestore";
 import { useSearchParams } from "expo-router/build/hooks";
 import { Report } from "@/constants/data/reports";
+import { firebase } from "@react-native-firebase/firestore";
+import { Image as Img, type ImageSource } from "expo-image";
+import { FontAwesome } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as FileSystem from "expo-file-system";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  UploadMetadata,
+} from "firebase/storage";
+
+type ImageProps = {
+  label: string;
+  theme?: "primary";
+  onPress?: () => void;
+};
+
+type IMGViewerProps = {
+  imgSource: string;
+  selectedImage?: string;
+};
 
 function EditReport({ navigation }: { navigation: any }) {
   const auth = authWeb;
@@ -87,10 +113,29 @@ function EditReport({ navigation }: { navigation: any }) {
       fetchReport();
     }
   }, [id]);
+
   // Parsing the date
   const editedDateTime = `${timeOfCrime} ${time}`;
   const parsedEditedDateTime = new Date(editedDateTime);
   console.log(parsedEditedDateTime);
+  //Parse Image
+  const parsedImage = JSON.parse(image);
+  const editFilename = parsedImage.filename;
+  const originalImage = parsedImage.uri;
+  const editImageLink = parsedImage.uri;
+
+  //Render Image
+  const bucketUrl =
+    "https://firebasestorage.googleapis.com/v0/b/listo-dev-18c26.firebasestorage.app/o/";
+  const imagePath = editImageLink;
+  const encodedPath = encodeURIComponent(imagePath);
+  console.log(encodedPath);
+  console.log(imagePath);
+  const imageUrl = `${bucketUrl}${encodedPath}?alt=media`;
+  console.log(imageUrl);
+
+  console.log("EDIT FILENAME", editFilename);
+  console.log("URI", editImageLink);
   // const { name, time, category, location, additionalInfo } = report;
   const [newName, setNewName] = useState(name);
   const [newTime, setNewTime] = useState(time);
@@ -99,12 +144,21 @@ function EditReport({ navigation }: { navigation: any }) {
   const [selectedValue, setSelectedValue] = useState(category);
   const [newLocation, setNewLocation] = useState(location);
   const [newAdditionalInfo, setNewAdditionalInfo] = useState(additionalInfo);
-  const [newCategory, setNewCategory] = useState<DropdownCrimeTypes | null>(
-    null
+  const [newCategory, setNewCategory] = useState<DropdownCrimeTypes | null>();
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(
+    imageUrl
   );
-  console.log("DATETIMEEEEEEEEEEEEEE", dateTime);
+  const [imageFilename, setImageFileName] = useState<string | null | undefined>(
+    editFilename
+  );
+
+  //Coordinates
   let stringCoordinate = coordinate;
-  console.log(coordinate);
+  const [latitude, longitude] = stringCoordinate.split(",").map(Number);
+
+  console.log(latitude, longitude);
+  const geoPoint = new firebase.firestore.GeoPoint(latitude, longitude);
+  console.log(geoPoint);
   const handleSelect = (item: DropdownCrimeTypes | undefined) => {
     setSelectedValue(item?.label);
     setIsDropdownVisible(false);
@@ -114,6 +168,55 @@ function EditReport({ navigation }: { navigation: any }) {
     Alert.alert("Error", "Unable to identify the report.");
     return;
   }
+
+  const geocodeAddress = async (
+    address: string
+  ): Promise<GeoPoint | string | null | undefined> => {
+    if (!address || address.trim() === "") return null;
+    const apiKey = "AIzaSyDoWF8JDzlhT2xjhuInBtMmkhWGXg2My0g";
+    const bounds = {
+      northeast: "14.693963,121.101193", // Adjusted bounds
+      southwest: "14.649732,121.067052",
+    };
+    const region = "PH";
+
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+      address
+    )}&bounds=${bounds.northeast}|${bounds.southwest}&region=${region}&key=${apiKey}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.status === "OK") {
+        console.log(data.results[0]);
+        const { lat, lng } = data.results[0].geometry.location;
+        console.log("Geocoded location:", lat, lng);
+
+        const [neLat, neLng] = bounds.northeast.split(",").map(Number);
+        const [swLat, swLng] = bounds.southwest.split(",").map(Number);
+        console.log(bounds);
+        const isWithinBounds =
+          lat <= neLat && lat >= swLat && lng <= neLng && lng >= swLng;
+        console.log("Within the bounds:", isWithinBounds);
+        console.log("Parsed bounds:", {
+          northwest: { lat: neLat, lng: neLng },
+          southeast: { lat: swLat, lng: swLng },
+        });
+        console.log(data.results[0].geometry.bounds);
+
+        if (isWithinBounds) {
+          return new GeoPoint(lat, lng);
+        }
+      } else {
+        console.error("Geocoding error:", data.status);
+        return null;
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       console.log("Report ID:", id);
@@ -128,6 +231,103 @@ function EditReport({ navigation }: { navigation: any }) {
         return;
       }
 
+      //Image
+      let resizedImage = null;
+      if (selectedImage) {
+        try {
+          console.log("Resizing image...");
+          // Resize the image
+          resizedImage = await ImageManipulator.manipulateAsync(
+            selectedImage,
+            [{ resize: { width: 800 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+          );
+        } catch (error) {
+          console.error("Error processing and uploading the image:", error);
+          alert("Failed to process and upload the image. Please try again.");
+          return;
+        }
+      }
+
+      async function convertUriToFile(
+        uri: string,
+        filename: string
+      ): Promise<File> {
+        return new Promise<File>((resolve, reject) => {
+          const img = new window.Image();
+          img.src = uri;
+
+          img.onload = () => {
+            // Create a canvas to draw the image and convert to Blob
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            if (context) {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              context.drawImage(img, 0, 0);
+
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  const file = new File([blob], filename, {
+                    type: "image/jpeg",
+                  });
+                  resolve(file);
+                } else {
+                  reject("Failed to convert image to Blob.");
+                }
+              }, "image/jpeg");
+            } else {
+              reject("Failed to get canvas context.");
+            }
+          };
+
+          img.onerror = (error) => reject(error);
+        });
+      }
+
+      async function uploadImageAndGetURL(
+        file: File,
+        storagePath: string,
+        metadata: UploadMetadata
+      ): Promise<string> {
+        const storage = getStorage(
+          app,
+          "gs://listo-dev-18c26.firebasestorage.app"
+        );
+        const reference = ref(storage, storagePath);
+        const snapshot = await uploadBytesResumable(reference, file, metadata);
+
+        console.log("Image uploaded successfully!", snapshot.metadata.fullPath);
+        const downloadURL = snapshot.metadata.fullPath;
+        return downloadURL;
+      }
+      let downloadURL = null;
+      if (selectedImage) {
+        const file = await convertUriToFile(selectedImage, imageFilename); // A File object from a file picker
+        const storagePath = `reportImages/${uid}/${imageFilename}`;
+        const metadata = {
+          contentType: "image/jpeg", // Automatically gets MIME type from the file
+        };
+        downloadURL = await uploadImageAndGetURL(file, storagePath, metadata);
+      } else {
+        alert("No image selected, proceeding to create report.");
+      }
+      const finalImageUri =
+        selectedImage === imageUrl ? originalImage : downloadURL;
+
+      // Geocode address to get Firestore GeoPoint
+      const locationString = newLocation;
+      console.log("Geocoding location:", locationString);
+      const firestoreGeoPoint = await geocodeAddress(locationString);
+
+      if (!firestoreGeoPoint && !geoPoint) {
+        console.warn("Skipping invalid location:", locationString);
+        alert(
+          `Does not accept locations beyond Quezon City: ${locationString}`
+        );
+        return;
+      }
+
       const updatedReport = {
         ...report,
         additionalInfo: newAdditionalInfo,
@@ -135,7 +335,11 @@ function EditReport({ navigation }: { navigation: any }) {
         time: time,
         category: selectedValue.toLowerCase(),
         location: newLocation,
-        coordinate: coordinate,
+        coordinate: firestoreGeoPoint,
+        image: {
+          filename: imageFilename,
+          uri: finalImageUri,
+        },
       };
       await updateDoc(reportRef, updatedReport);
       console.log("Report updated successfully:", updatedReport);
@@ -190,6 +394,66 @@ function EditReport({ navigation }: { navigation: any }) {
     }).start();
     setIsAlignedRight(!isAlignedRight);
     setSidebarVisible(!isSidebarVisible);
+  };
+
+  // Image Picker
+  const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+      setImageFileName(result.assets[0].fileName);
+    } else {
+      alert("You did not select any image.");
+    }
+  };
+
+  const PlaceholderImage = require("@/assets/images/background-image.jpg");
+
+  const Button = ({ label, theme, onPress }: ImageProps) => {
+    if (theme === "primary") {
+      return (
+        <View
+          style={[
+            webstyles.buttonContainer,
+            { borderWidth: 4, borderColor: "#ffd33d", borderRadius: 18 },
+          ]}
+        >
+          <Pressable
+            style={[webstyles.button, { backgroundColor: "#fff" }]}
+            onPress={onPress}
+          >
+            <FontAwesome
+              name={"picture-o"}
+              size={18}
+              color="#25292e"
+              style={webstyles.buttonIcon}
+            />
+            <Text style={[webstyles.buttonLabel, { color: "#25292e" }]}>
+              {label}
+            </Text>
+          </Pressable>
+        </View>
+      );
+    }
+    <View style={webstyles.buttonContainer}>
+      <Pressable
+        style={webstyles.button}
+        onPress={() => alert("You pressed a button.")}
+      >
+        <Text style={webstyles.buttonLabel}>{label}</Text>
+      </Pressable>
+    </View>;
+  };
+
+  const ImageViewer = ({ imgSource, selectedImage }: IMGViewerProps) => {
+    const imageSource = selectedImage ? { uri: selectedImage } : imgSource;
+
+    return <Img source={imageSource} style={webstyles.image} />;
   };
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
@@ -267,7 +531,13 @@ function EditReport({ navigation }: { navigation: any }) {
               onChangeText={setNewLocation}
             />
             <Text>Date and Time Happened:</Text>
-            <View style={{ flex: 1, flexDirection: "row" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                width: "100%",
+                justifyContent: "center",
+              }}
+            >
               <TextInput
                 style={webstyles.inputField}
                 value={newDate}
@@ -302,15 +572,39 @@ function EditReport({ navigation }: { navigation: any }) {
               onChangeText={setNewAdditionalInfo}
             />
             <Text>Image Upload:</Text>
-            <TextInput
-              style={webstyles.inputField}
-              value="https://cloud.com/BarangayBatasan/Virus.img"
-              editable={false}
-            />
+            <Text>{imageFilename}</Text>
+            <View style={webstyles.footerContainer}>
+              <Button
+                theme="primary"
+                label="Choose a photo"
+                onPress={pickImageAsync}
+              />
+              <Button label="Use this photo" />
+            </View>
+            <View style={webstyles.imageInputContainer}>
+              <View style={webstyles.imageContainer}>
+                <ImageViewer
+                  imgSource={PlaceholderImage}
+                  selectedImage={selectedImage}
+                />
+              </View>
+            </View>
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}
-                onPress={() => router.push("/viewReports")}
+                onPress={() => {
+                  const finalImageUri =
+                    selectedImage === imageUrl ? originalImage : selectedImage;
+                  const updatedReport = {
+                    ...report,
+                    image: {
+                      filename: imageFilename,
+                      uri: finalImageUri,
+                    },
+                  };
+                  console.log(updatedReport);
+                  router.push("/viewReports");
+                }}
               >
                 <Text style={webstyles.buttonTexteditReport}>CANCEL</Text>
               </TouchableOpacity>

@@ -46,6 +46,10 @@ const RootReports = () => {
         options={{ headerShown: false, title: "Admin View Emergency Report" }}
       />
       <Stack.Screen
+        name="viewDistress"
+        options={{ headerShown: false, title: "Admin View Emergency Report" }}
+      />
+      <Stack.Screen
         name="newAdminReports"
         options={{ headerShown: false, title: "New Admin Reports" }}
       />

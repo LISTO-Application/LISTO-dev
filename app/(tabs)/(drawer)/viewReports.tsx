@@ -96,6 +96,7 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           id: doc.id,
         }));
         setReports(updatedReport as Report[]);
+        setFilteredReports(updatedReport as Report[]);
       })
       .catch((error) => {
         console.error("Error fetching reports: ", error);
@@ -135,14 +136,18 @@ export default function ViewReports({ navigation }: { navigation: any }) {
     time: string;
     timeOfCrime: Date;
     additionalInfo: string;
-    image: any;
+    image: {
+      filename: string;
+      uri: string;
+    };
   }) => {
     // Redirect to the report edit page with the report ID in the query
     console.log("Report UID:", report.id);
     //Coordinate
     const coordinateString = `${report.coordinate.latitude},${report.coordinate.longitude}`;
+    console.log(coordinateString);
     //Date
-    console.log(report.timeOfCrime);
+    console.log(report);
     const formattedDate = new Date(report.timeOfCrime._seconds * 1000);
     console.log(formattedDate);
     const stringDate = dayjs(formattedDate).format("YYYY-MM-DD");
@@ -157,7 +162,10 @@ export default function ViewReports({ navigation }: { navigation: any }) {
         time: report.time,
         timeOfCrime: stringDate,
         additionalInfo: report.additionalInfo,
-        image: report.image,
+        image: JSON.stringify({
+          filename: report.image.filename,
+          uri: report.image.uri,
+        }),
       },
     });
   };
@@ -206,13 +214,16 @@ export default function ViewReports({ navigation }: { navigation: any }) {
           location: string;
           category: string;
           timeOfCrime: Date;
+          additionalInfo: string;
+          status: number;
         }) => {
           const query = searchQuery.toLowerCase();
           const date = dayjs(report.timeOfCrime).format("YYYY-MM-DD");
           return (
             report.location.toLowerCase().includes(query) ||
             report.category.toLowerCase().includes(query) ||
-            date.toLowerCase().includes(query)
+            date.toLowerCase().includes(query) ||
+            report.additionalInfo.toLowerCase().includes(query)
           );
         }
       );
@@ -394,161 +405,164 @@ export default function ViewReports({ navigation }: { navigation: any }) {
               isAlignedRight && { width: "75%" },
             ]}
           >
-            {reports.map((report) => {
-              let iconSource;
-              if (report.category === "carnapping") {
-                iconSource = require("@/assets/images/car-icon.png");
-              } else if (report.category === "rape") {
-                iconSource = require("@/assets/images/rape-icon.png");
-              } else if (report.category === "homicide") {
-                iconSource = require("@/assets/images/homicide-icon.png");
-              } else if (report.category === "murder") {
-                iconSource = require("@/assets/images/knife-icon.png");
-              } else if (report.category === "injury") {
-                iconSource = require("@/assets/images/injury-icon.png");
-              } else if (report.category === "theft") {
-                iconSource = require("@/assets/images/thief-icon.png");
-              } else if (report.category === "robbery") {
-                iconSource = require("@/assets/images/robbery-icon.png");
-              } else {
-                iconSource = require("@/assets/images/question-mark.png");
-              }
+            {currentReports.length > 0 ? (
+              currentReports.map((report) => {
+                let iconSource;
+                if (report.category === "carnapping") {
+                  iconSource = require("@/assets/images/car-icon.png");
+                } else if (report.category === "rape") {
+                  iconSource = require("@/assets/images/rape-icon.png");
+                } else if (report.category === "homicide") {
+                  iconSource = require("@/assets/images/homicide-icon.png");
+                } else if (report.category === "murder") {
+                  iconSource = require("@/assets/images/knife-icon.png");
+                } else if (report.category === "injury") {
+                  iconSource = require("@/assets/images/injury-icon.png");
+                } else if (report.category === "theft") {
+                  iconSource = require("@/assets/images/thief-icon.png");
+                } else if (report.category === "robbery") {
+                  iconSource = require("@/assets/images/robbery-icon.png");
+                } else {
+                  iconSource = require("@/assets/images/question-mark.png");
+                }
+                console.log(report.timeReported);
+                const timeReported = new Date(
+                  report.timeReported._seconds * 1000 +
+                    report.timeReported._nanoseconds / 1000000
+                );
+                const date = new Date(
+                  report.timeOfCrime._seconds * 1000 +
+                    report.timeOfCrime._nanoseconds / 1000000
+                );
+                console.log(date);
+                console.log(timeReported);
+                const parsedDate = format(date, "yyyy-MM-dd");
+                const parsedTimeCrime = format(date, "hh:mm");
+                const parsedTimeReported = format(timeReported, "hh:mm a");
+                console.log(parsedTimeReported);
 
-              // const date = new Date(
-              //   report.date._seconds * 1000 + report.date._nanoseconds / 1000000
-              // );
-              // const parsedDate = format(report.date, "yyyy-MM-dd");
-              // console.log(parsedDate);
-              // console.log(new Date(report.timestamp * 1000));
-              // const timestamp = new Date(report.timestamp * 1000);
-              // const localTime = dayjs(timestamp).format("hh:mm A");
-              // console.log(format(new Date(report.timestamp * 1000), "hh:mm a"));
-              console.log(report.timeReported);
-              const timeReported = new Date(
-                report.timeReported._seconds * 1000 +
-                  report.timeReported._nanoseconds / 1000000
-              );
-              const date = new Date(
-                report.timeOfCrime._seconds * 1000 +
-                  report.timeOfCrime._nanoseconds / 1000000
-              );
-              console.log(date);
-              console.log(timeReported);
-              const parsedDate = format(date, "yyyy-MM-dd");
-              const parsedTimeCrime = format(date, "hh:mm");
-              const parsedTimeReported = format(timeReported, "hh:mm a");
-              console.log(parsedTimeReported);
-
-              return (
-                <View key={report.id} style={webstyles.reportContainer}>
-                  <Image source={iconSource} style={webstyles.reportIcon} />
-                  <View style={{ flex: 1, flexDirection: "column" }}>
-                    <View style={{ flexDirection: "row" }}>
-                      <Text style={webstyles.reportTitle}>
-                        {report.category.charAt(0).toUpperCase() +
-                          report.category.slice(1)}
-                      </Text>
-                      <Text
-                        style={{
-                          flex: 1,
-                          color: "white",
-                          alignSelf: "center",
-                          fontWeight: "300",
-                        }}
-                      >
-                        {parsedDate} &nbsp; {parsedTimeCrime}
-                      </Text>
-                      <Text
-                        style={{ flex: 1, color: "white", fontWeight: "300" }}
-                      >
-                        {report.location.toUpperCase()}
-                      </Text>
+                return (
+                  <View key={report.id} style={webstyles.reportContainer}>
+                    <Image source={iconSource} style={webstyles.reportIcon} />
+                    <View style={{ flex: 1, flexDirection: "column" }}>
+                      <View style={{ flexDirection: "row" }}>
+                        <Text style={webstyles.reportTitle}>
+                          {report.category.charAt(0).toUpperCase() +
+                            report.category.slice(1)}
+                        </Text>
+                        <Text
+                          style={{
+                            flex: 1,
+                            color: "white",
+                            alignSelf: "center",
+                            fontWeight: "300",
+                          }}
+                        >
+                          {parsedDate} &nbsp; {parsedTimeCrime}
+                        </Text>
+                        <Text
+                          style={{ flex: 1, color: "white", fontWeight: "300" }}
+                        >
+                          {report.location.toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: "row" }}>
+                        <Text
+                          style={[webstyles.reportInfo, { marginLeft: 20 }]}
+                        >
+                          {report.phone}
+                        </Text>
+                        <Text style={[webstyles.reportInfo]}>
+                          <b>Remarks:</b> {report.additionalInfo}
+                        </Text>
+                        <Text style={webstyles.reportInfo}></Text>
+                      </View>
                     </View>
-                    <View style={{ flexDirection: "row" }}>
-                      <Text style={[webstyles.reportInfo, { marginLeft: 20 }]}>
-                        {report.phone}
-                      </Text>
-                      <Text style={[webstyles.reportInfo]}>
-                        <b>Remarks:</b> {report.additionalInfo}
-                      </Text>
-                      <Text style={webstyles.reportInfo}></Text>
-                    </View>
-                  </View>
-                  <View
-                    style={[
-                      {
-                        borderWidth: 2,
-                        borderRadius: 10,
-                        borderColor: "black",
-                      },
-                    ]}
-                  >
                     <View
                       style={[
-                        { borderWidth: 5, borderRadius: 10 },
-                        report.status === 2
-                          ? { borderColor: "green" } // Status 2 -> Green
-                          : report.status === 1
-                            ? { borderColor: "yellow" } // Status 1 -> Orange
-                            : report.status === 0
-                              ? { borderColor: "grey" } // Status 0 -> Grey
-                              : null,
+                        {
+                          borderWidth: 2,
+                          borderRadius: 10,
+                          borderColor: "black",
+                        },
                       ]}
-                    ></View>
-                  </View>
-                  <View style={webstyles.reportActions}>
-                    <TouchableOpacity
-                      style={[
-                        webstyles.editIcon,
-                        report.status === 2 && webstyles.disabledIcon, // Disabled when status is 2 (green)
-                      ]}
-                      onPress={() =>
-                        report.status !== 2 && handleEditReport(report)
-                      } // Only allow edit if status is not 2
-                      disabled={report.status === 2} // Disable if status is 2 (green)
                     >
-                      <Ionicons
-                        name="create-outline"
-                        size={30}
-                        color={
-                          report.status === 0
-                            ? "gray"
+                      <View
+                        style={[
+                          { borderWidth: 5, borderRadius: 10 },
+                          report.status === 2
+                            ? { borderColor: "green" } // Status 2 -> Green
                             : report.status === 1
-                              ? "yellow"
-                              : "green"
-                        } // Set color based on status
-                        style={
-                          report.status === 0 && {
-                            textDecorationLine: "line-through",
-                          } // Strike-through when status is 0 (grey)
+                              ? { borderColor: "yellow" } // Status 1 -> Orange
+                              : report.status === 0
+                                ? { borderColor: "grey" } // Status 0 -> Grey
+                                : null,
+                        ]}
+                      ></View>
+                    </View>
+                    <View style={webstyles.reportActions}>
+                      <TouchableOpacity
+                        style={[
+                          webstyles.editIcon,
+                          report.status === 2 && webstyles.disabledIcon, // Disabled when status is 2 (green)
+                        ]}
+                        onPress={() =>
+                          report.status !== 2 &&
+                          report.status !== 0 &&
+                          handleEditReport(report)
                         }
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={webstyles.editIcon}
-                      onPress={() => {
-                        if (
-                          window.confirm(
-                            "Are you sure you want to delete report?"
-                          )
-                        ) {
-                          handleDeleteReport(report.id);
-                        } else {
-                          return;
-                        }
-                      }}
-                    >
-                      <Ionicons
-                        name="trash-bin-outline"
-                        size={30}
-                        color="#DA4B46"
-                      />
-                    </TouchableOpacity>
-                    <Text style={webstyles.timeText}>{parsedTimeReported}</Text>
+                        // Only allow edit if status is not 2 nor 0
+                        disabled={report.status === 2 || report.status === 0}
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={30}
+                          color={
+                            report.status === 0
+                              ? "gray"
+                              : report.status === 1
+                                ? "yellow"
+                                : "green"
+                          } // Set color based on status
+                          style={
+                            report.status === 0 && {
+                              textDecorationLine: "line-through",
+                            } // Strike-through when status is 0 (grey)
+                          }
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={webstyles.editIcon}
+                        onPress={() => {
+                          if (
+                            window.confirm(
+                              "Are you sure you want to delete report?"
+                            )
+                          ) {
+                            handleDeleteReport(report.id);
+                          } else {
+                            return;
+                          }
+                        }}
+                      >
+                        <Ionicons
+                          name="trash-bin-outline"
+                          size={30}
+                          color="#DA4B46"
+                        />
+                      </TouchableOpacity>
+                      <Text style={webstyles.timeText}>
+                        {parsedTimeReported}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              );
-            })}
+                );
+              })
+            ) : (
+              <Text style={{ textAlign: "center", marginTop: 20 }}>
+                No reports available.
+              </Text>
+            )}
           </ScrollView>
           <PaginationReport
             filteredReports={filteredReports}

@@ -119,6 +119,8 @@ export default function NewAdminReports({
   const [imageFilename, setImageFileName] = useState<string | null | undefined>(
     undefined
   );
+  const [crimeError, setCrimeError] = useState(false);
+  const [locationError, setLocationError] = useState(false);
 
   const [selectedValue, setSelectedValue] = useState("");
 
@@ -133,7 +135,7 @@ export default function NewAdminReports({
     address: string
   ): Promise<GeoPoint | string | null | undefined> => {
     if (!address || address.trim() === "") return null;
-    const apiKey = "AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA";
+    const apiKey = "AIzaSyDoWF8JDzlhT2xjhuInBtMmkhWGXg2My0g";
     const bounds = {
       northeast: "14.693963,121.101193", // Adjusted bounds
       southwest: "14.649732,121.067052",
@@ -399,6 +401,11 @@ export default function NewAdminReports({
                 handleSelect(selectedItem);
               }}
             />
+            {crimeError && (
+              <Text style={{ fontWeight: "bold", fontSize: 16, color: "red" }}>
+                Please select a crime type
+              </Text>
+            )}
             <Text>Location:</Text>
             <TextInput
               style={webstyles.inputField}
@@ -407,6 +414,11 @@ export default function NewAdminReports({
               placeholder="House/Building No. Street Name , Subdivision/Village, Barangay, Nearest Landmark (e.g: 14 Faustino, Holy Spirit Drive, etc)"
               placeholderTextColor={"#8c8c8c"}
             />
+            {locationError && (
+              <Text style={{ fontWeight: "bold", fontSize: 16, color: "red" }}>
+                Please enter a location.
+              </Text>
+            )}
             <Text>Date and Time Happened:</Text>
             <View
               style={{
@@ -452,24 +464,6 @@ export default function NewAdminReports({
               }
               placeholderTextColor={"#8c8c8c"}
             />
-            {/* <Text>Image Upload:</Text>
-            <Text>{imageFilename}</Text>
-            <View style={webstyles.footerContainer}>
-              <Button
-                theme="primary"
-                label="Choose a photo"
-                onPress={pickImageAsync}
-              />
-              <Button label="Use this photo" />
-            </View>
-            <View style={webstyles.imageInputContainer}>
-              <View style={webstyles.imageContainer}>
-                <ImageViewer
-                  imgSource={PlaceholderImage}
-                  selectedImage={selectedImage}
-                />
-              </View>
-            </View> */}
             <View style={webstyles.buttonContainereditReport}>
               <TouchableOpacity
                 style={webstyles.cancelButtoneditReport}
@@ -482,8 +476,10 @@ export default function NewAdminReports({
                 onPress={() => {
                   if (value == null) {
                     window.alert("Please select a crime type");
+                    setCrimeError(true);
                   } else if (!location) {
                     window.alert("Please enter a location.");
+                    setLocationError(true);
                   } else {
                     if (
                       window.confirm(

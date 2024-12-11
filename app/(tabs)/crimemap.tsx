@@ -747,7 +747,7 @@ export default function CrimeMap({ navigation }: { navigation: any }) {
           backgroundColor="#115272"
         >
           <APIProvider
-            apiKey={"AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA"}
+            apiKey={"AIzaSyDoWF8JDzlhT2xjhuInBtMmkhWGXg2My0g"}
             region="PH"
           >
             <Map

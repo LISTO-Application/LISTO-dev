@@ -37,6 +37,8 @@ import {
   useAdvancedMarkerRef,
 } from "@vis.gl/react-google-maps";
 import { router } from "expo-router";
+import { getAuth } from "firebase/auth";
+import { app } from "@/app/(auth)";
 // Type for Navigation
 type DrawerParamList = {
   emergency: undefined;
@@ -221,9 +223,29 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
 
   const [userRole, setUserRole] = useState("User");
 
-  const toggleUserRole = () => {
-    setUserRole((prevRole) => (prevRole === "Admin" ? "User" : "Admin"));
-  };
+  const auth = getAuth(app);
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const idTokenResult = await user.getIdTokenResult();
+        const claims = idTokenResult.claims;
+        console.log("ID token result", idTokenResult);
+        console.log("Claims", claims);
+        console.log("Admin?", claims.admin);
+        if (claims.admin) {
+          setUserRole("Admin");
+        } else {
+          setUserRole("User");
+        }
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+
+  console.log("Auth", auth);
+
   useEffect(() => {
     console.log("Selected Location:", selectedLocation);
   }, [selectedLocation]);
@@ -251,10 +273,6 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
       </TouchableOpacity>
 
       {/* Notification and Exclamation Icons */}
-      <Button
-        title={`Switch to ${userRole === "Admin" ? "User" : "Admin"}`}
-        onPress={toggleUserRole}
-      />
       {userRole === "Admin" ? (
         <View style={layoutStyles.iconGroup}>
           {/* Notification Icon */}
@@ -408,7 +426,7 @@ const MyHeader: React.FC<CustomNavigatorProps> = ({ navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <APIProvider
-            apiKey="AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA"
+            apiKey="AIzaSyDoWF8JDzlhT2xjhuInBtMmkhWGXg2My0g"
             region="PH"
           >
             <View style={styles.mapModal}>

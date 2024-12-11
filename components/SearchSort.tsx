@@ -64,7 +64,7 @@ export default function SearchSort({
   const [isSortedAsc, setIsSortedAsc] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State for selected category filter
-  const [currentStatusSort, setCurrentStatusSort] = useState<boolean>(false);
+  const [currentStatusSort, setCurrentStatusSort] = useState<number>();
 
   // Handle search query change
   const handleSearch = (query: string) => {
@@ -83,8 +83,25 @@ export default function SearchSort({
     setFilteredReports((prevReports: Report[]) => {
       const sortedReports = [...prevReports];
       sortedReports.sort((a, b) => {
-        const dateA = a.timeOfCrime ? new Date(a.timeOfCrime).getTime() : 0;
-        const dateB = b.timeOfCrime ? new Date(b.timeOfCrime).getTime() : 0;
+        const getTimestamp = (time: any) => {
+          // Handle the case where timeOfCrime is an object with _seconds
+          if (time && typeof time._seconds === "number") {
+            return time._seconds * 1000; // Convert seconds to milliseconds
+          }
+
+          // Handle the case where timeOfCrime is a Date object
+          if (time instanceof Date) {
+            return time.getTime();
+          }
+
+          // Default to 0 if neither case matches
+          return 0;
+        };
+
+        const dateA = getTimestamp(a.timeOfCrime);
+        const dateB = getTimestamp(b.timeOfCrime);
+
+        console.log(dateA - dateB);
         return dateA - dateB; // Ascending order
       });
       return sortedReports;
@@ -96,8 +113,24 @@ export default function SearchSort({
     setFilteredReports((prevReports: Report[]) => {
       const sortedReports = [...prevReports];
       sortedReports.sort((a, b) => {
-        const dateA = a.timeOfCrime ? new Date(a.timeOfCrime).getTime() : 0;
-        const dateB = b.timeOfCrime ? new Date(b.timeOfCrime).getTime() : 0;
+        const getTimestamp = (time: any) => {
+          // Handle the case where timeOfCrime is an object with _seconds
+          if (time && typeof time._seconds === "number") {
+            return time._seconds * 1000; // Convert seconds to milliseconds
+          }
+
+          // Handle the case where timeOfCrime is a Date object
+          if (time instanceof Date) {
+            return time.getTime();
+          }
+
+          // Default to 0 if neither case matches
+          return 0;
+        };
+
+        const dateA = getTimestamp(a.timeOfCrime);
+        const dateB = getTimestamp(b.timeOfCrime);
+        console.log(dateA - dateB);
         return dateB - dateA; // Descending order
       });
       return sortedReports;
@@ -125,22 +158,20 @@ export default function SearchSort({
   };
 
   const sortReportsByStatus = () => {
-    // Cycle through status types
-    const nextStatus =
-      currentStatusSort === false
-        ? true
-        : currentStatusSort === true
-          ? false
-          : false;
+    const currentSort = currentStatusSort ?? 0;
+    const nextStatusSort = (currentSort + 1) % 3;
+    setCurrentStatusSort(nextStatusSort);
 
-    setCurrentStatusSort(nextStatus); // Update the state to the next status
+    const statusOrder = [
+      [2, 1, 0],
+      [0, 2, 1],
+      [1, 0, 2],
+    ];
 
-    // Sort the reports based on the new status
     setFilteredReports((prevReports: any) => {
       const sortedReports = [...prevReports].sort((a, b) => {
-        const statusOrder = [true, false];
-        // Sort reports by the status order
-        return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        const order = statusOrder[nextStatusSort];
+        return order.indexOf(a.status) - order.indexOf(b.status);
       });
       return sortedReports;
     });
@@ -154,7 +185,7 @@ export default function SearchSort({
     { label: "Sort by Date (Latest)", value: "date-desc" },
     { label: "Sort by Alphabet (A-Z)", value: "alphabet-asc" },
     { label: "Sort by Alphabet (Z-A)", value: "alphabet-desc" },
-    { label: "Sort by Crime Category", value: "category" },
+    { label: "Filter by Crime Category", value: "category" },
     { label: "Sort by Status", value: "status" },
   ]);
 

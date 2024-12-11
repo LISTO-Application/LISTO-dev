@@ -42,14 +42,15 @@ import { v4 as uuidv4 } from "uuid";
 import { crimeImages, CrimeType } from "../../../constants/data/marker";
 import { Asset } from "expo-asset";
 import { authWeb } from "@/app/(auth)";
+import { Distress } from "@/constants/data/distress";
 
-export default function ViewAdminEmergencyList() {
-  const [crimes, setCrimes] = useState<Report[]>([]);
+export default function ViewDistress() {
+  const [distress, setDistress] = useState<Distress[]>([]);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [filteredReports, setFilteredReports] = useState<Report[]>([]);
+  const [filteredReports, setFilteredReports] = useState<Distress[]>([]);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
@@ -59,20 +60,20 @@ export default function ViewAdminEmergencyList() {
 
   const fetchIncidents = async () => {
     try {
-      const crimesCollectionRef = collection(db, "crimes");
-      const crimesSnapshot = await getDocs(crimesCollectionRef);
+      const distressCollectionRef = collection(db, "distress");
+      const distressSnapshot = await getDocs(distressCollectionRef);
 
-      if (crimesSnapshot.empty) {
+      if (distressSnapshot.empty) {
         console.log("No incidents found in Firestore.");
         return;
       }
 
       // Process records from Firestore without geocoding.
-      const crimesArray = crimesSnapshot.docs.map((doc) => {
+      const distressArray = distressSnapshot.docs.map((doc) => {
         const data = doc.data();
 
         // Handle GeoPoint or plain object coordinates
-        let coordinate = data.coordinate;
+        let coordinate = data.location;
         if (coordinate instanceof FirestoreGeoPoint) {
           // If the coordinate is a GeoPoint (Firestore GeoPoint)
           coordinate = {
@@ -86,26 +87,22 @@ export default function ViewAdminEmergencyList() {
 
         return {
           id: doc.id,
-          additionalInfo: data.additionalInfo || "No additional info",
-          category: data.category || "Unknown",
-          location: data.location || "Unknown location",
-          coordinate: coordinate, // Updated coordinates based on GeoPoint or plain object
-          time: data.time || "00:00",
-          timeOfCrime:
-            data.timeOfCrime instanceof Timestamp
-              ? data.timeOfCrime.toDate()
-              : new Date(data.timeOfCrime || null),
-          timeReported:
-            data.timeReported instanceof Timestamp
-              ? data.timeReported.toDate()
-              : new Date(data.timeReported || null),
-          unixTOC: data.unixTOC || 0,
+          acknowledged: data.acknowledged,
+          addInfo: data.addInfo || "No additional info",
+          barangay: data.barangay,
+          emergencyType: {
+            crime: data.crime,
+            fire: data.fire,
+            injury: data.injury,
+          },
+          location: coordinate,
+          timestamp: data.timestamp,
         };
       });
 
-      console.log("Mapped Incidents:", crimesArray);
-      setCrimes(crimesArray);
-      setFilteredReports(crimesArray);
+      console.log("Mapped Incidents:", distressArray);
+      setDistress(distressArray);
+      setFilteredReports(distressArray);
     } catch (error) {
       console.error("Error fetching incidents:", error);
     }
@@ -317,19 +314,19 @@ export default function ViewAdminEmergencyList() {
         console.log("Total Reports Imported: ", importedReports.length);
         console.log("Imported Reports: ", importedReports);
 
-        const crimesCollection = collection(db, "crimes");
+        const distressCollection = collection(db, "distress");
 
         try {
-          const addReportsPromises = importedReports.map(async (report) => {
+          const addDistressPromise = importedReports.map(async (report) => {
             console.log("Adding report to Firestore:", report);
             try {
-              await addDoc(crimesCollection, report);
+              await addDoc(distressCollection, report);
             } catch (error) {
               console.error("Error adding report to Firestore:", error);
             }
           });
 
-          await Promise.all(addReportsPromises);
+          await Promise.all(addDistressPromise);
 
           alert("Reports successfully added.");
           await fetchIncidents();
@@ -359,13 +356,13 @@ export default function ViewAdminEmergencyList() {
   //   return format(date.toLocaleString(), "yyyy-MM-dd");
   // };
 
-  const getStatusStyle = (status: string) => {
+  const getStatusStyle = (status: number) => {
     switch (status) {
-      case "VALID":
+      case 2:
         return { backgroundColor: "#115272", color: "red" };
-      case "PENDING":
+      case 1:
         return { backgroundColor: "grey", color: "blue" };
-      case "PENALIZED":
+      case 0:
         return { backgroundColor: "#dc3545", color: "green" };
       default:
         return { backgroundColor: "#6c757d", color: "" };
@@ -403,135 +400,135 @@ export default function ViewAdminEmergencyList() {
 
   // Import GeoPoint from Firebase Firestore
 
-  const handleExport = () => {
-    if (filteredReports.length === 0) {
-      alert("No reports to export.");
-      return;
-    }
+  //   const handleExport = () => {
+  //     if (filteredReports.length === 0) {
+  //       alert("No reports to export.");
+  //       return;
+  //     }
 
-    // Prepare data for export
-    const dataToExport = filteredReports.map((report, index) => {
-      let formattedDate = "N/A"; // Default to N/A if date is invalid
-      let date = report.timeOfCrime || null;
-      if (date) {
-        console.log(format(date, "yyyy-MM-dd"));
-      } else {
-        console.log("Date is null");
-      }
-      if (date) {
-        if (typeof date === "object") {
-          formattedDate = format(date, "yyyy-MM-dd");
-        } else if (report.timeOfCrime instanceof Timestamp) {
-          formattedDate = format(date, "yyyy-MM-dd");
-        }
-      }
+  //     // Prepare data for export
+  //     const dataToExport = filteredReports.map((report, index) => {
+  //       let formattedDate = "N/A"; // Default to N/A if date is invalid
+  //       let date = report.timeOfCrime || null;
+  //       if (date) {
+  //         console.log(format(date, "yyyy-MM-dd"));
+  //       } else {
+  //         console.log("Date is null");
+  //       }
+  //       if (date) {
+  //         if (typeof date === "object") {
+  //           formattedDate = format(date, "yyyy-MM-dd");
+  //         } else if (report.timeOfCrime instanceof Timestamp) {
+  //           formattedDate = format(date, "yyyy-MM-dd");
+  //         }
+  //       }
 
-      // Ensure report.coordinate is a GeoPoint
-      let FirestoregeoPoint = report.coordinate;
-      if (
-        FirestoregeoPoint &&
-        !(FirestoregeoPoint instanceof FirestoreGeoPoint)
-      ) {
-        FirestoregeoPoint = new FirestoreGeoPoint(
-          FirestoregeoPoint.latitude,
-          FirestoregeoPoint.longitude
-        );
-      }
+  //       // Ensure report.coordinate is a GeoPoint
+  //       let FirestoregeoPoint = report.coordinate;
+  //       if (
+  //         FirestoregeoPoint &&
+  //         !(FirestoregeoPoint instanceof FirestoreGeoPoint)
+  //       ) {
+  //         FirestoregeoPoint = new FirestoreGeoPoint(
+  //           FirestoregeoPoint.latitude,
+  //           FirestoregeoPoint.longitude
+  //         );
+  //       }
 
-      // Ensure the location is available or default to 'Unknown'
-      const location = report.location || "Unknown";
+  //       // Ensure the location is available or default to 'Unknown'
+  //       const location = report.location || "Unknown";
 
-      // Now geoPoint is guaranteed to be a GeoPoint
-      return {
-        "S. No.": index + 1,
-        Category:
-          report.category.charAt(0).toUpperCase() + report.category.slice(1),
-        Date: formattedDate,
-        Coordinates: FirestoregeoPoint
-          ? `${FirestoregeoPoint.latitude}, ${FirestoregeoPoint.longitude}`
-          : "N/A",
-        Location: location,
+  //       // Now geoPoint is guaranteed to be a GeoPoint
+  //       return {
+  //         "S. No.": index + 1,
+  //         Category:
+  //           report.category.charAt(0).toUpperCase() + report.category.slice(1),
+  //         Date: formattedDate,
+  //         Coordinates: FirestoregeoPoint
+  //           ? `${FirestoregeoPoint.latitude}, ${FirestoregeoPoint.longitude}`
+  //           : "N/A",
+  //         Location: location,
 
-        Description: report.additionalInfo || "N/A",
-      };
-    });
+  //         Description: report.additionalInfo || "N/A",
+  //       };
+  //     });
 
-    // Ensure that the columns have proper headers and the data is in the correct format
-    const headers = [
-      "S. No.",
-      "Category",
-      "Date",
-      "Coordinates",
-      "Location",
-      "Description",
-    ];
+  //     // Ensure that the columns have proper headers and the data is in the correct format
+  //     const headers = [
+  //       "S. No.",
+  //       "Category",
+  //       "Date",
+  //       "Coordinates",
+  //       "Location",
+  //       "Description",
+  //     ];
 
-    // Create a new worksheet with the provided data and header
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport, {
-      header: headers,
-    });
+  //     // Create a new worksheet with the provided data and header
+  //     const worksheet = XLSX.utils.json_to_sheet(dataToExport, {
+  //       header: headers,
+  //     });
 
-    // Automatically adjust column widths based on content
-    const colWidths = headers.map((header) => {
-      // Find the maximum length of content in each column and adjust width accordingly
-      let maxLength = header.length;
-      dataToExport.forEach((report: { [key: string]: any }) => {
-        const cellValue = report[header];
-        if (
-          cellValue &&
-          typeof cellValue === "string" &&
-          cellValue.length > maxLength
-        ) {
-          maxLength = cellValue.length;
-        } else if (
-          typeof cellValue === "number" &&
-          String(cellValue).length > maxLength
-        ) {
-          maxLength = String(cellValue).length;
-        }
-      });
+  //     // Automatically adjust column widths based on content
+  //     const colWidths = headers.map((header) => {
+  //       // Find the maximum length of content in each column and adjust width accordingly
+  //       let maxLength = header.length;
+  //       dataToExport.forEach((report: { [key: string]: any }) => {
+  //         const cellValue = report[header];
+  //         if (
+  //           cellValue &&
+  //           typeof cellValue === "string" &&
+  //           cellValue.length > maxLength
+  //         ) {
+  //           maxLength = cellValue.length;
+  //         } else if (
+  //           typeof cellValue === "number" &&
+  //           String(cellValue).length > maxLength
+  //         ) {
+  //           maxLength = String(cellValue).length;
+  //         }
+  //       });
 
-      // Increase the width padding more significantly
-      return { wch: maxLength + 100 }; // Increased padding for better readability
-    });
+  //       // Increase the width padding more significantly
+  //       return { wch: maxLength + 100 }; // Increased padding for better readability
+  //     });
 
-    worksheet["!cols"] = colWidths; // Apply the column widths to the worksheet
+  //     worksheet["!cols"] = colWidths; // Apply the column widths to the worksheet
 
-    // Convert worksheet to CSV
-    const csvData = XLSX.utils.sheet_to_csv(worksheet);
+  //     // Convert worksheet to CSV
+  //     const csvData = XLSX.utils.sheet_to_csv(worksheet);
 
-    // Trigger download of the CSV file
-    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const generateFileName = () => {
-      const now = new Date();
-      const day = String(now.getDate()).padStart(2, "0");
-      const month = String(now.getMonth() + 1).padStart(2, "0"); // Month is 0-based
-      const year = now.getFullYear();
-      return `LISTO-crimes-${month}-${day}-${year}.csv`;
-    };
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", generateFileName()); // Save as CSV
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  //     // Trigger download of the CSV file
+  //     const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+  //     const url = URL.createObjectURL(blob);
+  //     const generateFileName = () => {
+  //       const now = new Date();
+  //       const day = String(now.getDate()).padStart(2, "0");
+  //       const month = String(now.getMonth() + 1).padStart(2, "0"); // Month is 0-based
+  //       const year = now.getFullYear();
+  //       return `LISTO-crimes-${month}-${day}-${year}.csv`;
+  //     };
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", generateFileName()); // Save as CSV
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //   };
 
-  interface Report {
-    id: string;
-    additionalInfo: string;
-    category: string;
-    coordinate: {
-      latitude: number;
-      longitude: number;
-    };
-    location: string;
-    time: string;
-    timeOfCrime: Date | null;
-    timeReported: Date | null;
-    unixTOC: number;
-  }
+  //   interface Report {
+  //     id: string;
+  //     additionalInfo: string;
+  //     category: string;
+  //     coordinate: {
+  //       latitude: number;
+  //       longitude: number;
+  //     };
+  //     location: string;
+  //     time: string;
+  //     timeOfCrime: Date | null;
+  //     timeReported: Date | null;
+  //     unixTOC: number;
+  //   }
 
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10;
@@ -540,47 +537,47 @@ export default function ViewAdminEmergencyList() {
     currentPage * reportsPerPage
   );
 
-  const crimeCategories = Array.from(
-    new Set(crimes.map((report) => report.category))
+  const distressType = Array.from(
+    new Set(distress.map((report) => report.emergencyType))
   );
 
-  const filterReports = (searchQuery: string, category: string | null) => {
-    let filtered = crimes;
+  //   const filterReports = (searchQuery: string, type: string | null) => {
+  //     let filtered = distress;
 
-    if (category) {
-      filtered = filtered.filter(
-        (report: { category: string }) => report.category === category
-      );
-    }
+  //     if (type) {
+  //       filtered = filtered.filter(
+  //         (distress: { type: string }) => distress.type === type
+  //       );
+  //     }
 
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (report: {
-          time: any;
-          location: string;
-          category: string;
-          timeOfCrime: any;
-        }) => {
-          const query = searchQuery.toLowerCase();
-          const date = dayjs(report.timeOfCrime).format("YYYY-MM-DD");
-          console.log(date);
-          return (
-            report.location.toLowerCase().includes(query) ||
-            report.category.toLowerCase().includes(query) ||
-            date.toLowerCase().includes(query)
-          );
-        }
-      );
-    }
+  //     if (searchQuery) {
+  //       filtered = filtered.filter(
+  //         (report: {
+  //           time: any;
+  //           location: string;
+  //           category: string;
+  //           timeOfCrime: any;
+  //         }) => {
+  //           const query = searchQuery.toLowerCase();
+  //           const date = dayjs(report.timeOfCrime).format("YYYY-MM-DD");
+  //           console.log(date);
+  //           return (
+  //             report.location.toLowerCase().includes(query) ||
+  //             report.category.toLowerCase().includes(query) ||
+  //             date.toLowerCase().includes(query)
+  //           );
+  //         }
+  //       );
+  //     }
 
-    setFilteredReports(filtered); // Update the filtered reports state
-  };
+  //     setFilteredReports(filtered); // Update the filtered reports state
+  //   };
   // Handle category selection from the modal
-  const handleCategorySelect = (category: string) => {
-    setSelectedCategory(category); // Set the selected category
-    setCategoryModalVisible(false); // Close the modal
-    filterReports(searchQuery, category); // Apply the category filter along with the current search query
-  };
+  //   const handleCategorySelect = (category: string) => {
+  //     setSelectedCategory(category); // Set the selected category
+  //     setCategoryModalVisible(false); // Close the modal
+  //     filterReports(searchQuery, category); // Apply the category filter along with the current search query
+  //   };
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
@@ -699,12 +696,12 @@ export default function ViewAdminEmergencyList() {
           <TitleCard />
 
           <SearchSort
-            reports={crimes}
+            reports={distress}
             setCategoryModalVisible={setCategoryModalVisible}
             setFilteredReports={setFilteredReports}
             isAlignedRight={isAlignedRight}
-            filterReports={filterReports}
-            handleExport={handleExport}
+            // filterReports={filterReports}
+            // handleExport={handleExport}
             handleImport={handleImport}
             pickFile={() => {}} // Add appropriate function or state
             excelData={[]} // Add appropriate state
@@ -712,13 +709,12 @@ export default function ViewAdminEmergencyList() {
             uploadToFirestore={() => {}} // Add appropriate function
           />
 
-          <Modal
+          {/* <Modal
             visible={isCategoryModalVisible}
             animationType="slide"
             transparent={true}
             onRequestClose={() => setCategoryModalVisible(false)}
           >
-            {/* TouchableWithoutFeedback to close the modal when clicking outside */}
             <TouchableWithoutFeedback
               onPress={() => setCategoryModalVisible(false)}
             >
@@ -744,7 +740,7 @@ export default function ViewAdminEmergencyList() {
                 </View>
               </View>
             </TouchableWithoutFeedback>
-          </Modal>
+          </Modal> */}
           <ScrollView
             contentContainerStyle={[
               webstyles.reportList,
@@ -754,7 +750,7 @@ export default function ViewAdminEmergencyList() {
             {currentReports.length > 0 ? (
               currentReports.map((incident, index) => {
                 // Destructure coordinates (_lat, _long) from incident.coordinate
-                const { latitude, longitude } = incident.coordinate;
+                const { latitude, longitude } = incident.location;
                 const isValidCoordinate = latitude && longitude;
 
                 return (
@@ -790,8 +786,9 @@ export default function ViewAdminEmergencyList() {
                             color: "#115272",
                           }}
                         >
-                          {incident.category.charAt(0).toUpperCase() +
-                            incident.category.slice(1)}
+                          {incident.emergencyType.crime ? "Crime" : null}
+                          {incident.emergencyType.fire ? "Fire" : null}
+                          {incident.emergencyType.injury ? "Injury" : null}
                         </Text>
                         <Text
                           style={{
@@ -799,12 +796,7 @@ export default function ViewAdminEmergencyList() {
                             fontSize: 14,
                             marginLeft: 10, // Space between title and date
                           }}
-                        >
-                          {format(
-                            new Date(incident.timeOfCrime || new Date()),
-                            "yyyy-MM-dd"
-                          )}
-                        </Text>
+                        ></Text>
                       </View>
                       <TouchableOpacity
                         style={{ padding: 10 }}
@@ -905,33 +897,6 @@ export default function ViewAdminEmergencyList() {
             isAlignedRight={isAlignedRight}
           />
         </Animated.View>
-        <TouchableOpacity
-          style={webstyles.fab}
-          onPress={() => router.push("/newAdminReports")}
-        >
-          <View
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: 20,
-            }}
-          >
-            <Text
-              style={{
-                alignSelf: "center",
-                color: "white",
-                fontWeight: "bold",
-                fontSize: 20,
-              }}
-            >
-              Add a crime
-            </Text>
-            <View style={{ alignSelf: "center" }}>
-              <Ionicons name="add" size={30} color="white" />
-            </View>
-          </View>
-        </TouchableOpacity>
       </View>
     );
   }

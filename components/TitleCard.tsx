@@ -14,6 +14,7 @@ export default function TitleCard() {
     reportDetails: "Report Details",
     ViewAdminEmergencyList: "Listed Crimes",
     newAdminReports: "Add a Crime",
+    viewDistress: "Distress Messages",
     Default: "Default",
   };
 

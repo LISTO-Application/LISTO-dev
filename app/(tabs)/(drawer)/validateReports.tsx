@@ -329,40 +329,36 @@ export default function ValidateReports({ navigation }: { navigation: any }) {
                   </Text>
                 </View>
 
-                {/* {report.status === "PENDING" ? (
+                {report.status === 1 ? (
                   <View style={styles.actionContainer}>
                     <TouchableOpacity
                       style={webstyles.approveButton}
-                      onPress={() => handleApprove(report.id)}
+                      onPress={() => handleStatusChange(report.id, 2)}
                     >
                       <Text style={webstyles.buttonText}>Validate</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={webstyles.rejectedButton}
-                      onPress={() => handleReject(report.id)}
+                      onPress={() => handleStatusChange(report.id, 0)}
                     >
                       <Text style={webstyles.buttonText}>Penalize</Text>
                     </TouchableOpacity>
                   </View>
-                ) : report.status === "VALID" ? (
+                ) : report.status === 2 ? (
                   <TouchableOpacity
                     style={webstyles.approvedButton}
-                    onPress={() => {
-
-                    }}
+                    onPress={() => {}}
                   >
                     <Text style={webstyles.approvedButtonText}>Validated</Text>
                   </TouchableOpacity>
-                ) : report.status === "PENALIZED" ? (
+                ) : report.status === 0 ? (
                   <TouchableOpacity
                     style={webstyles.rejectedButton}
-                    onPress={() => {
-
-                    }}
+                    onPress={() => {}}
                   >
                     <Text style={webstyles.rejectedButtonText}>Penalized</Text>
                   </TouchableOpacity>
-                ) : null} */}
+                ) : null}
               </View>
             </View>
           ))}

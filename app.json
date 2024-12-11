@@ -26,7 +26,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyC7Wb7_O8WszlUd4OsUYT0m0EvGkfuP9kA"
+          "apiKey": "AIzaSyDoWF8JDzlhT2xjhuInBtMmkhWGXg2My0g"
         }
       },
       "permissions": ["android.permission.WRITE_EXTERNAL_STORAGE"],
