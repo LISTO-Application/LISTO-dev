@@ -16,8 +16,8 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { webstyles } from "@/styles/webstyles"; // For web styles
 import { db } from "@/app/FirebaseConfig";
-import { Timestamp } from "@react-native-firebase/firestore";
-import { GeoPoint as FirestoreGeoPoint } from "firebase/firestore";
+import { Timestamp, updateDoc } from "@react-native-firebase/firestore";
+import { GeoPoint as FirestoreGeoPoint, GeoPoint } from "firebase/firestore";
 import "firebase/database";
 import {
   collection,
@@ -41,7 +41,7 @@ import * as DocumentPicker from "expo-document-picker"; // For mobile file selec
 import { v4 as uuidv4 } from "uuid";
 import { crimeImages, CrimeType } from "../../../constants/data/marker";
 import { Asset } from "expo-asset";
-import { authWeb } from "@/app/(auth)";
+import { authWeb, dbWeb } from "@/app/(auth)";
 import { Distress } from "@/constants/data/distress";
 
 export default function ViewDistress() {
@@ -91,9 +91,9 @@ export default function ViewDistress() {
           addInfo: data.addInfo || "No additional info",
           barangay: data.barangay,
           emergencyType: {
-            crime: data.crime,
-            fire: data.fire,
-            injury: data.injury,
+            crime: data.emergencyType.crime,
+            fire: data.emergencyType.fire,
+            injury: data.emergencyType.injury,
           },
           location: coordinate,
           timestamp: data.timestamp,
@@ -199,151 +199,151 @@ export default function ViewDistress() {
 
     return utcDate;
   };
-  const handleImport = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          "text/csv",
-          "application/vnd.ms-excel",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        ],
-      });
+  // const handleImport = async () => {
+  //   try {
+  //     const result = await DocumentPicker.getDocumentAsync({
+  //       type: [
+  //         "text/csv",
+  //         "application/vnd.ms-excel",
+  //         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //       ],
+  //     });
 
-      if (result.canceled) {
-        console.log("File selection was canceled.");
-        return;
-      }
+  //     if (result.canceled) {
+  //       console.log("File selection was canceled.");
+  //       return;
+  //     }
 
-      const file = result.assets?.[0];
-      if (!file?.uri) {
-        console.error("No URI found for the selected file.");
-        return;
-      }
+  //     const file = result.assets?.[0];
+  //     if (!file?.uri) {
+  //       console.error("No URI found for the selected file.");
+  //       return;
+  //     }
 
-      const response = await fetch(file.uri);
-      const data = await response.blob();
-      const reader = new FileReader();
+  //     const response = await fetch(file.uri);
+  //     const data = await response.blob();
+  //     const reader = new FileReader();
 
-      reader.onload = async (event) => {
-        const binaryData = event.target?.result;
-        if (!binaryData) {
-          console.error("Failed to read the file.");
-          return;
-        }
+  //     reader.onload = async (event) => {
+  //       const binaryData = event.target?.result;
+  //       if (!binaryData) {
+  //         console.error("Failed to read the file.");
+  //         return;
+  //       }
 
-        const workbook = XLSX.read(binaryData, { type: "binary" });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+  //       const workbook = XLSX.read(binaryData, { type: "binary" });
+  //       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  //       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const importedReports = await Promise.all(
-          jsonData.map(async (item: any) => {
-            let timeOfCrime = item["Time of Crime"]
-              ? parseTime(item["Time of Crime"])
-              : null;
-            let timeReported = item["Time Reported"]
-              ? parseTime(item["Time Reported"])
-              : null;
+  //       const importedReports = await Promise.all(
+  //         jsonData.map(async (item: any) => {
+  //           let timeOfCrime = item["Time of Crime"]
+  //             ? parseTime(item["Time of Crime"])
+  //             : null;
+  //           let timeReported = item["Time Reported"]
+  //             ? parseTime(item["Time Reported"])
+  //             : null;
 
-            if (!timeOfCrime) {
-              timeOfCrime = new Date(); // Default to current time
-              console.warn(
-                "Time of Crime missing or invalid, using current time."
-              );
-            }
+  //           if (!timeOfCrime) {
+  //             timeOfCrime = new Date(); // Default to current time
+  //             console.warn(
+  //               "Time of Crime missing or invalid, using current time."
+  //             );
+  //           }
 
-            if (!timeReported) {
-              timeReported = new Date(); // Default to current time
-              console.warn(
-                "Time Report missing or invalid, using current time."
-              );
-            }
+  //           if (!timeReported) {
+  //             timeReported = new Date(); // Default to current time
+  //             console.warn(
+  //               "Time Report missing or invalid, using current time."
+  //             );
+  //           }
 
-            let coordinate: FirestoreGeoPoint | null = null;
-            const lat = item["Latitude"] ? parseFloat(item["Latitude"]) : null;
-            const lng = item["Longitude"]
-              ? parseFloat(item["Longitude"])
-              : null;
+  //           let coordinate: FirestoreGeoPoint | null = null;
+  //           const lat = item["Latitude"] ? parseFloat(item["Latitude"]) : null;
+  //           const lng = item["Longitude"]
+  //             ? parseFloat(item["Longitude"])
+  //             : null;
 
-            // Check if latitude and longitude exist in the file
-            if (lat && lng) {
-              coordinate = new FirestoreGeoPoint(lat, lng);
-            } else if (item["Location"]) {
-              // Geocode the address if coordinates aren't available
-              coordinate = await geocodeAddress(item["Location"]);
-            }
+  //           // Check if latitude and longitude exist in the file
+  //           if (lat && lng) {
+  //             coordinate = new FirestoreGeoPoint(lat, lng);
+  //           } else if (item["Location"]) {
+  //             // Geocode the address if coordinates aren't available
+  //             coordinate = await geocodeAddress(item["Location"]);
+  //           }
 
-            if (!coordinate) {
-              console.warn(
-                "Geocoding failed or no coordinates provided, using default coordinates for Barangay Holy Spirit."
-              );
-              coordinate = new FirestoreGeoPoint(14.6522, 121.0633); // Default coordinates
-            }
+  //           if (!coordinate) {
+  //             console.warn(
+  //               "Geocoding failed or no coordinates provided, using default coordinates for Barangay Holy Spirit."
+  //             );
+  //             coordinate = new FirestoreGeoPoint(14.6522, 121.0633); // Default coordinates
+  //           }
 
-            // Log coordinate values for debugging
-            console.log("Coordinates before formatting:", {
-              latitude: coordinate.latitude,
-              longitude: coordinate.longitude,
-            });
+  //           // Log coordinate values for debugging
+  //           console.log("Coordinates before formatting:", {
+  //             latitude: coordinate.latitude,
+  //             longitude: coordinate.longitude,
+  //           });
 
-            // Format the coordinates for display or usage
+  //           // Format the coordinates for display or usage
 
-            // Convert the time to Firestore Timestamp
-            const timestampOfCrime = Timestamp.fromMillis(
-              timeOfCrime.getTime()
-            );
-            const timestampReported = Timestamp.fromMillis(
-              timeReported.getTime()
-            );
+  //           // Convert the time to Firestore Timestamp
+  //           const timestampOfCrime = Timestamp.fromMillis(
+  //             timeOfCrime.getTime()
+  //           );
+  //           const timestampReported = Timestamp.fromMillis(
+  //             timeReported.getTime()
+  //           );
 
-            const report = {
-              uid: authWeb.currentUser?.uid,
-              additionalInfo: item["Additional Info"] || "No additional info",
-              category: item["Category"] || "Unknown",
-              location: item["Location"] || "Unknown location",
-              time: item["Time"] || "00:00",
-              timeOfCrime: timestampOfCrime,
-              timeReported: timestampReported,
-              coordinate, // Store GeoPoint directly
-            };
+  //           const report = {
+  //             uid: authWeb.currentUser?.uid,
+  //             additionalInfo: item["Additional Info"] || "No additional info",
+  //             category: item["Category"] || "Unknown",
+  //             location: item["Location"] || "Unknown location",
+  //             time: item["Time"] || "00:00",
+  //             timeOfCrime: timestampOfCrime,
+  //             timeReported: timestampReported,
+  //             coordinate, // Store GeoPoint directly
+  //           };
 
-            console.log("Imported Report Details:", report);
-            return report;
-          })
-        );
+  //           console.log("Imported Report Details:", report);
+  //           return report;
+  //         })
+  //       );
 
-        console.log("Total Reports Imported: ", importedReports.length);
-        console.log("Imported Reports: ", importedReports);
+  //       console.log("Total Reports Imported: ", importedReports.length);
+  //       console.log("Imported Reports: ", importedReports);
 
-        const distressCollection = collection(db, "distress");
+  //       const distressCollection = collection(db, "distress");
 
-        try {
-          const addDistressPromise = importedReports.map(async (report) => {
-            console.log("Adding report to Firestore:", report);
-            try {
-              await addDoc(distressCollection, report);
-            } catch (error) {
-              console.error("Error adding report to Firestore:", error);
-            }
-          });
+  //       try {
+  //         const addDistressPromise = importedReports.map(async (report) => {
+  //           console.log("Adding report to Firestore:", report);
+  //           try {
+  //             await addDoc(distressCollection, report);
+  //           } catch (error) {
+  //             console.error("Error adding report to Firestore:", error);
+  //           }
+  //         });
 
-          await Promise.all(addDistressPromise);
+  //         await Promise.all(addDistressPromise);
 
-          alert("Reports successfully added.");
-          await fetchIncidents();
-        } catch (error) {
-          console.error("Error adding reports to Firestore:", error);
-          alert("Failed to add reports. Please try again.");
-        }
-      };
+  //         alert("Reports successfully added.");
+  //         await fetchIncidents();
+  //       } catch (error) {
+  //         console.error("Error adding reports to Firestore:", error);
+  //         alert("Failed to add reports. Please try again.");
+  //       }
+  //     };
 
-      reader.readAsBinaryString(data);
-    } catch (error) {
-      console.error("Error during file import:", error);
-      alert(
-        "An error occurred during file import. Please check the file format."
-      );
-    }
-  };
+  //     reader.readAsBinaryString(data);
+  //   } catch (error) {
+  //     console.error("Error during file import:", error);
+  //     alert(
+  //       "An error occurred during file import. Please check the file format."
+  //     );
+  //   }
+  // };
 
   // Helper function to parse the date format in the CSV
 
@@ -393,9 +393,26 @@ export default function ViewDistress() {
     setSidebarVisible(!isSidebarVisible);
   };
 
-  const handleDeleteRequest = (reportId: string) => {
+  const handleDeleteRequest = async (reportId: string) => {
     setSelectedReportId(reportId);
     setDeleteModalVisible(true);
+    if (selectedReportId !== null) {
+      await readDistress(reportId);
+    }
+  };
+
+  const readDistress = async (reportId: string) => {
+    try {
+      // Reference the specific document in the "distress" collection
+      const reportRef = doc(db, "distress", reportId);
+      console.log("deleting distress...", reportRef);
+      // Delete the document
+      await updateDoc(reportRef, { acknowledged: true });
+
+      console.log(`Report with ID ${reportId} has been updated`);
+    } catch (error) {
+      console.error("Error updating distress:", error);
+    }
   };
 
   // Import GeoPoint from Firebase Firestore
@@ -578,6 +595,29 @@ export default function ViewDistress() {
   //     setCategoryModalVisible(false); // Close the modal
   //     filterReports(searchQuery, category); // Apply the category filter along with the current search query
   //   };
+  const [addresses, setAddresses] = useState<string[]>([]);
+
+  const geocoder = new google.maps.Geocoder();
+
+  function reverseGeocode(lat: any, lng: any, index: number) {
+    const latLng = {
+      lat,
+      lng,
+    };
+
+    geocoder.geocode({ location: latLng }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        console.log("Address: " + results[0].formatted_address);
+        setAddresses((prev) => {
+          const updated = [...prev];
+          updated[index] = results[0].formatted_address;
+          return updated;
+        });
+      } else {
+        console.error("Geocode failed: " + status);
+      }
+    });
+  }
 
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
@@ -594,78 +634,124 @@ export default function ViewDistress() {
         </View>
 
         <ScrollView contentContainerStyle={webstyles.scrollViewContent}>
-          {crimes.map((report) => (
-            <View key={report.id}>
-              {/* Report content */}
-              <View style={webstyles.reportContainer}>
-                <View style={webstyles.reportIcon}>
-                  <Ionicons
-                    name={
-                      report.title === "HOMICIDE" ? "alert-circle" : "alert"
-                    }
-                    size={24}
-                    color="white"
-                  />
-                </View>
-
-                <View style={webstyles.reportTextContainer}>
-                  {/* Title wrapped in TouchableOpacity for navigation */}
-                  <TouchableOpacity onPress={() => handleTitlePress(report.id)}>
-                    <Text style={webstyles.reportTitle}>{report.title}</Text>
-                  </TouchableOpacity>
-                  <Text style={webstyles.reportDetails}>{report.details}</Text>
-                </View>
-
-                {/* Status badge */}
-                <View style={webstyles.statusContainer}>
-                  <Text
-                    style={[
-                      webstyles.statusBadge,
-                      getStatusStyle(report.status),
-                    ]}
+          {crimes.map(
+            (report: {
+              id: React.Key | null | undefined;
+              title:
+                | string
+                | number
+                | boolean
+                | React.ReactElement<
+                    any,
+                    string | React.JSXElementConstructor<any>
                   >
-                    {report.status}
-                  </Text>
-                </View>
+                | Iterable<React.ReactNode>
+                | null
+                | undefined;
+              details:
+                | string
+                | number
+                | boolean
+                | React.ReactElement<
+                    any,
+                    string | React.JSXElementConstructor<any>
+                  >
+                | Iterable<React.ReactNode>
+                | React.ReactPortal
+                | null
+                | undefined;
+              status:
+                | string
+                | number
+                | boolean
+                | React.ReactElement<
+                    any,
+                    string | React.JSXElementConstructor<any>
+                  >
+                | Iterable<React.ReactNode>
+                | null
+                | undefined;
+            }) => (
+              <View key={report.id}>
+                {/* Report content */}
+                <View style={webstyles.reportContainer}>
+                  <View style={webstyles.reportIcon}>
+                    <Ionicons
+                      name={
+                        report.title === "HOMICIDE" ? "alert-circle" : "alert"
+                      }
+                      size={24}
+                      color="white"
+                    />
+                  </View>
 
-                {/* Approve and Reject buttons */}
-                {report.status === "PENDING" ? (
-                  <View style={styles.actionContainer}>
+                  <View style={webstyles.reportTextContainer}>
+                    {/* Title wrapped in TouchableOpacity for navigation */}
                     <TouchableOpacity
-                      style={webstyles.approveButton}
-                      onPress={() => handleApprove(report.id)}
+                      onPress={() => handleTitlePress(report.id)}
                     >
-                      <Text style={webstyles.buttonText}>Validate</Text>
+                      <Text style={webstyles.reportTitle}>{report.title}</Text>
                     </TouchableOpacity>
+                    <Text style={webstyles.reportDetails}>
+                      {report.details}
+                    </Text>
+                  </View>
+
+                  {/* Status badge */}
+                  <View style={webstyles.statusContainer}>
+                    <Text
+                      style={[
+                        webstyles.statusBadge,
+                        getStatusStyle(report.status),
+                      ]}
+                    >
+                      {report.status}
+                    </Text>
+                  </View>
+
+                  {/* Approve and Reject buttons */}
+                  {report.status === "PENDING" ? (
+                    <View style={styles.actionContainer}>
+                      <TouchableOpacity
+                        style={webstyles.approveButton}
+                        onPress={() => handleApprove(report.id)}
+                      >
+                        <Text style={webstyles.buttonText}>Validate</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={webstyles.rejectedButton}
+                        onPress={() => handleReject(report.id)}
+                      >
+                        <Text style={webstyles.buttonText}>Penalize</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : report.status === "VALID" ? (
+                    <TouchableOpacity
+                      style={webstyles.approvedButton}
+                      onPress={() => {
+                        /* Optional: Add any action for approved state */
+                      }}
+                    >
+                      <Text style={webstyles.approvedButtonText}>
+                        Validated
+                      </Text>
+                    </TouchableOpacity>
+                  ) : report.status === "PENALIZED" ? (
                     <TouchableOpacity
                       style={webstyles.rejectedButton}
-                      onPress={() => handleReject(report.id)}
+                      onPress={() => {
+                        /* Optional: Add any action for rejected state */
+                      }}
                     >
-                      <Text style={webstyles.buttonText}>Penalize</Text>
+                      <Text style={webstyles.rejectedButtonText}>
+                        Penalized
+                      </Text>
                     </TouchableOpacity>
-                  </View>
-                ) : report.status === "VALID" ? (
-                  <TouchableOpacity
-                    style={webstyles.approvedButton}
-                    onPress={() => {
-                      /* Optional: Add any action for approved state */
-                    }}
-                  >
-                    <Text style={webstyles.approvedButtonText}>Validated</Text>
-                  </TouchableOpacity>
-                ) : report.status === "PENALIZED" ? (
-                  <TouchableOpacity
-                    style={webstyles.rejectedButton}
-                    onPress={() => {
-                      /* Optional: Add any action for rejected state */
-                    }}
-                  >
-                    <Text style={webstyles.rejectedButtonText}>Penalized</Text>
-                  </TouchableOpacity>
-                ) : null}
+                  ) : null}
+                </View>
               </View>
-            </View>
-          ))}
+            )
+          )}
         </ScrollView>
       </View>
     );
@@ -702,7 +788,7 @@ export default function ViewDistress() {
             isAlignedRight={isAlignedRight}
             // filterReports={filterReports}
             // handleExport={handleExport}
-            handleImport={handleImport}
+            // handleImport={handleImport}
             pickFile={() => {}} // Add appropriate function or state
             excelData={[]} // Add appropriate state
             uploading={false} // Add appropriate state
@@ -752,6 +838,9 @@ export default function ViewDistress() {
                 // Destructure coordinates (_lat, _long) from incident.coordinate
                 const { latitude, longitude } = incident.location;
                 const isValidCoordinate = latitude && longitude;
+                if (isValidCoordinate && !addresses[index]) {
+                  reverseGeocode(latitude, longitude, index);
+                }
 
                 return (
                   <View
@@ -818,10 +907,7 @@ export default function ViewDistress() {
                     <Text
                       style={{ color: "#115272", fontSize: 14, marginTop: 5 }}
                     >
-                      {/* Display location if available */}
-                      {incident.location
-                        ? `Location: ${incident.location}`
-                        : "Location not provided"}
+                      {addresses[index] || "Fetching address..."}
                     </Text>
 
                     {/* Modal for delete confirmation */}

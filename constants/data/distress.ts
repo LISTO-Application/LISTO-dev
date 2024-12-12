@@ -1,6 +1,7 @@
 import { GeoPoint } from "firebase/firestore";
 
 export interface Distress {
+  id: string;
   acknowledged: Boolean;
   addInfo: string;
   barangay: string;

@@ -20,8 +20,8 @@ import {
   where,
   getDocs,
 } from "@react-native-firebase/firestore";
-import { signOut } from "firebase/auth";
-import { authWeb } from "@/app/(auth)";
+import { getAuth, signOut } from "firebase/auth";
+import { app, authWeb } from "@/app/(auth)";
 
 export const SideBar = ({
   sideBarPosition,
@@ -52,7 +52,17 @@ export const SideBar = ({
 
   const [newReportsCount, setNewReportsCount] = useState(0);
   const [reportTitles, setReportTitles] = useState<string[]>([]); // State to hold the titles of pending reports
-
+  const [distressMessagesCount, setDistressMessagesCount] = useState(0);
+  const [distressMessagesDetails, setDistressMessagesDetails] = useState<
+    {
+      emergencyType: string;
+      addInfo: string;
+      location: { latitude: number; longitude: number };
+      timestamp: Date;
+      id: string;
+      acknowledge: boolean;
+    }[] // Adding the 'id' property
+  >([]);
   // Fetch the count and titles of new reports whenever the component mounts or updates
   useEffect(() => {
     const reportsCollection = collection(db, "reports");
@@ -75,11 +85,73 @@ export const SideBar = ({
     fetchReports();
   }, []);
 
+  useEffect(() => {
+    const distressCollection = collection(db, "distress");
+    const q = query(distressCollection, where("acknowledged", "==", false));
+
+    const fetchDistressMessages = async () => {
+      try {
+        const snapshot = await getDocs(q); // Fetch the distress messages
+
+        if (!snapshot.empty) {
+          const messagesDetails = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            const timestamp = data.timestamp;
+            const parsedTimestamp = new Date(timestamp);
+            const location = data.location;
+            const latitude = location.latitude;
+            const longitude = location.longitude;
+            console.log("emergency type", data.emergencyType);
+            return {
+              emergencyType: data.emergencyType || {},
+              addInfo: data.addInfo || "",
+              location: { latitude, longitude },
+              timestamp: parsedTimestamp,
+              id: doc.id, // Document ID
+              acknowledge: data.acknowledged || false,
+            };
+          });
+
+          setDistressMessagesCount(messagesDetails.length);
+          setDistressMessagesDetails(messagesDetails);
+        } else {
+          setDistressMessagesCount(0);
+          setDistressMessagesDetails([]);
+        }
+      } catch (error) {
+        console.error("Error fetching distress messages:", error);
+      }
+    };
+
+    fetchDistressMessages();
+  }, []);
+
+  console.log("Distresses", distressMessagesDetails);
+
   const [userRole, setUserRole] = useState("User");
 
-  const toggleUserRole = () => {
-    setUserRole((prevRole) => (prevRole === "Admin" ? "User" : "Admin"));
-  };
+  const authen = getAuth(app);
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const user = authen.currentUser;
+      if (user) {
+        const idTokenResult = await user.getIdTokenResult();
+        const claims = idTokenResult.claims;
+        console.log("ID token result", idTokenResult);
+        console.log("Claims", claims);
+        console.log("Admin?", claims.admin);
+        if (claims.admin) {
+          setUserRole("Admin");
+        } else {
+          setUserRole("User");
+        }
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+
+  console.log("Auth", auth);
 
   return (
     <Animated.View
@@ -88,10 +160,6 @@ export const SideBar = ({
         { transform: [{ translateX: sideBarPosition }] },
       ]}
     >
-      <Button
-        title={`Switch to ${userRole === "Admin" ? "User" : "Admin"}`}
-        onPress={toggleUserRole}
-      />
       <ImageBackground
         source={image}
         resizeMode="cover"
